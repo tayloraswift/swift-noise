@@ -1,0 +1,18 @@
+{
+  "autoPin": true,
+  "pins": [
+    {
+      "package": "MaxPNG",
+      "reason": null,
+      "repositoryURL": "https://github.com/kelvin13/maxpng",
+      "version": "2.0.0"
+    },
+    {
+      "package": "Zlib",
+      "reason": null,
+      "repositoryURL": "https://github.com/kelvin13/swift-zlib",
+      "version": "1.0.0"
+    }
+  ],
+  "version": 1
+}
