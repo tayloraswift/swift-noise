@@ -235,8 +235,8 @@ func simplex(_ x:Double, _ y:Double) -> Double
     let uv_sum:Double = du0 + dv0
     if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
     {
-        z += gradient(u : ub + 1,
-                      v : vb + 1,
+        z += gradient(u : ub  + 1,
+                      v : vb  + 1,
                       dx: dx0 - 1 - 2*UNSTRETCH_2D,
                       dy: dy0 - 1 - 2*UNSTRETCH_2D)
 
@@ -293,8 +293,8 @@ func simplex(_ x:Double, _ y:Double) -> Double
         }
         else
         {
-            z += gradient(u : ub + 1,
-                          v : vb + 1,
+            z += gradient(u : ub  + 1,
+                          v : vb  + 1,
                           dx: dx0 - 1 - 2*UNSTRETCH_2D,
                           dy: dy0 - 1 - 2*UNSTRETCH_2D)
         }
@@ -303,28 +303,14 @@ func simplex(_ x:Double, _ y:Double) -> Double
     return z * NORMALIZATION_2D
 }
 
-func super_octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
+func octaves(_ x:Double, _ y:Double, f function:(Double, Double) -> Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
 {
     var f:Double = frequency,
         k:Double = 1,
         z:Double = 0
     for _ in 0 ..< octaves
     {
-        z += k * super_simplex(f*x, f*y)
-        k *= persistence
-        f *= 2
-    }
-    return z
-}
-
-func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
-{
-    var f:Double = frequency,
-        k:Double = 1,
-        z:Double = 0
-    for _ in 0 ..< octaves
-    {
-        z += k * simplex(f*x, f*y)
+        z += k * function(f*x, f*y)
         k *= persistence
         f *= 2
     }
@@ -332,7 +318,6 @@ func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:
 }
 
 import func Glibc.clock
-
 
 var pixbuf:[UInt8] = [UInt8](repeating: 0, count: viewer_size * viewer_size)
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
@@ -342,7 +327,8 @@ for y in 0 ..< viewer_size
 {
     for x in 0 ..< viewer_size
     {
-        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (octaves(Double(x), Double(y), frequency: 0.00083429273, octaves: 12, persistence: 0.75) / 2 + 0.5))))
+        let noise:Double = octaves(Double(x), Double(y), f: simplex, frequency: 0.00083429273, octaves: 12, persistence: 0.75)
+        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (noise / 2 + 0.5))))
     }
 }
 print(clock() - t0)
@@ -352,7 +338,8 @@ for y in 0 ..< viewer_size
 {
     for x in 0 ..< viewer_size
     {
-        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (super_octaves(Double(x), Double(y), frequency: 0.00083429273, octaves: 12, persistence: 0.75) / 2 + 0.5))))
+        let noise:Double = octaves(Double(x), Double(y), f: super_simplex, frequency: 0.00083429273, octaves: 12, persistence: 0.75)
+        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (noise / 2 + 0.5))))
     }
 }
 print(clock() - t0)
