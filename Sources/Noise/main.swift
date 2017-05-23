@@ -57,7 +57,6 @@ let super_gradient_table_2d:[Double] =
 -18.518518518518519,                   0,
 -16.037507477489605,   9.259259259259260,
 -9.259259259259260,  16.037507477489605,
-                0, 18.518518518518519
 ]
 
 func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
@@ -66,7 +65,7 @@ func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
     if (dr > 0)
     {
         let drdr:Double = dr * dr
-        let hash:Int = random_index_table[(u ^ random_index_table[v & 255]) & 255] & 24
+        let hash:Int = (random_index_table[(u + random_index_table[v & 255]) & 255] % 12) << 1
         return drdr * drdr * (super_gradient_table_2d[hash] * dx + super_gradient_table_2d[hash + 1] * dy)
     }
     else
@@ -153,7 +152,7 @@ func super_simplex(_ x:Double, _ y:Double) -> Double
         z += supergradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
     }
 
-    return z * 0.6
+    return z*0.5
 }
 
 
