@@ -135,7 +135,7 @@ func super_simplex(_ x:Double, _ y:Double) -> Double
     let du0:Double = u - Double(ub),
         dv0:Double = v - Double(vb)
 
-    let region:Int = Int(du0 + dv0)
+    let region:Int = Int(du0 + dv0) // always either 0 or 1
     let vertex_index:Int = region << 2 |
         Int(du0 - 0.5*dv0 + 1 - 0.5*Double(region)) << 3 |
         Int(dv0 - 0.5*du0 + 1 - 0.5*Double(region)) << 4
@@ -239,6 +239,32 @@ func simplex(_ x:Double, _ y:Double) -> Double
                       v : vb + 1,
                       dx: dx0 - 1 - 2*UNSTRETCH_2D,
                       dy: dy0 - 1 - 2*UNSTRETCH_2D)
+
+        let center_dist:Double = 2 - uv_sum
+        if center_dist < du0 || center_dist < dv0
+        {
+            if du0 > dv0
+            {
+                z += gradient(u : ub  + 2,
+                              v : vb     ,
+                              dx: dx0 - 2 - 2*UNSTRETCH_2D,
+                              dy: dy0     - 2*UNSTRETCH_2D)
+            }
+            else
+            {
+                z += gradient(u : ub     ,
+                              v : vb  + 2,
+                              dx: dx0     - 2*UNSTRETCH_2D,
+                              dy: dy0 - 2 - 2*UNSTRETCH_2D)
+            }
+        }
+        else
+        {
+            z += gradient(u : ub,
+                          v : vb,
+                          dx: dx0,
+                          dy: dy0)
+        }
     }
     else
     {
@@ -246,12 +272,38 @@ func simplex(_ x:Double, _ y:Double) -> Double
                       v : vb,
                       dx: dx0,
                       dy: dy0)
+
+        let center_dist:Double = 1 - uv_sum
+        if center_dist > du0 || center_dist > dv0
+        {
+            if du0 > dv0
+            {
+                z += gradient(u : ub  + 1,
+                              v : vb  - 1,
+                              dx: dx0 + 1,
+                              dy: dy0 - 1)
+            }
+            else
+            {
+                z += gradient(u : ub  - 1,
+                              v : vb  + 1,
+                              dx: dx0 - 1,
+                              dy: dy0 + 1)
+            }
+        }
+        else
+        {
+            z += gradient(u : ub + 1,
+                          v : vb + 1,
+                          dx: dx0 - 1 - 2*UNSTRETCH_2D,
+                          dy: dy0 - 1 - 2*UNSTRETCH_2D)
+        }
     }
 
     return z * NORMALIZATION_2D
 }
 
-func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
+func super_octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
 {
     var f:Double = frequency,
         k:Double = 1,
@@ -265,9 +317,27 @@ func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:
     return z
 }
 
+func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
+{
+    var f:Double = frequency,
+        k:Double = 1,
+        z:Double = 0
+    for _ in 0 ..< octaves
+    {
+        z += k * simplex(f*x, f*y)
+        k *= persistence
+        f *= 2
+    }
+    return z
+}
+
+import func Glibc.clock
+
 
 var pixbuf:[UInt8] = [UInt8](repeating: 0, count: viewer_size * viewer_size)
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
+
+var t0:Int = clock()
 for y in 0 ..< viewer_size
 {
     for x in 0 ..< viewer_size
@@ -275,6 +345,18 @@ for y in 0 ..< viewer_size
         pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (octaves(Double(x), Double(y), frequency: 0.00083429273, octaves: 12, persistence: 0.75) / 2 + 0.5))))
     }
 }
+print(clock() - t0)
+
+t0 = clock()
+for y in 0 ..< viewer_size
+{
+    for x in 0 ..< viewer_size
+    {
+        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, 255 * (super_octaves(Double(x), Double(y), frequency: 0.00083429273, octaves: 12, persistence: 0.75) / 2 + 0.5))))
+    }
+}
+print(clock() - t0)
+
 try png_encode(path: "viewer.png", raw_data: pixbuf, properties: png_properties)
 
 
