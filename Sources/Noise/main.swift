@@ -34,12 +34,6 @@ let random_index_table:[Int] = [
 156, 231, 237, 79, 180, 240, 228, 170, 115, 222, 175, 22, 220, 94, 187, 163, 155,
 136, 30, 47, 41, 74]
 
-let simplex_gradient_table_2d:[Double] =
-[
-    -1, -1,     1,  0,    -1,  0,     1,  1,
-    -1,  1,     0, -1,     0,  1,     1, -1
-]
-
 let STRETCH_2D  :Double = 0.5 * (1 / 3.squareRoot() - 1)
 let UNSTRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 let NORMALIZATION_2D:Double = 1/14
@@ -48,6 +42,126 @@ func floor(_ x:Double) -> Int
 {
     return x > 0 ? Int(x) : Int(x) - 1
 }
+
+let super_gradient_table_2d:[Double] =
+[
+                0,  18.518518518518519,
+9.259259259259260,  16.037507477489605,
+16.037507477489605,   9.259259259259260,
+18.518518518518519,                   0,
+16.037507477489605,  -9.259259259259260,
+9.259259259259260, -16.037507477489605,
+                0, -18.518518518518519,
+-9.259259259259260, -16.037507477489605,
+-16.037507477489605,  -9.259259259259260,
+-18.518518518518519,                   0,
+-16.037507477489605,   9.259259259259260,
+-9.259259259259260,  16.037507477489605,
+                0, 18.518518518518519
+]
+
+func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
+{
+    let dr:Double = 2/3 - dx*dx - dy*dy // why 2/3 ?
+    if (dr > 0)
+    {
+        let drdr:Double = dr * dr
+        let hash:Int = random_index_table[(u ^ random_index_table[v & 255]) & 255] & 24
+        return drdr * drdr * (super_gradient_table_2d[hash] * dx + super_gradient_table_2d[hash + 1] * dy)
+    }
+    else
+    {
+        return 0
+    }
+}
+
+struct LatticePoint2D
+{
+    let u:Int,
+        v:Int,
+        dx:Double,
+        dy:Double
+
+    init(u:Int, v:Int)
+    {
+        let stretch_offset:Double = Double(u + v) * STRETCH_2D
+        self.u = u
+        self.v = v
+        self.dx = -Double(u) - stretch_offset
+        self.dy = -Double(v) - stretch_offset
+    }
+}
+
+//         (0, -1)
+//         /  |
+//      /     |
+//   /        |
+// (-1, 0)---(0, 0) ---- (1, 0)
+//            |   A     /     |
+//            |       /       |     ← (u, v) coordinates
+//            |     /     B   |
+//            (0, 1) --- (1, 1)--------(2, 1)
+//                            |      /
+//                            |    /
+//                            |  /
+//                           (1, 2)
+
+let SS_LOOKUP_2D:[LatticePoint2D] =
+[
+    ((-1,  0), ( 0, -1)),
+    (( 0,  1), ( 1,  0)),
+    (( 1,  0), ( 0, -1)),
+    (( 2,  1), ( 1,  0)),
+    ((-1,  0), ( 0,  1)),
+    (( 0,  1), ( 1,  2)),
+    (( 1,  0), ( 0,  1)),
+    (( 2,  1), ( 1,  2)),
+].map
+{
+    return [LatticePoint2D(u:    0, v:    0),
+            LatticePoint2D(u:    1, v:    1),
+            LatticePoint2D(u: $0.0, v: $0.1),
+            LatticePoint2D(u: $1.0, v: $1.1)]
+}.flatMap{ $0 }
+
+func super_simplex(_ x:Double, _ y:Double) -> Double
+{
+    let unstretch_offset:Double = (x + y) * UNSTRETCH_2D,
+        u:Double = x + unstretch_offset,
+        v:Double = y + unstretch_offset
+
+    let ub:Int = floor(u),
+        vb:Int = floor(v)
+
+    let du0:Double = u - Double(ub),
+        dv0:Double = v - Double(vb)
+
+    let region:Int = Int(du0 + dv0)
+    let vertex_index:Int = region << 2 |
+        Int(du0 - 0.5*dv0 + 1 - 0.5*Double(region)) << 3 |
+        Int(dv0 - 0.5*du0 + 1 - 0.5*Double(region)) << 4
+
+    let stretch_offset:Double = (du0 + dv0) * STRETCH_2D,
+        dx0:Double = du0 + stretch_offset,
+        dy0:Double = dv0 + stretch_offset
+
+    var z:Double = 0
+    for point in SS_LOOKUP_2D[vertex_index ..< vertex_index + 4]
+    {
+        let dx:Double = dx0 + point.dx,
+            dy:Double = dy0 + point.dy
+        z += supergradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
+    }
+
+    return z * 0.6
+}
+
+
+let simplex_gradient_table_2d:[Double] =
+[
+    -1, -1,     1,  0,    -1,  0,     1,  1,
+    -1,  1,     0, -1,     0,  1,     1, -1
+]
 
 func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
 {
@@ -74,6 +188,8 @@ func simplex(_ x:Double, _ y:Double) -> Double
     // get integral (u, v) coordinates of the rhombus
     let ub:Int = floor(u),
         vb:Int = floor(v)
+
+
 
     //   (0, 0)------(1, 0)
     //      \         / \
@@ -143,12 +259,13 @@ func octaves(_ x:Double, _ y:Double, frequency:Double, octaves:Int, persistence:
         z:Double = 0
     for _ in 0 ..< octaves
     {
-        z += k * simplex(f*x, f*y)
+        z += k * super_simplex(f*x, f*y)
         k *= persistence
         f *= 2
     }
     return z
 }
+
 
 var pixbuf:[UInt8] = [UInt8](repeating: 0, count: viewer_size * viewer_size)
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
@@ -160,6 +277,8 @@ for y in 0 ..< viewer_size
     }
 }
 try png_encode(path: "viewer.png", raw_data: pixbuf, properties: png_properties)
+
+
 /*
 var pixbuf:[UInt32] = [UInt32](repeating: 0, count: viewer_size * viewer_size)
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .rgba, interlaced: false)!
