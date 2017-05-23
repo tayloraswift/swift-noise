@@ -34,273 +34,12 @@ let random_index_table:[Int] = [
 156, 231, 237, 79, 180, 240, 228, 170, 115, 222, 175, 22, 220, 94, 187, 163, 155,
 136, 30, 47, 41, 74]
 
-let STRETCH_2D  :Double = 0.5 * (1 / 3.squareRoot() - 1)
-let UNSTRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
-let NORMALIZATION_2D:Double = 1/14
+let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1)
+let STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 
 func floor(_ x:Double) -> Int
 {
     return x > 0 ? Int(x) : Int(x) - 1
-}
-
-let super_gradient_table_2d:[Double] =
-[
-                0,  18.518518518518519,
-9.259259259259260,  16.037507477489605,
-16.037507477489605,   9.259259259259260,
-18.518518518518519,                   0,
-16.037507477489605,  -9.259259259259260,
-9.259259259259260, -16.037507477489605,
-                0, -18.518518518518519,
--9.259259259259260, -16.037507477489605,
--16.037507477489605,  -9.259259259259260,
--18.518518518518519,                   0,
--16.037507477489605,   9.259259259259260,
--9.259259259259260,  16.037507477489605,
-]
-
-func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
-{
-    let dr:Double = 2/3 - dx*dx - dy*dy // why 2/3 ?
-    if (dr > 0)
-    {
-        let drdr:Double = dr * dr
-        let hash:Int = (random_index_table[(u + random_index_table[v & 255]) & 255] % 12) << 1
-        return drdr * drdr * (super_gradient_table_2d[hash] * dx + super_gradient_table_2d[hash + 1] * dy)
-    }
-    else
-    {
-        return 0
-    }
-}
-
-struct LatticePoint2D
-{
-    let u:Int,
-        v:Int,
-        dx:Double,
-        dy:Double
-
-    init(u:Int, v:Int)
-    {
-        let stretch_offset:Double = Double(u + v) * STRETCH_2D
-        self.u = u
-        self.v = v
-        self.dx = -Double(u) - stretch_offset
-        self.dy = -Double(v) - stretch_offset
-    }
-}
-
-//         (0, -1)
-//         /  |
-//      /     |
-//   /        |
-// (-1, 0)---(0, 0) ---- (1, 0)
-//            |   A     /     |
-//            |       /       |     ← (u, v) coordinates
-//            |     /     B   |
-//            (0, 1) --- (1, 1)--------(2, 1)
-//                            |      /
-//                            |    /
-//                            |  /
-//                           (1, 2)
-
-let SS_LOOKUP_2D:[LatticePoint2D] =
-[
-    ((-1,  0), ( 0, -1)),
-    (( 0,  1), ( 1,  0)),
-    (( 1,  0), ( 0, -1)),
-    (( 2,  1), ( 1,  0)),
-    ((-1,  0), ( 0,  1)),
-    (( 0,  1), ( 1,  2)),
-    (( 1,  0), ( 0,  1)),
-    (( 2,  1), ( 1,  2)),
-].map
-{
-    return [LatticePoint2D(u:    0, v:    0),
-            LatticePoint2D(u:    1, v:    1),
-            LatticePoint2D(u: $0.0, v: $0.1),
-            LatticePoint2D(u: $1.0, v: $1.1)]
-}.flatMap{ $0 }
-
-func super_simplex(_ x:Double, _ y:Double) -> Double
-{
-    let unstretch_offset:Double = (x + y) * UNSTRETCH_2D,
-        u:Double = x + unstretch_offset,
-        v:Double = y + unstretch_offset
-
-    let ub:Int = floor(u),
-        vb:Int = floor(v)
-
-    let du0:Double = u - Double(ub),
-        dv0:Double = v - Double(vb)
-
-    let region:Int = Int(du0 + dv0) // always either 0 or 1
-    let vertex_index:Int = region << 2 |
-        Int(du0 - 0.5*dv0 + 1 - 0.5*Double(region)) << 3 |
-        Int(dv0 - 0.5*du0 + 1 - 0.5*Double(region)) << 4
-
-    let stretch_offset:Double = (du0 + dv0) * STRETCH_2D,
-        dx0:Double = du0 + stretch_offset,
-        dy0:Double = dv0 + stretch_offset
-
-    var z:Double = 0
-    for point in SS_LOOKUP_2D[vertex_index ..< vertex_index + 4]
-    {
-        let dx:Double = dx0 + point.dx,
-            dy:Double = dy0 + point.dy
-        z += supergradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
-    }
-
-    return z*0.5
-}
-
-
-let simplex_gradient_table_2d:[Double] =
-[
-    -1, -1,     1,  0,    -1,  0,     1,  1,
-    -1,  1,     0, -1,     0,  1,     1, -1
-]
-
-func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
-{
-    let dr1:Double = 2 - dx*dx - dy*dy
-    if (dr1 > 0)
-    {
-        let drdr1:Double = dr1 * dr1
-        let hash:Int = random_index_table[(u + random_index_table[v & 255]) & 255] & 14
-        return drdr1 * drdr1 * (simplex_gradient_table_2d[hash] * dx + simplex_gradient_table_2d[hash + 1] * dy)
-    }
-    else
-    {
-        return 0
-    }
-}
-
-func simplex(_ x:Double, _ y:Double) -> Double
-{
-    // transform our coordinate system so that the *simplex* (x, y) forms a rectangular grid (u, v)
-    let stretch_offset:Double = (x + y) * STRETCH_2D,
-        u:Double = x + stretch_offset,
-        v:Double = y + stretch_offset
-
-    // get integral (u, v) coordinates of the rhombus
-    let ub:Int = floor(u),
-        vb:Int = floor(v)
-
-
-
-    //   (0, 0)------(1, 0)
-    //      \         / \
-    //        \     /     \             ← (x, y) coordinates
-    //          \ /         \
-    //        (0, 1)-------(1, 1)
-
-    // (ub, vb) = (0, 0) --- (1, 0)
-    //            |   A     /     |
-    //            |       /       |     ← (u, v) coordinates
-    //            |     /     B   |
-    //            (0, 1) --- (1, 1)
-
-    // get relative position inside the rhombus relative to (ub, vb)
-    let du0:Double = u - Double(ub),
-        dv0:Double = v - Double(vb)
-
-    // do the same in the original (x, y) coordinate space
-
-    // unstretch to get (x, y) coordinates of rhombus origin
-    let unstretch_offset:Double = Double(ub + vb) * UNSTRETCH_2D,
-        xb:Double = Double(ub) + unstretch_offset,
-        yb:Double = Double(vb) + unstretch_offset
-
-    // get relative position inside the rhombus relative to (xb, xb)
-    let dx0:Double = x - xb,
-        dy0:Double = y - yb
-
-    var z:Double = 0 // the value of the noise function, which we will sum up
-
-    // contribution from (1, 0)
-    z += gradient(u : ub + 1,
-                  v : vb,
-                  dx: dx0 - 1 - UNSTRETCH_2D,
-                  dy: dy0     - UNSTRETCH_2D)
-
-    // contribution from (0, 1)
-    z += gradient(u : ub,
-                  v : vb + 1,
-                  dx: dx0     - UNSTRETCH_2D,
-                  dy: dy0 - 1 - UNSTRETCH_2D)
-
-    // decide which triangle we are in
-    let uv_sum:Double = du0 + dv0
-    if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
-    {
-        z += gradient(u : ub  + 1,
-                      v : vb  + 1,
-                      dx: dx0 - 1 - 2*UNSTRETCH_2D,
-                      dy: dy0 - 1 - 2*UNSTRETCH_2D)
-
-        let center_dist:Double = 2 - uv_sum
-        if center_dist < du0 || center_dist < dv0
-        {
-            if du0 > dv0
-            {
-                z += gradient(u : ub  + 2,
-                              v : vb     ,
-                              dx: dx0 - 2 - 2*UNSTRETCH_2D,
-                              dy: dy0     - 2*UNSTRETCH_2D)
-            }
-            else
-            {
-                z += gradient(u : ub     ,
-                              v : vb  + 2,
-                              dx: dx0     - 2*UNSTRETCH_2D,
-                              dy: dy0 - 2 - 2*UNSTRETCH_2D)
-            }
-        }
-        else
-        {
-            z += gradient(u : ub,
-                          v : vb,
-                          dx: dx0,
-                          dy: dy0)
-        }
-    }
-    else
-    {
-        z += gradient(u : ub,
-                      v : vb,
-                      dx: dx0,
-                      dy: dy0)
-
-        let center_dist:Double = 1 - uv_sum
-        if center_dist > du0 || center_dist > dv0
-        {
-            if du0 > dv0
-            {
-                z += gradient(u : ub  + 1,
-                              v : vb  - 1,
-                              dx: dx0 + 1,
-                              dy: dy0 - 1)
-            }
-            else
-            {
-                z += gradient(u : ub  - 1,
-                              v : vb  + 1,
-                              dx: dx0 - 1,
-                              dy: dy0 + 1)
-            }
-        }
-        else
-        {
-            z += gradient(u : ub  + 1,
-                          v : vb  + 1,
-                          dx: dx0 - 1 - 2*UNSTRETCH_2D,
-                          dy: dy0 - 1 - 2*UNSTRETCH_2D)
-        }
-    }
-
-    return z * NORMALIZATION_2D
 }
 
 func octaves(_ x:Double, _ y:Double, f function:(Double, Double) -> Double, frequency:Double, octaves:Int, persistence:Double = 0.66666666666) -> Double
@@ -333,6 +72,8 @@ for y in 0 ..< viewer_size
 }
 print(clock() - t0)
 
+try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
+
 t0 = clock()
 for y in 0 ..< viewer_size
 {
@@ -344,7 +85,7 @@ for y in 0 ..< viewer_size
 }
 print(clock() - t0)
 
-try png_encode(path: "viewer.png", raw_data: pixbuf, properties: png_properties)
+try png_encode(path: "super_simplex.png", raw_data: pixbuf, properties: png_properties)
 
 
 /*
