@@ -2,10 +2,10 @@ import func Glibc.sin
 import func Glibc.cos
 
 public
-struct SuperSimplex:HashedNoiseGenerator
+struct SuperSimplex2D:HashedNoiseGenerator
 {
     private
-    struct LatticePoint2D
+    struct LatticePoint
     {
         let u:Int,
             v:Int,
@@ -23,11 +23,11 @@ struct SuperSimplex:HashedNoiseGenerator
     }
 
     private static
-    let n_hashes_2d:Int = 16
+    let n_hashes:Int = 16
 
     static
-    let gradient_table_2d:[(Double, Double)] = (0 ..< SuperSimplex.n_hashes_2d).lazy.map
-    { Double($0) * 2 * Double.pi/Double(SuperSimplex.n_hashes_2d) }.map
+    let gradient_table:[(Double, Double)] = (0 ..< SuperSimplex2D.n_hashes).lazy.map
+    { Double($0) * 2 * Double.pi/Double(SuperSimplex2D.n_hashes) }.map
     {
         let x:Double = 10*cos($0),
             y:Double = 10*sin($0)
@@ -35,7 +35,7 @@ struct SuperSimplex:HashedNoiseGenerator
     }
 
     private static
-    let points_2d:[LatticePoint2D] =
+    let points:[LatticePoint] =
     [
         ((-1,  0), ( 0, -1)),
         (( 0,  1), ( 1,  0)),
@@ -47,17 +47,17 @@ struct SuperSimplex:HashedNoiseGenerator
         (( 2,  1), ( 1,  2)),
     ].map
     {
-        return [LatticePoint2D(u:    0, v:    0),
-                LatticePoint2D(u:    1, v:    1),
-                LatticePoint2D(u: $0.0, v: $0.1),
-                LatticePoint2D(u: $1.0, v: $1.1)]
+        return [LatticePoint(u:    0, v:    0),
+                LatticePoint(u:    1, v:    1),
+                LatticePoint(u: $0.0, v: $0.1),
+                LatticePoint(u: $1.0, v: $1.1)]
     }.flatMap{ $0 }
 
     static
     let radius:Double = 2/3
 
-    let perm:[Int],
-        perm2d:[Int]
+    let perm1024:[Int],
+        hashes:[Int]
 
     private
     let amplitude:Double,
@@ -68,7 +68,7 @@ struct SuperSimplex:HashedNoiseGenerator
     {
         self.amplitude = amplitude
         self.frequency = frequency
-        (self.perm, self.perm2d) = table(seed: seed, hashes_2d: SuperSimplex.n_hashes_2d)
+        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: SuperSimplex2D.n_hashes)
     }
 
     public
@@ -196,7 +196,7 @@ struct SuperSimplex:HashedNoiseGenerator
             dy0:Double = dv0 + squish_offset
 
         var z:Double = 0
-        for point in SuperSimplex.points_2d[vertex_index ..< vertex_index + 4]
+        for point in SuperSimplex2D.points[vertex_index ..< vertex_index + 4]
         {
             // get the relative offset from *that* particular point
             let dx:Double = dx0 - point.dx,

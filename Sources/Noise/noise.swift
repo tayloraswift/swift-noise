@@ -1,9 +1,9 @@
-func table(seed:Int, hashes_2d:Int) -> ([Int], [Int])
+func table(seed:Int, n_hashes:Int) -> ([Int], [Int])
 {
     var seed = seed
-    var perm:[Int]   = [Int](repeating: 0, count: 1024),
-        perm2d:[Int] = [Int](repeating: 0, count: 1024)
-    var source:[Int] = Array(0 ..< 1024)
+    var perm1024:[Int] = [Int](repeating: 0, count: 1024),
+        hashes:[Int]   = [Int](repeating: 0, count: 1024)
+    var source:[Int]   = Array(0 ..< 1024)
     for i in stride(from: 1023, to: 0, by: -1)
     {
         seed = seed &* 6364136223846793005 &+ 1442695040888963407
@@ -12,13 +12,12 @@ func table(seed:Int, hashes_2d:Int) -> ([Int], [Int])
         {
             r += i + 1
         }
-        perm[i]   = source[r]
-        perm2d[i] = perm[i] % hashes_2d
-        //perm3d[i] = (short)((perm[i] % 48) * 3);
-        source[r] = source[i]
+        perm1024[i] = source[r]
+        hashes[i]   = perm1024[i] % n_hashes
+        source[r]   = source[i]
     }
 
-    return (perm, perm2d)
+    return (perm1024, hashes)
 }
 
 func floor(_ x:Double) -> Int
@@ -38,9 +37,9 @@ protocol NoiseGenerator
 
 protocol HashedNoiseGenerator:NoiseGenerator
 {
-    var perm:[Int] { get }
-    var perm2d:[Int] { get }
-    static var gradient_table_2d:[(Double, Double)] { get }
+    var perm1024:[Int] { get }
+    var hashes:[Int] { get }
+    static var gradient_table:[(Double, Double)] { get }
     static var radius:Double { get }
 }
 
@@ -52,8 +51,8 @@ extension HashedNoiseGenerator
         if dr > 0
         {
             let drdr:Double = dr * dr
-            let hash:Int = self.perm2d[self.perm[u & 1023] ^ (v & 1023)],
-                gradient:(Double, Double) = Self.gradient_table_2d[hash]
+            let hash:Int = self.hashes[self.perm1024[u & 1023] ^ (v & 1023)],
+                gradient:(Double, Double) = Self.gradient_table[hash]
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
         }
         else
@@ -69,7 +68,7 @@ struct fBm<Generator:NoiseGenerator>:NoiseGenerator
     private
     let generators:[Generator]
 
-    public 
+    public
     init(amplitude:Double, frequency:Double, seed:Int)
     {
         self.init(amplitude: amplitude, frequency: frequency, octaves: 1, seed: seed)

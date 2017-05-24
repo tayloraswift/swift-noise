@@ -1,11 +1,11 @@
 public
-struct Simplex:HashedNoiseGenerator
+struct Simplex2D:HashedNoiseGenerator
 {
     private static
-    let n_hashes_2d:Int = 8
+    let n_hashes:Int = 8
 
     static
-    let gradient_table_2d:[(Double, Double)] =
+    let gradient_table:[(Double, Double)] =
     [
         (-1, -1),   (1,  0),   (-1,  0),   (1,  1),
         (-1,  1),   (0, -1),    (0,  1),   (1, -1)
@@ -14,8 +14,8 @@ struct Simplex:HashedNoiseGenerator
     static
     let radius:Double = 2
 
-    let perm:[Int],
-        perm2d:[Int]
+    let perm1024:[Int],
+        hashes:[Int]
 
     private
     let amplitude:Double,
@@ -26,7 +26,7 @@ struct Simplex:HashedNoiseGenerator
     {
         self.amplitude = amplitude
         self.frequency = frequency
-        (self.perm, self.perm2d) = table(seed: seed, hashes_2d: Simplex.n_hashes_2d)
+        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: Simplex2D.n_hashes)
     }
 
     public
