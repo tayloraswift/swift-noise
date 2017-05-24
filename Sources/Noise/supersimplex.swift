@@ -1,8 +1,10 @@
 import func Glibc.sin
 import func Glibc.cos
 
+public
 struct SuperSimplex:HashedNoiseGenerator
 {
+    private
     struct LatticePoint2D
     {
         let u:Int,
@@ -20,8 +22,11 @@ struct SuperSimplex:HashedNoiseGenerator
         }
     }
 
-    static let n_hashes_2d:Int = 16
-    static let gradient_table_2d:[(Double, Double)] = (0 ..< SuperSimplex.n_hashes_2d).lazy.map
+    private static
+    let n_hashes_2d:Int = 16
+
+    static
+    let gradient_table_2d:[(Double, Double)] = (0 ..< SuperSimplex.n_hashes_2d).lazy.map
     { Double($0) * 2 * Double.pi/Double(SuperSimplex.n_hashes_2d) }.map
     {
         let x:Double = 10*cos($0),
@@ -29,7 +34,8 @@ struct SuperSimplex:HashedNoiseGenerator
         return (x, y)
     }
 
-    static let points_2d:[LatticePoint2D] =
+    private static
+    let points_2d:[LatticePoint2D] =
     [
         ((-1,  0), ( 0, -1)),
         (( 0,  1), ( 1,  0)),
@@ -47,13 +53,17 @@ struct SuperSimplex:HashedNoiseGenerator
                 LatticePoint2D(u: $1.0, v: $1.1)]
     }.flatMap{ $0 }
 
-    static let radius:Double = 2/3
+    static
+    let radius:Double = 2/3
 
     let perm:[Int],
-        perm2d:[Int],
-        amplitude:Double,
+        perm2d:[Int]
+
+    private
+    let amplitude:Double,
         frequency:Double
 
+    public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
         self.amplitude = amplitude
@@ -61,6 +71,7 @@ struct SuperSimplex:HashedNoiseGenerator
         (self.perm, self.perm2d) = table(seed: seed, hashes_2d: SuperSimplex.n_hashes_2d)
     }
 
+    public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
         let x:Double = x * self.frequency,
