@@ -1,18 +1,42 @@
-let super_gradient_table_2d:[Double] =
-[
-                0,  18.518518518518519,
-9.259259259259260,  16.037507477489605,
-16.037507477489605,   9.259259259259260,
-18.518518518518519,                   0,
-16.037507477489605,  -9.259259259259260,
-9.259259259259260, -16.037507477489605,
-                0, -18.518518518518519,
--9.259259259259260, -16.037507477489605,
--16.037507477489605,  -9.259259259259260,
--18.518518518518519,                   0,
--16.037507477489605,   9.259259259259260,
--9.259259259259260,  16.037507477489605,
-]
+import func Glibc.sin
+import func Glibc.cos
+
+let N_GRADIENTS:Int = 256
+
+let super_gradient_table_2d:[(Double, Double)] = (0 ..< N_GRADIENTS).lazy.map
+{ Double($0) * 2 * Double.pi/Double(N_GRADIENTS) }.map
+{
+    let x:Double = 10*cos($0),
+        y:Double = 10*sin($0)
+    return (x, y)
+}
+
+func random_table(seed:Int) -> ([Int], [Int])
+{
+    var seed = seed
+    var perm:[Int]   = [Int](repeating: 0, count: 1024),
+        perm2D:[Int] = [Int](repeating: 0, count: 1024)
+    var source:[Int] = Array(0 ..< 1024)
+    for i in stride(from: 1023, to: 0, by: -1)
+    {
+        seed = seed &* 6364136223846793005 &+ 1442695040888963407
+        var r:Int = (seed + 31) % (i + 1)
+        if r < 0
+        {
+            r += i + 1
+        }
+        perm[i]   = source[r]
+        perm2D[i] = perm[i] % N_GRADIENTS
+        //perm3D[i] = (short)((perm[i] % 48) * 3);
+        source[r] = source[i]
+    }
+
+    return (perm, perm2D)
+}
+
+let (perm, perm2D):([Int], [Int]) = random_table(seed: 0)
+
+var histogram:[Int] = [Int](repeating: 0, count: N_GRADIENTS)
 
 func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
 {
@@ -20,8 +44,10 @@ func supergradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
     if (dr > 0)
     {
         let drdr:Double = dr * dr
-        let hash:Int = (random_index_table[(u + random_index_table[v & 255]) & 255] % 12) << 1
-        return drdr * drdr * (super_gradient_table_2d[hash] * dx + super_gradient_table_2d[hash + 1] * dy)
+        let hash:Int = perm2D[perm[u & 1023] ^ (v & 1023)],
+            gradient:(Double, Double) = super_gradient_table_2d[hash]
+        histogram[hash] += 1
+        return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
     }
     else
     {
@@ -193,6 +219,5 @@ u = 2v - 1  |   -              |  u = 2v
             dy:Double = dy0 - point.dy
         z += supergradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
     }
-
-    return z*0.5
+    return z
 }
