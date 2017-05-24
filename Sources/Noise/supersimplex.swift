@@ -41,8 +41,8 @@ struct LatticePoint2D
         let stretch_offset:Double = Double(u + v) * SQUISH_2D
         self.u = u
         self.v = v
-        self.dx = -Double(u) - stretch_offset
-        self.dy = -Double(v) - stretch_offset
+        self.dx = Double(u) + stretch_offset
+        self.dy = Double(v) + stretch_offset
     }
 }
 
@@ -85,7 +85,7 @@ func super_simplex(_ x:Double, _ y:Double) -> Double
     //       \   D   | \   A   | \
     //          \    |    \    |    \       ← (u, v) coordinates
     //             \ |   B   \ |   E   \
-    //            (0, 1) -- (1, 1) --- (2, 1)
+    //            (0, 1) -- (1, 1) -- (2, 1)
     //                  \   F   |
     //                     \    |
     //                        \ |
@@ -99,11 +99,88 @@ func super_simplex(_ x:Double, _ y:Double) -> Double
     let du0:Double = u - Double(ub),
         dv0:Double = v - Double(vb)
 
-    let region:Int = Int(du0 + dv0) // always either 0 or 1
-    let vertex_index:Int = region << 2 |
-        Int(du0 - 0.5*dv0 + 1 - 0.5*Double(region)) << 3 |
-        Int(dv0 - 0.5*du0 + 1 - 0.5*Double(region)) << 4
+    let a:Int = du0 + dv0 > 1 ? 1 : 0
+    let vertex_index:Int = a << 2 |
+        Int((2*du0 - dv0 - Double(a))*0.5 + 1) << 3 |
+        Int((2*dv0 - du0 - Double(a))*0.5 + 1) << 4
+    /*
+        This bit of code deserves some explanation. OpenSimplex/SuperSimplex
+        always samples four vertices. Which four depends on what part of the A–B
+        square our (x, y) → (u, v) sample coordinate lands in. Think of each
+        triangular slice of that square as being further subdivided into three
+        smaller triangles.
 
+        ************************
+        **  *           a     **
+        *  * *     *       *   *
+        *   *   *      *       *
+        *    *    *   b   *  c *
+        *     *   e  *     *   *
+        *  d   *       *    *  *
+        *    *      *    *   * *
+        *  *            *  *  **
+        **        f           **
+        ************************
+
+        Obviously we’re running up against the bounds on what can be explained
+        with an ASCII art comment. Hopefully you get the idea. We have 6 regions,
+        counter-clockwise in the upper-right triangle from the top, regions a, b,
+        and c, and clockwise in the lower-left triangle from the left, regions
+        d, e, and f.
+
+        Region a borders region C, so it gets the extra vertices (-1, 0) and (1, 0)
+        in addition to (0, 0), and (1, 1), which every region samples. Region c
+        borders region E, so it gets the extra vertices (1, 0) and (2, 1). Region b
+        doesn’t border any exterior region, so it just gets the other two vertices
+        of the square, (0, 1) and (1, 0). Regions d and f are the same as a and c,
+        except they border D and F, respectively. Region e is essentially the same
+        as region b.
+
+        This means that we effectively have five different vertex selection outcomes.
+        That means we need no less than three bits of information, i.e., three tests
+        to determine where we are. Two such tests could be:
+
+        (0, 0) -------------- (1, 0)
+            | \        \       |
+            |  \        \      |
+            |   \        \     |
+            |    \        \    |
+            |     \        \   |
+            |      \        \  |
+            |       \        \ |
+        (1, 0) -------------- (1, 1)
+                   v = 2u    v = 2u - 1
+
+        and
+
+        (0, 0) -------------- (1, 0)
+            |   -              |
+            |       -          |
+            |           -      |
+            |               -  |
+u = 2v - 1  |   -              |  u = 2v
+            |       -          |
+            |           -      |
+        (1, 0) -------------- (1, 1)
+
+        Each test has two lines. How do we pick which one? We use a third test:
+
+        (0, 0) -------------- (1, 0)
+            |              /   |
+            |            /     |
+            |          /       |
+            |        /         |
+            |      /           |
+            |    /  u + v = 1  |
+            |  /               |
+        (1, 0) -------------- (1, 1)
+
+        If we’re in the top left, we use the lines without the offsets, otherwise
+        we use the ones with the -1 offset. That’s where the `- Double(a)` term
+        comes from.
+    */
+
+    // get the relative offset from (0, 0)
     let squish_offset:Double = (du0 + dv0) * SQUISH_2D,
         dx0:Double = du0 + squish_offset,
         dy0:Double = dv0 + squish_offset
@@ -111,8 +188,9 @@ func super_simplex(_ x:Double, _ y:Double) -> Double
     var z:Double = 0
     for point in SS_LOOKUP_2D[vertex_index ..< vertex_index + 4]
     {
-        let dx:Double = dx0 + point.dx,
-            dy:Double = dy0 + point.dy
+        // get the relative offset from *that* particular point
+        let dx:Double = dx0 - point.dx,
+            dy:Double = dy0 - point.dy
         z += supergradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
     }
 

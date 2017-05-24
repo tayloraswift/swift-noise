@@ -62,6 +62,7 @@ var pixbuf:[UInt8] = [UInt8](repeating: 0, count: viewer_size * viewer_size)
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
 
 var t0:Int = clock()
+/*
 for y in 0 ..< viewer_size
 {
     for x in 0 ..< viewer_size
@@ -73,7 +74,7 @@ for y in 0 ..< viewer_size
 print(clock() - t0)
 
 try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
-
+*/
 t0 = clock()
 for y in 0 ..< viewer_size
 {
