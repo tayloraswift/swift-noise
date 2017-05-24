@@ -1,6 +1,6 @@
 # noise
 
-[![Build](https://travis-ci.org/kelvin13/maxpng.svg?branch=master)](https://travis-ci.org/kelvin13/maxpng)
+[![Build](https://travis-ci.org/kelvin13/noise.svg?branch=master)](https://travis-ci.org/kelvin13/noise)
 [![Issues](https://img.shields.io/github/issues/kelvin13/noise.svg)](https://github.com/kelvin13/noise/issues?state=open)
 [![Language](https://img.shields.io/badge/version-swift_3-ffa020.svg)](https://developer.apple.com/swift)
 [![License](https://img.shields.io/badge/license-GPL3-ff3079.svg)](https://github.com/kelvin13/noise/blob/master/LICENSE.gpl3)
