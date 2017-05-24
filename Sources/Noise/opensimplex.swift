@@ -1,19 +1,27 @@
+public
 struct Simplex:HashedNoiseGenerator
 {
-    static let n_hashes_2d:Int = 8
-    static let gradient_table_2d:[(Double, Double)] =
+    private static
+    let n_hashes_2d:Int = 8
+
+    static
+    let gradient_table_2d:[(Double, Double)] =
     [
         (-1, -1),   (1,  0),   (-1,  0),   (1,  1),
         (-1,  1),   (0, -1),    (0,  1),   (1, -1)
     ]
 
-    static let radius:Double = 2
+    static
+    let radius:Double = 2
 
     let perm:[Int],
-        perm2d:[Int],
-        amplitude:Double,
+        perm2d:[Int]
+
+    private
+    let amplitude:Double,
         frequency:Double
 
+    public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
         self.amplitude = amplitude
@@ -21,6 +29,7 @@ struct Simplex:HashedNoiseGenerator
         (self.perm, self.perm2d) = table(seed: seed, hashes_2d: Simplex.n_hashes_2d)
     }
 
+    public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
         let x:Double = x * self.frequency,
