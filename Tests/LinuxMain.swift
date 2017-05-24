@@ -26,7 +26,7 @@ let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: vie
 
 var t0:Int
 
-let S:fBm<Simplex> = fBm<Simplex>(amplitude: 127 / 20, frequency: 0.00083429273, octaves: 10)
+let S:fBm<Simplex2D> = fBm<Simplex2D>(amplitude: 127 / 20, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
 for y in 0 ..< viewer_size
 {
@@ -40,7 +40,7 @@ print(clock() - t0)
 try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
 
 
-let SS:fBm<SuperSimplex> = fBm<SuperSimplex>(amplitude: 127, frequency: 0.00083429273, octaves: 10)
+let SS:fBm<SuperSimplex2D> = fBm<SuperSimplex2D>(amplitude: 127, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
 for y in 0 ..< viewer_size
 {
