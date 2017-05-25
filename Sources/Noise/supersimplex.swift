@@ -23,18 +23,6 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     }
 
     private static
-    let n_hashes:Int = 16
-
-    static
-    let gradient_table:[(Double, Double)] = (0 ..< SuperSimplex2D.n_hashes).lazy.map
-    { Double($0) * 2 * Double.pi/Double(SuperSimplex2D.n_hashes) }.map
-    {
-        let x:Double = cos($0),
-            y:Double = sin($0)
-        return (x, y)
-    }
-
-    private static
     let points:[LatticePoint] =
     {
         var points:[LatticePoint] = []
@@ -96,6 +84,22 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     }()
 
     static
+    let gradient_table:[(Double, Double)] =
+    {
+        var gradients:[(Double, Double)] = []
+            gradients.reserveCapacity(16)
+
+        let dθ:Double = 2 * Double.pi / Double(16)
+        for i in 0 ..< 16
+        {
+            let θ:Double = Double(i) * dθ
+            gradients.append((cos(θ), sin(θ)))
+        }
+
+        return gradients
+    }()
+
+    static
     let radius:Double = 2/3
 
     let perm1024:[Int],
@@ -110,7 +114,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     {
         self.amplitude = 10 * amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: SuperSimplex2D.n_hashes)
+        (self.perm1024, self.hashes) = SuperSimplex2D.table(seed: seed)
     }
 
     public
@@ -273,18 +277,6 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     }
 
     private static
-    let n_hashes:Int = 16
-
-    static
-    let gradient_table:[(Double, Double, Double)] =
-    [
-        (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0),
-        (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
-        (0, 1, 1), (0, -1, 1), (0, 1, -1), (0, -1, -1),
-        (1, 1, 0), (-1, 1, 0), (0, -1, 1), (0, -1, -1)
-    ]
-
-    private static
     let points:[LatticePoint] =
     {
         var points:[LatticePoint] = []
@@ -342,6 +334,15 @@ struct SuperSimplex3D:Hashed3DGradientNoise
         return points
     }()
 
+    static
+    let gradient_table:[(Double, Double, Double)] =
+    [
+        (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0),
+        (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
+        (0, 1, 1), (0, -1, 1), (0, 1, -1), (0, -1, -1),
+        (1, 1, 0), (-1, 1, 0), (0, -1, 1), (0, -1, -1)
+    ]
+
     let perm1024:[Int],
         hashes:[Int]
 
@@ -354,7 +355,7 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     {
         self.amplitude = amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: SuperSimplex3D.n_hashes)
+        (self.perm1024, self.hashes) = SuperSimplex3D.table(seed: seed)
     }
 
     public
