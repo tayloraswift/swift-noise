@@ -112,7 +112,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = 10 * amplitude
+        self.amplitude = 1275 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = SuperSimplex2D.table(seed: seed)
     }
@@ -156,7 +156,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
             dv0:Double = v - Double(vb)
 
         let a:Int = du0 + dv0 > 1 ? 1 : 0
-        let vertex_index:Int = a << 2 |
+        let base_vertex_index:Int = a << 2 |
             Int((2*du0 - dv0 - Double(a))*0.5 + 1) << 3 |
             Int((2*dv0 - du0 - Double(a))*0.5 + 1) << 4
         /*
@@ -241,15 +241,15 @@ struct SuperSimplex2D:Hashed2DGradientNoise
             dx0:Double = du0 + squish_offset,
             dy0:Double = dv0 + squish_offset
 
-        var z:Double = 0
-        for point in SuperSimplex2D.points[vertex_index ..< vertex_index + 4]
+        var Σ:Double = 0
+        for point in SuperSimplex2D.points[base_vertex_index ..< base_vertex_index + 4]
         {
             // get the relative offset from *that* particular point
             let dx:Double = dx0 - point.dx,
                 dy:Double = dy0 - point.dy
-            z += self.gradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
+            Σ += self.gradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
         }
-        return self.amplitude * z
+        return self.amplitude * Σ
     }
 
     public
@@ -274,6 +274,19 @@ struct SuperSimplex3D:Hashed3DGradientNoise
         let u:Int,
             v:Int,
             w:Int
+        let du:Double,
+            dv:Double,
+            dw:Double
+
+        init(_ u:Int, _ v:Int, _ w:Int)
+        {
+            self.u = u
+            self.v = v
+            self.w = w
+            self.du = Double(u)
+            self.dv = Double(v)
+            self.dw = Double(w)
+        }
     }
 
     private static
@@ -325,10 +338,10 @@ struct SuperSimplex3D:Hashed3DGradientNoise
                 i4 = 0; j4 = 0; k4 = 1
             }
 
-            points.append(LatticePoint(u: i1, v: j1, w: k1))
-            points.append(LatticePoint(u: i2, v: j2, w: k2))
-            points.append(LatticePoint(u: i3, v: j3, w: k3))
-            points.append(LatticePoint(u: i4, v: j4, w: k4))
+            points.append(LatticePoint(i1, j1, k1))
+            points.append(LatticePoint(i2, j2, k2))
+            points.append(LatticePoint(i3, j3, k3))
+            points.append(LatticePoint(i4, j4, k4))
         }
 
         return points
@@ -353,7 +366,7 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude
+        self.amplitude = 700 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = SuperSimplex3D.table(seed: seed)
     }
@@ -367,7 +380,71 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        return 0
+        let x:Double = x * self.frequency,
+            y:Double = y * self.frequency,
+            z:Double = z * self.frequency
+
+        // transform our coordinate system so that out rotated lattice (x, y, z)
+        // forms an axis-aligned rectangular grid again (u, v, w)
+        let rotation_offset:Double = 2/3 * (x + y + z),
+            u1:Double = rotation_offset - x,
+            v1:Double = rotation_offset - y,
+            w1:Double = rotation_offset - z,
+        // do the same for an offset cube lattice
+            u2:Double = u1 + 512.5,
+            v2:Double = v1 + 512.5,
+            w2:Double = w1 + 512.5
+
+        // get integral (u, v, w) cube coordinates (can Swift vectorize this??)
+        let ub1:Int = floor(u1),
+            vb1:Int = floor(v1),
+            wb1:Int = floor(w1),
+            ub2:Int = floor(u2),
+            vb2:Int = floor(v2),
+            wb2:Int = floor(w2)
+
+        // get offsets inside the cubes from the cube origins
+        let du1:Double = u1 - Double(ub1),
+            dv1:Double = v1 - Double(vb1),
+            dw1:Double = w1 - Double(wb1),
+            du2:Double = u2 - Double(ub2),
+            dv2:Double = v2 - Double(vb2),
+            dw2:Double = w2 - Double(wb2)
+
+        // get nearest points
+        let base_vertex_index1:Int =
+            ( du1 + dv1 + dw1 >= 1.5 ?  4 : 0) |
+            (-du1 + dv1 + dw1 >= 0.5 ?  8 : 0) |
+            ( du1 - dv1 + dw1 >= 0.5 ? 16 : 0) |
+            ( du1 + dv1 - dw1 >= 0.5 ? 32 : 0)
+
+        let base_vertex_index2:Int =
+            ( du2 + dv2 + dw2 >= 1.5 ?  4 : 0) |
+            (-du2 + dv2 + dw2 >= 0.5 ?  8 : 0) |
+            ( du2 - dv2 + dw2 >= 0.5 ? 16 : 0) |
+            ( du2 + dv2 - dw2 >= 0.5 ? 32 : 0)
+
+        // sum up the contributions from the two lattices
+        var Σ:Double = 0
+        for point in SuperSimplex3D.points[base_vertex_index1 ..< base_vertex_index1 + 4]
+        {
+            // get the relative offset from *that* particular point
+            let dx:Double = du1 - point.du,
+                dy:Double = dv1 - point.dv,
+                dz:Double = dw1 - point.dw
+            Σ += self.gradient(u: ub1 + point.u, v: vb1 + point.v, w: wb1 + point.w, dx: dx, dy: dy, dz: dz)
+        }
+
+        for point in SuperSimplex3D.points[base_vertex_index2 ..< base_vertex_index2 + 4]
+        {
+            // get the relative offset from *that* particular point
+            let dx:Double = du2 - point.du,
+                dy:Double = dv2 - point.dv,
+                dz:Double = dw2 - point.dw
+            Σ += self.gradient(u: ub2 + point.u, v: vb2 + point.v, w: wb2 + point.w, dx: dx, dy: dy, dz: dz)
+        }
+
+        return self.amplitude * Σ
     }
 
     public
