@@ -32,7 +32,9 @@ public
 protocol NoiseGenerator
 {
     init(amplitude:Double, frequency:Double, seed:Int)
-    func evaluate(_ x:Double, _ y:Double) -> Double
+    func evaluate(_ x:Double, _ y:Double)                         -> Double
+    func evaluate(_ x:Double, _ y:Double, _ z:Double)             -> Double
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
 }
 
 protocol HashedNoiseGenerator:NoiseGenerator
@@ -100,5 +102,27 @@ struct fBm<Generator:NoiseGenerator>:NoiseGenerator
             z += generator.evaluate(x, y) // a .reduce(:{}) is much slower than a simple loop
         }
         return z
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        var w:Double = 0
+        for generator in self.generators
+        {
+            w += generator.evaluate(x, y, z)
+        }
+        return w
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
+    {
+        var u:Double = 0
+        for generator in self.generators
+        {
+            u += generator.evaluate(x, y, z, w)
+        }
+        return u
     }
 }
