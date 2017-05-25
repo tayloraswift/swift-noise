@@ -16,6 +16,30 @@ protocol Noise
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
 }
 
+public
+extension Noise
+{
+    public
+    func noise2d(width:Int, height:Int) -> [UInt8]
+    {
+        var pixbuf:[UInt8] = []
+            pixbuf.reserveCapacity(width * height)
+        var y:Double = 0
+        for _ in 0 ..< height
+        {
+            var x:Double = 0
+            for _ in 0 ..< width
+            {
+                x += 1
+                let noise:Double = self.evaluate(x, y)
+                pixbuf.append(UInt8(max(0, min(255, noise + 127))))
+            }
+            y += 1
+        }
+        return pixbuf
+    }
+}
+
 protocol HashedNoise:Noise
 {
     var perm1024:[Int] { get }

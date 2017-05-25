@@ -21,48 +21,27 @@ func rgba_from_argb32(_ argb32:[UInt32]) -> [UInt8]
 
 import func Glibc.clock
 
-var pixbuf:[UInt8] = [UInt8](repeating: 0, count: viewer_size * viewer_size)
+var pixbuf:[UInt8]
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
 
 var t0:Int
 
 let S:fBm<Simplex2D> = fBm<Simplex2D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-for y in 0 ..< viewer_size
-{
-    for x in 0 ..< viewer_size
-    {
-        let noise:Double = S.evaluate(Double(x), Double(y))
-        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, noise + 127)))
-    }
-}
+pixbuf = S.noise2d(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
 
 
 let SS:fBm<SuperSimplex2D> = fBm<SuperSimplex2D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-for y in 0 ..< viewer_size
-{
-    for x in 0 ..< viewer_size
-    {
-        let noise:Double = SS.evaluate(Double(x), Double(y))
-        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, noise + 127)))
-    }
-}
+pixbuf = SS.noise2d(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "super_simplex.png", raw_data: pixbuf, properties: png_properties)
 
 let SS3D:fBm<SuperSimplex3D> = fBm<SuperSimplex3D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-for y in 0 ..< viewer_size
-{
-    for x in 0 ..< viewer_size
-    {
-        let noise:Double = SS3D.evaluate(Double(x), Double(y), 0)
-        pixbuf[y * viewer_size + x] = UInt8(max(0, min(255, noise + 127)))
-    }
-}
+pixbuf = SS3D.noise2d(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "super_simplex3D.png", raw_data: pixbuf, properties: png_properties)
 
