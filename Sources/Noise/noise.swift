@@ -71,9 +71,9 @@ extension Hashed2DGradientNoise
         let dr:Double = Self.radius - dx*dx - dy*dy
         if dr > 0
         {
-            let drdr:Double = dr * dr
             let hash:Int = self.hashes[self.perm1024[u & 1023] ^ (v & 1023)],
-                gradient:(Double, Double) = Self.gradient_table[hash]
+                gradient:(Double, Double) = Self.gradient_table[hash],
+                drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
         }
         else
@@ -95,15 +95,15 @@ extension Hashed3DGradientNoise
     {
         return Self.gradient_table.count
     }
-    
+
     func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
     {
         let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
         if dr > 0
         {
-            let drdr:Double = dr * dr
             let hash:Int = self.hashes[self.perm1024[self.perm1024[u & 1023] ^ (v & 1023)] ^ (w & 1023)],
-                gradient:(Double, Double, Double) = Self.gradient_table[hash]
+                gradient:(Double, Double, Double) = Self.gradient_table[hash],
+                drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
         }
         else

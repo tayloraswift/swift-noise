@@ -21,7 +21,7 @@ struct Simplex2D:Hashed2DGradientNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude
+        self.amplitude = 7 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = Simplex2D.table(seed: seed)
     }
@@ -75,16 +75,16 @@ struct Simplex2D:Hashed2DGradientNoise
         let dx0:Double = x - xb,
             dy0:Double = y - yb
 
-        var z:Double = 0 // the value of the noise function, which we will sum up
+        var Σ:Double = 0 // the value of the noise function, which we will sum up
 
         // contribution from (1, 0)
-        z += gradient(u : ub + 1,
+        Σ += gradient(u : ub + 1,
                       v : vb,
                       dx: dx0 - 1 - STRETCH_2D,
                       dy: dy0     - STRETCH_2D)
 
         // contribution from (0, 1)
-        z += gradient(u : ub,
+        Σ += gradient(u : ub,
                       v : vb + 1,
                       dx: dx0     - STRETCH_2D,
                       dy: dy0 - 1 - STRETCH_2D)
@@ -93,7 +93,7 @@ struct Simplex2D:Hashed2DGradientNoise
         let uv_sum:Double = du0 + dv0
         if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
         {
-            z += gradient(u : ub  + 1,
+            Σ += gradient(u : ub  + 1,
                           v : vb  + 1,
                           dx: dx0 - 1 - 2*STRETCH_2D,
                           dy: dy0 - 1 - 2*STRETCH_2D)
@@ -103,14 +103,14 @@ struct Simplex2D:Hashed2DGradientNoise
             {
                 if du0 > dv0
                 {
-                    z += gradient(u : ub  + 2,
+                    Σ += gradient(u : ub  + 2,
                                   v : vb     ,
                                   dx: dx0 - 2 - 2*STRETCH_2D,
                                   dy: dy0     - 2*STRETCH_2D)
                 }
                 else
                 {
-                    z += gradient(u : ub     ,
+                    Σ += gradient(u : ub     ,
                                   v : vb  + 2,
                                   dx: dx0     - 2*STRETCH_2D,
                                   dy: dy0 - 2 - 2*STRETCH_2D)
@@ -118,7 +118,7 @@ struct Simplex2D:Hashed2DGradientNoise
             }
             else
             {
-                z += gradient(u : ub,
+                Σ += gradient(u : ub,
                               v : vb,
                               dx: dx0,
                               dy: dy0)
@@ -126,7 +126,7 @@ struct Simplex2D:Hashed2DGradientNoise
         }
         else
         {
-            z += gradient(u : ub,
+            Σ += gradient(u : ub,
                           v : vb,
                           dx: dx0,
                           dy: dy0)
@@ -136,14 +136,14 @@ struct Simplex2D:Hashed2DGradientNoise
             {
                 if du0 > dv0
                 {
-                    z += gradient(u : ub  + 1,
+                    Σ += gradient(u : ub  + 1,
                                   v : vb  - 1,
                                   dx: dx0 + 1,
                                   dy: dy0 - 1)
                 }
                 else
                 {
-                    z += gradient(u : ub  - 1,
+                    Σ += gradient(u : ub  - 1,
                                   v : vb  + 1,
                                   dx: dx0 - 1,
                                   dy: dy0 + 1)
@@ -151,14 +151,14 @@ struct Simplex2D:Hashed2DGradientNoise
             }
             else
             {
-                z += gradient(u : ub  + 1,
+                Σ += gradient(u : ub  + 1,
                               v : vb  + 1,
                               dx: dx0 - 1 - 2*STRETCH_2D,
                               dy: dy0 - 1 - 2*STRETCH_2D)
             }
         }
 
-        return self.amplitude * z
+        return self.amplitude * Σ
     }
 
     public
