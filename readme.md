@@ -14,11 +14,12 @@
 
 * SuperSimplex noise (2D)
 
-    SuperSimplex noise is yet another improvement on Simpex noise that results in even noise with fewer artifacts. SuperSimplex noise also runs slightly (~5%) faster than Simplex noise. Many thanks to the Java and [Rust OpenSimplex communities](https://github.com/brendanzab/noise-rs) for their assistance, which was essential for bringing SuperSimplex procedural noise to Swift.
+    SuperSimplex noise is yet another improvement on Simplex noise that results in even noise with fewer artifacts. SuperSimplex noise also runs slightly (~5%) faster than Simplex noise. Many thanks to the Java and [Rust OpenSimplex communities](https://github.com/brendanzab/noise-rs) for their assistance, which was essential for bringing SuperSimplex procedural noise to Swift.
 
 * SuperSimplex noise (3D)
 
     3D SuperSimplex volumetric noise, suitable for texturing any 3D object without seams or texture unwrapping.
+
 
 ![](super_simplex3D.png)
 
