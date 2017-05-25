@@ -10,13 +10,17 @@
 
 * Simplex noise (2D)
 
-    Simplex noise is an improved version of the classical [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) algorithm. Noise-swift uses the OpenSimplex procedural noise generation algorithm, which solves many of the quality issues apparent in the 3D version of the proprietary Simplex noise algorithm, as well as sidestepping potential patent threats. 
+    Simplex noise is an improved version of the classical [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) algorithm. Noise-swift uses the OpenSimplex procedural noise generation algorithm, which solves many of the quality issues apparent in the 3D version of the proprietary Simplex noise algorithm, as well as sidestepping potential patent threats.
 
-* SuperSimplex noise (2D) 
+* SuperSimplex noise (2D)
 
     SuperSimplex noise is yet another improvement on Simpex noise that results in even noise with fewer artifacts. SuperSimplex noise also runs slightly (~5%) faster than Simplex noise. Many thanks to the Java and [Rust OpenSimplex communities](https://github.com/brendanzab/noise-rs) for their assistance, which was essential for bringing SuperSimplex procedural noise to Swift.
-    
-![](super_simplex.png)
+
+* SuperSimplex noise (3D)
+
+    3D SuperSimplex volumetric noise, suitable for texturing any 3D object without seams or texture unwrapping.
+
+![](super_simplex3D.png)
 
 ### A note on building
 
