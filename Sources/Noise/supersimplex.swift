@@ -2,7 +2,7 @@ import func Glibc.sin
 import func Glibc.cos
 
 public
-struct SuperSimplex2D:HashedNoiseGenerator
+struct SuperSimplex2D:Hashed2DGradientNoise
 {
     private
     struct LatticePoint
@@ -29,29 +29,71 @@ struct SuperSimplex2D:HashedNoiseGenerator
     let gradient_table:[(Double, Double)] = (0 ..< SuperSimplex2D.n_hashes).lazy.map
     { Double($0) * 2 * Double.pi/Double(SuperSimplex2D.n_hashes) }.map
     {
-        let x:Double = 10*cos($0),
-            y:Double = 10*sin($0)
+        let x:Double = cos($0),
+            y:Double = sin($0)
         return (x, y)
     }
 
     private static
     let points:[LatticePoint] =
-    [
-        ((-1,  0), ( 0, -1)),
-        (( 0,  1), ( 1,  0)),
-        (( 1,  0), ( 0, -1)),
-        (( 2,  1), ( 1,  0)),
-        ((-1,  0), ( 0,  1)),
-        (( 0,  1), ( 1,  2)),
-        (( 1,  0), ( 0,  1)),
-        (( 2,  1), ( 1,  2)),
-    ].map
     {
-        return [LatticePoint(u:    0, v:    0),
-                LatticePoint(u:    1, v:    1),
-                LatticePoint(u: $0.0, v: $0.1),
-                LatticePoint(u: $1.0, v: $1.1)]
-    }.flatMap{ $0 }
+        var points:[LatticePoint] = []
+            points.reserveCapacity(32)
+
+        for n in 0 ..< 8
+        {
+            let i1:Int, j1:Int,
+                i2:Int, j2:Int
+
+            if n & 1 != 0
+            {
+                if n & 2 != 0
+                {
+                    i1 =  2; j1 =  1
+                }
+                else
+                {
+                    i1 =  0; j1 =  1
+                }
+
+                if n & 4 != 0
+                {
+                    i2 =  1; j2 =  2
+                }
+                else
+                {
+                    i2 =  1; j2 =  0
+                }
+            }
+            else
+            {
+                if n & 2 != 0
+                {
+                    i1 =  1; j1 =  0
+                }
+                else
+                {
+                    i1 = -1; j1 =  0
+                }
+
+                if n & 4 != 0
+                {
+                    i2 =  0; j2 =  1
+                }
+                else
+                {
+                    i2 =  0; j2 = -1
+                }
+            }
+
+            points.append(LatticePoint(u:  0, v:  0))
+            points.append(LatticePoint(u:  1, v:  1))
+            points.append(LatticePoint(u: i1, v: j1))
+            points.append(LatticePoint(u: i2, v: j2))
+        }
+
+        return points
+    }()
 
     static
     let radius:Double = 2/3
@@ -66,7 +108,7 @@ struct SuperSimplex2D:HashedNoiseGenerator
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude
+        self.amplitude = 10 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = table(seed: seed, n_hashes: SuperSimplex2D.n_hashes)
     }
@@ -216,5 +258,120 @@ struct SuperSimplex2D:HashedNoiseGenerator
     func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
     {
         return self.evaluate(x, y)
+    }
+}
+
+public
+struct SuperSimplex3D:Hashed3DGradientNoise
+{
+    private
+    struct LatticePoint
+    {
+        let u:Int,
+            v:Int,
+            w:Int
+    }
+
+    private static
+    let n_hashes:Int = 16
+
+    static
+    let gradient_table:[(Double, Double, Double)] =
+    [
+        (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0),
+        (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
+        (0, 1, 1), (0, -1, 1), (0, 1, -1), (0, -1, -1),
+        (1, 1, 0), (-1, 1, 0), (0, -1, 1), (0, -1, -1)
+    ]
+
+    private static
+    let points:[LatticePoint] =
+    {
+        var points:[LatticePoint] = []
+            points.reserveCapacity(64)
+
+        for n in 0 ..< 16
+        {
+            let i1:Int, j1:Int, k1:Int,
+                i2:Int, j2:Int, k2:Int,
+                i3:Int, j3:Int, k3:Int,
+                i4:Int, j4:Int, k4:Int
+
+            if n & 1 != 0
+            {
+                i1 = 1; j1 = 1; k1 = 1
+            }
+            else
+            {
+                i1 = 0; j1 = 0; k1 = 0
+            }
+
+            if n & 2 != 0
+            {
+                i2 = 0; j2 = 1; k2 = 1
+            }
+            else
+            {
+                i2 = 1; j2 = 0; k2 = 0
+            }
+
+            if n & 4 != 0
+            {
+                i3 = 1; j3 = 0; k3 = 1
+            }
+            else
+            {
+                i3 = 0; j3 = 1; k3 = 0
+            }
+
+            if n & 8 != 0
+            {
+                i4 = 1; j4 = 1; k4 = 0
+            }
+            else
+            {
+                i4 = 0; j4 = 0; k4 = 1
+            }
+
+            points.append(LatticePoint(u: i1, v: j1, w: k1))
+            points.append(LatticePoint(u: i2, v: j2, w: k2))
+            points.append(LatticePoint(u: i3, v: j3, w: k3))
+            points.append(LatticePoint(u: i4, v: j4, w: k4))
+        }
+
+        return points
+    }()
+
+    let perm1024:[Int],
+        hashes:[Int]
+
+    private
+    let amplitude:Double,
+        frequency:Double
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: SuperSimplex3D.n_hashes)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        return 0
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
     }
 }
