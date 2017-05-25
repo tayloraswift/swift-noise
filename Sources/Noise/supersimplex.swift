@@ -205,4 +205,16 @@ struct SuperSimplex2D:HashedNoiseGenerator
         }
         return self.amplitude * z
     }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
+    }
 }
