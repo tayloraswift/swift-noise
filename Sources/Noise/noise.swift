@@ -1,25 +1,3 @@
-func table(seed:Int, n_hashes:Int) -> ([Int], [Int])
-{
-    var seed = seed
-    var perm1024:[Int] = [Int](repeating: 0, count: 1024),
-        hashes:[Int]   = [Int](repeating: 0, count: 1024)
-    var source:[Int]   = Array(0 ..< 1024)
-    for i in stride(from: 1023, to: 0, by: -1)
-    {
-        seed = seed &* 6364136223846793005 &+ 1442695040888963407
-        var r:Int = (seed + 31) % (i + 1)
-        if r < 0
-        {
-            r += i + 1
-        }
-        perm1024[i] = source[r]
-        hashes[i]   = perm1024[i] % n_hashes
-        source[r]   = source[i]
-    }
-
-    return (perm1024, hashes)
-}
-
 func floor(_ x:Double) -> Int
 {
     return x > 0 ? Int(x) : Int(x) - 1
@@ -32,6 +10,7 @@ public
 protocol Noise
 {
     init(amplitude:Double, frequency:Double, seed:Int)
+
     func evaluate(_ x:Double, _ y:Double)                         -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double)             -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
@@ -41,6 +20,36 @@ protocol HashedNoise:Noise
 {
     var perm1024:[Int] { get }
     var hashes:[Int] { get }
+
+    static
+    var n_hashes:Int { get }
+}
+
+extension HashedNoise
+{
+    static
+    func table(seed:Int) -> ([Int], [Int])
+    {
+        let range:Int = Self.n_hashes
+        var seed = seed
+        var perm1024:[Int] = [Int](repeating: 0, count: 1024),
+            hashes:[Int]   = [Int](repeating: 0, count: 1024)
+        var source:[Int]   = Array(0 ..< 1024)
+        for i in stride(from: 1023, to: 0, by: -1)
+        {
+            seed = seed &* 6364136223846793005 &+ 1442695040888963407
+            var r:Int = (seed + 31) % (i + 1)
+            if r < 0
+            {
+                r += i + 1
+            }
+            perm1024[i] = source[r]
+            hashes[i]   = perm1024[i] % range
+            source[r]   = source[i]
+        }
+
+        return (perm1024, hashes)
+    }
 }
 
 protocol Hashed2DGradientNoise:HashedNoise
@@ -51,6 +60,12 @@ protocol Hashed2DGradientNoise:HashedNoise
 
 extension Hashed2DGradientNoise
 {
+    static
+    var n_hashes:Int
+    {
+        return Self.gradient_table.count
+    }
+
     func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
     {
         let dr:Double = Self.radius - dx*dx - dy*dy
@@ -75,6 +90,12 @@ protocol Hashed3DGradientNoise:HashedNoise
 
 extension Hashed3DGradientNoise
 {
+    static
+    var n_hashes:Int
+    {
+        return Self.gradient_table.count
+    }
+    
     func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
     {
         let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz

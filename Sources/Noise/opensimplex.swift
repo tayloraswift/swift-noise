@@ -1,9 +1,6 @@
 public
 struct Simplex2D:Hashed2DGradientNoise
 {
-    private static
-    let n_hashes:Int = 8
-
     static
     let gradient_table:[(Double, Double)] =
     [
@@ -26,7 +23,7 @@ struct Simplex2D:Hashed2DGradientNoise
     {
         self.amplitude = amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = table(seed: seed, n_hashes: Simplex2D.n_hashes)
+        (self.perm1024, self.hashes) = Simplex2D.table(seed: seed)
     }
 
     public
