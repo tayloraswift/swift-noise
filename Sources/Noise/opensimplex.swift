@@ -1,5 +1,5 @@
 public
-struct Simplex2D:HashedNoiseGenerator
+struct Simplex2D:Hashed2DGradientNoise
 {
     private static
     let n_hashes:Int = 8

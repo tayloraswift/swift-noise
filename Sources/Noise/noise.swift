@@ -29,7 +29,7 @@ let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1)
 let STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 
 public
-protocol NoiseGenerator
+protocol Noise
 {
     init(amplitude:Double, frequency:Double, seed:Int)
     func evaluate(_ x:Double, _ y:Double)                         -> Double
@@ -37,15 +37,19 @@ protocol NoiseGenerator
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
 }
 
-protocol HashedNoiseGenerator:NoiseGenerator
+protocol HashedNoise:Noise
 {
     var perm1024:[Int] { get }
     var hashes:[Int] { get }
+}
+
+protocol Hashed2DGradientNoise:HashedNoise
+{
     static var gradient_table:[(Double, Double)] { get }
     static var radius:Double { get }
 }
 
-extension HashedNoiseGenerator
+extension Hashed2DGradientNoise
 {
     func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
     {
@@ -64,8 +68,32 @@ extension HashedNoiseGenerator
     }
 }
 
+protocol Hashed3DGradientNoise:HashedNoise
+{
+    static var gradient_table:[(Double, Double, Double)] { get }
+}
+
+extension Hashed3DGradientNoise
+{
+    func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
+    {
+        let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
+        if dr > 0
+        {
+            let drdr:Double = dr * dr
+            let hash:Int = self.hashes[self.perm1024[self.perm1024[u & 1023] ^ (v & 1023)] ^ (w & 1023)],
+                gradient:(Double, Double, Double) = Self.gradient_table[hash]
+            return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
+        }
+        else
+        {
+            return 0
+        }
+    }
+}
+
 public
-struct fBm<Generator:NoiseGenerator>:NoiseGenerator
+struct fBm<Generator:Noise>:Noise
 {
     private
     let generators:[Generator]
