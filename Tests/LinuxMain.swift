@@ -1,7 +1,6 @@
 import Noise
 
 import MaxPNG
-import SwiftCairo
 
 let viewer_size:Int = 1024
 
@@ -44,19 +43,3 @@ t0 = clock()
 pixbuf = SS3D.noise2d(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "super_simplex3D.png", raw_data: pixbuf, properties: png_properties)
-
-/*
-var pixbuf:[UInt32] = [UInt32](repeating: 0, count: viewer_size * viewer_size)
-let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .rgba, interlaced: false)!
-
-let surface:CairoSurface = CairoSurface(withoutOwningBuffer: &pixbuf, format: .argb32, width: viewer_size, height: viewer_size)!
-let cr:CairoContext = surface.create()
-
-cr.set_source_rgba(1, 0.2, 0.5, 1)
-cr.move_to(200, 200)
-cr.arc(x: 200, y: 200, r: 100)
-cr.fill()
-
-print(pixbuf[0...3])
-try png_encode(path: "viewer.png", raw_data: rgba_from_argb32(pixbuf), properties: png_properties)
-*/
