@@ -10,15 +10,17 @@ func rgba_from_argb32(_ argb32:[UInt32]) -> [UInt8]
     rgba.reserveCapacity(argb32.count * 4)
     for argb in argb32
     {
-        rgba.append(UInt8(truncatingBitPattern: argb >> 16))
-        rgba.append(UInt8(truncatingBitPattern: argb >> 8 ))
-        rgba.append(UInt8(truncatingBitPattern: argb      ))
-        rgba.append(UInt8(truncatingBitPattern: argb >> 24))
+        rgba.append(UInt8(extendingOrTruncating: argb >> 16))
+        rgba.append(UInt8(extendingOrTruncating: argb >> 8 ))
+        rgba.append(UInt8(extendingOrTruncating: argb      ))
+        rgba.append(UInt8(extendingOrTruncating: argb >> 24))
     }
     return rgba
 }
 
 import func Glibc.clock
+
+let _ = PoissonSampler(seed: 0)
 
 var pixbuf:[UInt8]
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
