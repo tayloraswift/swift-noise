@@ -20,8 +20,13 @@
 
     3D SuperSimplex volumetric noise, suitable for texturing any 3D object without seams or texture unwrapping.
 
+* Poisson sample noise (2D)
+
+    Two dimensional point noise with a visually uniform distribution, and no clumping.
+
 
 ![](super_simplex3D.png)
+![](poisson.png)
 
 ### A note on building
 
