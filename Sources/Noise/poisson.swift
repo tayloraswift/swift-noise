@@ -104,6 +104,7 @@ struct PoissonSampler
                 {
                     points.append(Point(candidate.x * radius, candidate.y * radius))
                     queue.append(candidate)
+                    queue.swapAt(queue.endIndex - 1, PoissonSampler.random(less_than: queue.endIndex))
                     continue outer
                 }
             }
