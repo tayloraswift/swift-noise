@@ -20,23 +20,24 @@ public
 extension Noise
 {
     public
-    func noise2d(width:Int, height:Int) -> [UInt8]
+    func noise2d(width:Int, height:Int) -> [Double]
     {
-        var pixbuf:[UInt8] = []
-            pixbuf.reserveCapacity(width * height)
-        var y:Double = 0
-        for _ in 0 ..< height
+        var samples:[Double] = []
+            samples.reserveCapacity(width * height)
+        for y in 0 ..< height
         {
-            var x:Double = 0
-            for _ in 0 ..< width
+            for x in 0 ..< width
             {
-                x += 1
-                let noise:Double = self.evaluate(x, y)
-                pixbuf.append(UInt8(max(0, min(255, noise + 127))))
+                samples.append(self.evaluate(Double(x), Double(y)))
             }
-            y += 1
         }
-        return pixbuf
+        return samples
+    }
+
+    public
+    func noise2d_u8(width:Int, height:Int) -> [UInt8]
+    {
+        return self.noise2d(width: width, height: height).map{ UInt8(max(0, min(255, $0 + 127.5))) }
     }
 }
 

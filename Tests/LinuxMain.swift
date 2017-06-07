@@ -39,19 +39,19 @@ try png_encode(path: "poisson.png", raw_data: pixbuf, properties: png_properties
 
 let S:fBm<Simplex2D> = fBm<Simplex2D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-pixbuf = S.noise2d(width: viewer_size, height: viewer_size)
+pixbuf = S.noise2d_u8(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
 
 
 let SS:fBm<SuperSimplex2D> = fBm<SuperSimplex2D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-pixbuf = SS.noise2d(width: viewer_size, height: viewer_size)
+pixbuf = SS.noise2d_u8(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "super_simplex.png", raw_data: pixbuf, properties: png_properties)
 
 let SS3D:fBm<SuperSimplex3D> = fBm<SuperSimplex3D>(amplitude: 1, frequency: 0.00083429273, octaves: 10)
 t0 = clock()
-pixbuf = SS3D.noise2d(width: viewer_size, height: viewer_size)
+pixbuf = SS3D.noise2d_u8(width: viewer_size, height: viewer_size)
 print(clock() - t0)
 try png_encode(path: "super_simplex3D.png", raw_data: pixbuf, properties: png_properties)

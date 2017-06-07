@@ -15,7 +15,8 @@ let package = Package(
     targets: [
         .target(
             name: "Noise",
-            dependencies: ["MaxPNG"]),
+            dependencies: ["MaxPNG"], 
+            path: "Sources/noise"), 
         .testTarget(
             name: "NoiseTests",
             dependencies: ["Noise"]),
