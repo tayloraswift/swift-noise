@@ -1,11 +1,23 @@
-// required: `libz-dev`, `libcairo-dev`
-// swift-tools-version:3.1
+// swift-tools-version:4.0
 
 import PackageDescription
 
 let package = Package(
     name: "Noise",
-    targets: [Target(name: "Noise")],
-    dependencies: [.Package(url: "https://github.com/kelvin13/maxpng", Version("2.0.0"))],
-    swiftLanguageVersions: [3, 4]
+    products: [
+        .library(
+            name: "Noise",
+            targets: ["Noise"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/kelvin13/maxpng", from: "2.0.0")
+    ],
+    targets: [
+        .target(
+            name: "Noise",
+            dependencies: ["MaxPNG"]),
+        .testTarget(
+            name: "NoiseTests",
+            dependencies: ["Noise"]),
+    ]
 )
