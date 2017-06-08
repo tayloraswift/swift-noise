@@ -15,13 +15,13 @@ struct Simplex2D:Hashed2DGradientNoise
         hashes:[Int]
 
     private
-    let amplitude:Double,
+    let amplitude:Double, // this is not necissaryly the same amplitude passed into the initializer
         frequency:Double
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = 7 * amplitude
+        self.amplitude = 0.096 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = Simplex2D.table(seed: seed)
     }
