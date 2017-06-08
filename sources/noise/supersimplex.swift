@@ -84,7 +84,7 @@ struct SuperSimplex2D:GradientNoise2D
     }()
 
     static
-    let gradient_table:[(Double, Double)] =
+    let gradient_table16:[(Double, Double)] =
     {
         var gradients:[(Double, Double)] = []
             gradients.reserveCapacity(16)
@@ -113,7 +113,7 @@ struct SuperSimplex2D:GradientNoise2D
     {
         self.amplitude = 18 * amplitude
         self.frequency = frequency
-        self.permutation_table = PermutationTable(range: SuperSimplex2D.gradient_table.count, seed: seed)
+        self.permutation_table = PermutationTable(seed: seed)
     }
 
     public
@@ -347,7 +347,7 @@ struct SuperSimplex3D:GradientNoise3D
     }()
 
     static
-    let gradient_table:[(Double, Double, Double)] =
+    let gradient_table16:[(Double, Double, Double)] =
     [
         (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0),
         (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
@@ -366,7 +366,7 @@ struct SuperSimplex3D:GradientNoise3D
     {
         self.amplitude = 9 * amplitude
         self.frequency = frequency
-        self.permutation_table = PermutationTable(range: SuperSimplex3D.gradient_table.count, seed: seed)
+        self.permutation_table = PermutationTable(seed: seed)
     }
 
     public
