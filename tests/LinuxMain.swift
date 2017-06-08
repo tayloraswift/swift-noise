@@ -37,6 +37,14 @@ for point:PoissonSampler.Point in poisson.generate(radius: 10, width: viewer_siz
 print(clock() - t0)
 try png_encode(path: "poisson.png", raw_data: pixbuf, properties: png_properties)
 
+
+let V:CellNoise2D = CellNoise2D(amplitude: 255, frequency: 0.01)
+t0 = clock()
+pixbuf = V.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 0)
+print(clock() - t0)
+try png_encode(path: "voronoi.png", raw_data: pixbuf, properties: png_properties)
+
+
 let S:fBm<SimplexNoise2D> = fBm<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
 pixbuf = S.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
