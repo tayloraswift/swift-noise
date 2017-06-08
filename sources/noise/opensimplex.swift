@@ -1,5 +1,5 @@
 public
-struct Simplex2D:Hashed2DGradientNoise
+struct Simplex2D:GradientNoise2D
 {
     static
     let gradient_table:[(Double, Double)] =
@@ -11,8 +11,7 @@ struct Simplex2D:Hashed2DGradientNoise
     static
     let radius:Double = 2
 
-    let perm1024:[Int],
-        hashes:[Int]
+    let permutation_table:PermutationTable
 
     private
     let amplitude:Double, // this is not necissaryly the same amplitude passed into the initializer
@@ -23,7 +22,7 @@ struct Simplex2D:Hashed2DGradientNoise
     {
         self.amplitude = 0.096 * amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = Simplex2D.table(seed: seed)
+        self.permutation_table = PermutationTable(range: Simplex2D.gradient_table.count, seed: seed)
     }
 
     public

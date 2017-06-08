@@ -1,16 +1,10 @@
 public
-struct Cell2D:HashedNoise
+struct Cell2D
 {
-    let perm1024:[Int],
-        hashes:[Int]
-
-    static
-    var n_hashes:Int = 1024
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        (self.perm1024, self.hashes) = SuperSimplex2D.table(seed: seed)
     }
 
     public
