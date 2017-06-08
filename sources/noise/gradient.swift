@@ -49,7 +49,7 @@ struct SimplexNoise2D:GradientNoise2D
     let permutation_table:PermutationTable
 
     private
-    let amplitude:Double, // this is not necissaryly the same amplitude passed into the initializer
+    let amplitude:Double, // this is not necessarily the same amplitude passed into the initializer
         frequency:Double
 
     public

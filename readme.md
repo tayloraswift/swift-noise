@@ -20,12 +20,17 @@
 
     3D SuperSimplex volumetric noise, suitable for texturing any 3D object without seams or texture unwrapping.
 
+* Voronoi noise (2D)
+
+    Also known as Worley noise, produces a cellular, bulby texture.
+
 * Poisson sample noise (2D)
 
     Two dimensional point noise with a visually uniform distribution, and no clumping.
 
 
 ![](super_simplex3D.png)
+![](voronoi.png)
 ![](poisson.png)
 
 ### A note on building
