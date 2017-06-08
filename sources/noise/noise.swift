@@ -20,24 +20,35 @@ public
 extension Noise
 {
     public
-    func noise2d(width:Int, height:Int) -> [Double]
+    func sample_area(width:Int, height:Int) -> [(x:Double, y:Double, z:Double)]
     {
-        var samples:[Double] = []
+        var samples:[(x:Double, y:Double, z:Double)] = []
             samples.reserveCapacity(width * height)
-        for y in 0 ..< height
+        for i in 0 ..< height
         {
-            for x in 0 ..< width
+            for j in 0 ..< width
             {
-                samples.append(self.evaluate(Double(x), Double(y)))
+                let x:Double = Double(i) + 0.5,
+                    y:Double = Double(j) + 0.5
+                samples.append((x: x, y: y, z: self.evaluate(x, y)))
             }
         }
         return samples
     }
 
     public
-    func noise2d_u8(width:Int, height:Int) -> [UInt8]
+    func sample_area_saturated_to_u8(width:Int, height:Int, offset:Double = 0.5) -> [UInt8]
     {
-        return self.noise2d(width: width, height: height).map{ UInt8(max(0, min(255, $0 + 127.5))) }
+        var samples:[UInt8] = []
+            samples.reserveCapacity(width * height)
+        for y in 0 ..< height
+        {
+            for x in 0 ..< width
+            {
+                samples.append(UInt8(max(0, min(255, self.evaluate(Double(x), Double(y)) + offset))))
+            }
+        }
+        return samples
     }
 }
 
