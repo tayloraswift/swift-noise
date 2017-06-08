@@ -2,8 +2,11 @@ public
 struct Simplex2D:GradientNoise2D
 {
     static
-    let gradient_table:[(Double, Double)] =
+    let gradient_table16:[(Double, Double)] =
     [
+        (-1, -1),   (1,  0),   (-1,  0),   (1,  1),
+        (-1,  1),   (0, -1),    (0,  1),   (1, -1),
+        
         (-1, -1),   (1,  0),   (-1,  0),   (1,  1),
         (-1,  1),   (0, -1),    (0,  1),   (1, -1)
     ]
@@ -22,7 +25,7 @@ struct Simplex2D:GradientNoise2D
     {
         self.amplitude = 0.096 * amplitude
         self.frequency = frequency
-        self.permutation_table = PermutationTable(range: Simplex2D.gradient_table.count, seed: seed)
+        self.permutation_table = PermutationTable(seed: seed)
     }
 
     public

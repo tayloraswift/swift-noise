@@ -55,10 +55,9 @@ extension Noise
 struct PermutationTable
 {
     private
-    let permut:[UInt8], // keep these small to minimize cache misses
-        hashes:[UInt8]
+    let permut:[UInt8] // keep these small to minimize cache misses
 
-    init(range:Int, seed:Int)
+    init(seed:Int)
     {
         var permutations:[UInt8] = [UInt8](0 ... 255),
             state128:(UInt32, UInt32, UInt32, UInt32) = (1, 0, UInt32(extendingOrTruncating: seed >> 32), UInt32(extendingOrTruncating: seed))
@@ -77,17 +76,16 @@ struct PermutationTable
         }
 
         self.permut = permutations
-        self.hashes = permutations.map{ $0 % UInt8(range) }
     }
 
     func hash(_ n1:Int, _ n2:Int) -> Int
     {
-        return Int(self.hashes[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
+        return Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
     }
 
     func hash(_ n1:Int, _ n2:Int, _ n3:Int) -> Int
     {
-        return Int(self.hashes[Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)]) ^ (n3 & 255)])
+        return Int(self.permut[self.hash(n1, n2) ^ (n3 & 255)])
     }
 }
 
@@ -95,7 +93,7 @@ protocol GradientNoise2D:Noise
 {
     var permutation_table:PermutationTable { get }
 
-    static var gradient_table:[(Double, Double)] { get }
+    static var gradient_table16:[(Double, Double)] { get }
     static var radius:Double { get }
 }
 
@@ -106,7 +104,7 @@ extension GradientNoise2D
         let dr:Double = Self.radius - dx*dx - dy*dy
         if dr > 0
         {
-            let gradient:(Double, Double) = Self.gradient_table[self.permutation_table.hash(u, v)],
+            let gradient:(Double, Double) = Self.gradient_table16[self.permutation_table.hash(u, v) & 15],
                 drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
         }
@@ -121,7 +119,7 @@ protocol GradientNoise3D:Noise
 {
     var permutation_table:PermutationTable { get }
 
-    static var gradient_table:[(Double, Double, Double)] { get }
+    static var gradient_table16:[(Double, Double, Double)] { get }
 }
 
 extension GradientNoise3D
@@ -131,7 +129,7 @@ extension GradientNoise3D
         let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
         if dr > 0
         {
-            let gradient:(Double, Double, Double) = Self.gradient_table[self.permutation_table.hash(u, v, w)],
+            let gradient:(Double, Double, Double) = Self.gradient_table16[self.permutation_table.hash(u, v, w) & 15],
                 drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
         }
