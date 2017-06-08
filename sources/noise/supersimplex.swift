@@ -112,7 +112,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = 1275 * amplitude
+        self.amplitude = 18 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = SuperSimplex2D.table(seed: seed)
     }
@@ -366,7 +366,7 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = 700 * amplitude
+        self.amplitude = 9 * amplitude
         self.frequency = frequency
         (self.perm1024, self.hashes) = SuperSimplex3D.table(seed: seed)
     }

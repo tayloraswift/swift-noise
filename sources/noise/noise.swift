@@ -67,24 +67,23 @@ extension HashedNoise
     func table(seed:Int) -> ([Int], [Int])
     {
         let range:Int = Self.n_hashes
-        var seed = seed
-        var perm1024:[Int] = [Int](repeating: 0, count: 1024),
-            hashes:[Int]   = [Int](repeating: 0, count: 1024)
-        var source:[Int]   = Array(0 ..< 1024)
-        for i in stride(from: 1023, to: 0, by: -1)
+        var perm1024:[Int] = [Int](0 ..< 1024),
+            state128:(UInt32, UInt32, UInt32, UInt32) = (1, 0, 0, UInt32(extendingOrTruncating: seed))
+        for i in 0 ..< 1024 - 1
         {
-            seed = seed &* 6364136223846793005 &+ 1442695040888963407
-            var r:Int = (seed + 31) % (i + 1)
-            if r < 0
-            {
-                r += i + 1
-            }
-            perm1024[i] = source[r]
-            hashes[i]   = perm1024[i] % range
-            source[r]   = source[i]
+            var t:UInt32 = state128.3
+            t ^= t &<< 11
+            t ^= t &>> 8
+            state128.3 = state128.2
+            state128.2 = state128.1
+            state128.1 = state128.0
+            t ^= state128.0
+            t ^= state128.0 &>> 19
+            state128.0 = t
+            perm1024.swapAt(i, Int(t) & 1023)
         }
 
-        return (perm1024, hashes)
+        return (perm1024, perm1024.map{ $0 % range })
     }
 }
 
