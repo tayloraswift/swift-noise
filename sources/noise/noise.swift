@@ -52,24 +52,17 @@ extension Noise
     }
 }
 
-protocol HashedNoise:Noise
+struct PermutationTable
 {
-    var perm1024:[Int] { get }
-    var hashes:[Int] { get }
+    private
+    let permut:[UInt8], // keep these small to minimize cache misses
+        hashes:[UInt8]
 
-    static
-    var n_hashes:Int { get }
-}
-
-extension HashedNoise
-{
-    static
-    func table(seed:Int) -> ([Int], [Int])
+    init(range:Int, seed:Int)
     {
-        let range:Int = Self.n_hashes
-        var perm1024:[Int] = [Int](0 ..< 1024),
-            state128:(UInt32, UInt32, UInt32, UInt32) = (1, 0, 0, UInt32(extendingOrTruncating: seed))
-        for i in 0 ..< 1024 - 1
+        var permutations:[UInt8] = [UInt8](0 ... 255),
+            state128:(UInt32, UInt32, UInt32, UInt32) = (1, 0, UInt32(extendingOrTruncating: seed >> 32), UInt32(extendingOrTruncating: seed))
+        for i in 0 ..< 255 - 1
         {
             var t:UInt32 = state128.3
             t ^= t &<< 11
@@ -80,34 +73,40 @@ extension HashedNoise
             t ^= state128.0
             t ^= state128.0 &>> 19
             state128.0 = t
-            perm1024.swapAt(i, Int(t) & 1023)
+            permutations.swapAt(i, Int(t) & 255)
         }
 
-        return (perm1024, perm1024.map{ $0 % range })
+        self.permut = permutations
+        self.hashes = permutations.map{ $0 % UInt8(range) }
+    }
+
+    func hash(_ n1:Int, _ n2:Int) -> Int
+    {
+        return Int(self.hashes[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
+    }
+
+    func hash(_ n1:Int, _ n2:Int, _ n3:Int) -> Int
+    {
+        return Int(self.hashes[Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)]) ^ (n3 & 255)])
     }
 }
 
-protocol Hashed2DGradientNoise:HashedNoise
+protocol GradientNoise2D:Noise
 {
+    var permutation_table:PermutationTable { get }
+
     static var gradient_table:[(Double, Double)] { get }
     static var radius:Double { get }
 }
 
-extension Hashed2DGradientNoise
+extension GradientNoise2D
 {
-    static
-    var n_hashes:Int
-    {
-        return Self.gradient_table.count
-    }
-
     func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
     {
         let dr:Double = Self.radius - dx*dx - dy*dy
         if dr > 0
         {
-            let hash:Int = self.hashes[self.perm1024[u & 1023] ^ (v & 1023)],
-                gradient:(Double, Double) = Self.gradient_table[hash],
+            let gradient:(Double, Double) = Self.gradient_table[self.permutation_table.hash(u, v)],
                 drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
         }
@@ -118,26 +117,21 @@ extension Hashed2DGradientNoise
     }
 }
 
-protocol Hashed3DGradientNoise:HashedNoise
+protocol GradientNoise3D:Noise
 {
+    var permutation_table:PermutationTable { get }
+
     static var gradient_table:[(Double, Double, Double)] { get }
 }
 
-extension Hashed3DGradientNoise
+extension GradientNoise3D
 {
-    static
-    var n_hashes:Int
-    {
-        return Self.gradient_table.count
-    }
-
     func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
     {
         let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
         if dr > 0
         {
-            let hash:Int = self.hashes[self.perm1024[self.perm1024[u & 1023] ^ (v & 1023)] ^ (w & 1023)],
-                gradient:(Double, Double, Double) = Self.gradient_table[hash],
+            let gradient:(Double, Double, Double) = Self.gradient_table[self.permutation_table.hash(u, v, w)],
                 drdr:Double = dr * dr
             return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
         }

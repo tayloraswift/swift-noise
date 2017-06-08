@@ -2,7 +2,7 @@ import func Glibc.sin
 import func Glibc.cos
 
 public
-struct SuperSimplex2D:Hashed2DGradientNoise
+struct SuperSimplex2D:GradientNoise2D
 {
     private
     struct LatticePoint
@@ -102,8 +102,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     static
     let radius:Double = 2/3
 
-    let perm1024:[Int],
-        hashes:[Int]
+    let permutation_table:PermutationTable
 
     private
     let amplitude:Double,
@@ -114,7 +113,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
     {
         self.amplitude = 18 * amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = SuperSimplex2D.table(seed: seed)
+        self.permutation_table = PermutationTable(range: SuperSimplex2D.gradient_table.count, seed: seed)
     }
 
     public
@@ -266,7 +265,7 @@ struct SuperSimplex2D:Hashed2DGradientNoise
 }
 
 public
-struct SuperSimplex3D:Hashed3DGradientNoise
+struct SuperSimplex3D:GradientNoise3D
 {
     private
     struct LatticePoint
@@ -356,8 +355,7 @@ struct SuperSimplex3D:Hashed3DGradientNoise
         (1, 1, 0), (-1, 1, 0), (0, -1, 1), (0, -1, -1)
     ]
 
-    let perm1024:[Int],
-        hashes:[Int]
+    let permutation_table:PermutationTable
 
     private
     let amplitude:Double,
@@ -368,7 +366,7 @@ struct SuperSimplex3D:Hashed3DGradientNoise
     {
         self.amplitude = 9 * amplitude
         self.frequency = frequency
-        (self.perm1024, self.hashes) = SuperSimplex3D.table(seed: seed)
+        self.permutation_table = PermutationTable(range: SuperSimplex3D.gradient_table.count, seed: seed)
     }
 
     public
