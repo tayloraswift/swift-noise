@@ -89,57 +89,6 @@ struct PermutationTable
     }
 }
 
-protocol GradientNoise2D:Noise
-{
-    var permutation_table:PermutationTable { get }
-
-    static var gradient_table16:[(Double, Double)] { get }
-    static var radius:Double { get }
-}
-
-extension GradientNoise2D
-{
-    func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
-    {
-        let dr:Double = Self.radius - dx*dx - dy*dy
-        if dr > 0
-        {
-            let gradient:(Double, Double) = Self.gradient_table16[self.permutation_table.hash(u, v) & 15],
-                drdr:Double = dr * dr
-            return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
-        }
-        else
-        {
-            return 0
-        }
-    }
-}
-
-protocol GradientNoise3D:Noise
-{
-    var permutation_table:PermutationTable { get }
-
-    static var gradient_table16:[(Double, Double, Double)] { get }
-}
-
-extension GradientNoise3D
-{
-    func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
-    {
-        let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
-        if dr > 0
-        {
-            let gradient:(Double, Double, Double) = Self.gradient_table16[self.permutation_table.hash(u, v, w) & 15],
-                drdr:Double = dr * dr
-            return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
-        }
-        else
-        {
-            return 0
-        }
-    }
-}
-
 public
 struct fBm<Generator:Noise>:Noise
 {
