@@ -1,5 +1,5 @@
 public
-struct Cell2D
+struct CellNoise2D:Noise 
 {
 
     public
