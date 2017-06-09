@@ -61,11 +61,11 @@ struct CellNoise2D:Noise
         // as “near” and “far” points. We call these points the *generating points*.
         // The sample point (example) has been marked with an ‘*’.
 
-        //          A ------- far
+        //          A ------ far
         //          |    |    |
         //          |----+----|
         //          |  * |    |
-        //       near ------- A
+        //        near ------ A
 
         // The actual feature points never spawn outside of the unit square surrounding
         // their generating points. Therefore, the boundaries of the generating
@@ -111,6 +111,13 @@ struct CellNoise2D:Noise
             test(generating_point: far)
         }
 
+        // EARLY EXIT: if we have a point within 0.5 units, we don’t have to check
+        // the outer kernel
+        if r2_min < 0.5*0.5
+        {
+            return self.amplitude * r2_min
+        }
+
         // This is the part where shit hits the fan. (`inner` and `outer` are never
         // sampled directly, they are used for calculating the coordinates of the
         // generating point.)
@@ -150,6 +157,13 @@ struct CellNoise2D:Noise
         if (nearpoint_disp.y + 0.5) * (nearpoint_disp.y + 0.5) + (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) < r2_min
         {
             test(generating_point: (far.a, inner.b))
+        }
+
+        // EARLY EXIT: if we have a point within 1 unit, we don’t have to check
+        // the D points or the E points
+        if r2_min < 1*1
+        {
+            return self.amplitude * r2_min
         }
 
         // D points
