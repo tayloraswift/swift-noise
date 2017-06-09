@@ -21,6 +21,5 @@ let package = Package(
             name: "NoiseTests",
             dependencies: ["Noise"],
             path: "tests/noise"),
-    ],
-    exclude: ["sources/meta"]
+    ]
 )

@@ -44,6 +44,12 @@ pixbuf = V.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, 
 print(clock() - t0)
 try png_encode(path: "voronoi.png", raw_data: pixbuf, properties: png_properties)
 
+let V3:CellNoise3D = CellNoise3D(amplitude: 255, frequency: 0.01)
+t0 = clock()
+pixbuf = V3.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 0)
+print(clock() - t0)
+try png_encode(path: "voronoi3D.png", raw_data: pixbuf, properties: png_properties)
+
 
 let S:fBm<SimplexNoise2D> = fBm<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
