@@ -19,7 +19,8 @@ let package = Package(
             path: "sources/noise"),
         .testTarget(
             name: "NoiseTests",
-            dependencies: ["Noise"], 
+            dependencies: ["Noise"],
             path: "tests/noise"),
-    ]
+    ],
+    exclude: ["sources/meta"]
 )
