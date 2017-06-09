@@ -1,4 +1,4 @@
-struct Point3D
+struct Point3D:CustomStringConvertible
 {
     let x:Double,
         y:Double,
@@ -7,6 +7,19 @@ struct Point3D
     var r2:Double
     {
         return self.x*self.x + self.y*self.y + self.z*self.z
+    }
+
+    var description:String
+    {
+        guard let xb:Int = Int(exactly: self.x),
+              let yb:Int = Int(exactly: self.y),
+              let zb:Int = Int(exactly: self.z)
+        else
+        {
+            return "(\(self.x), \(self.y), \(self.z))"
+        }
+
+        return "(\(xb), \(yb), \(zb))"
     }
 
     init(_ x:Double, _ y:Double, _ z:Double)
@@ -33,6 +46,12 @@ struct Point3D
     func + (_ a:Point3D, _ b:Point3D) -> Point3D
     {
         return Point3D(a.x + b.x, a.y + b.y, a.z + b.z)
+    }
+
+    static
+    prefix func - (_ a:Point3D) -> Point3D
+    {
+        return Point3D(-a.x, -a.y, -a.z)
     }
 }
 
@@ -88,7 +107,9 @@ enum Colors
 
 func kernel3d()
 {
-    let near:Point3D = Point3D(-0.5, 0.5, 0.5)
+    let near:Point3D = Point3D(0.5, 0.5, 0.5)
+
+    var cell_classes:[Double: [Cell3D]] = [:]
 
     for k in -3 ..< 3
     {
@@ -110,7 +131,12 @@ func kernel3d()
                     r2 = min(r2, cell.distance_squared(from: point))
                 }
 
-                var output:String = pad(String(describing: r2), to: 5)
+                if cell_classes[r2]?.append(cell) == nil
+                {
+                    cell_classes[r2] = [cell]
+                }
+
+                var output:String = pad(String(r2), to: 5)
 
                 if r2 < 3
                 {
@@ -122,6 +148,13 @@ func kernel3d()
             print()
         }
         print()
+    }
+
+    for r2:Double in cell_classes.keys.sorted()
+    {
+        let cells:[Cell3D] = cell_classes[r2]!
+        let class_vector:String = cells.map{ String(describing: -$0.root) }.joined(separator: ", ")
+        print("\(Colors.bold)\(pad(String(r2), to: 5))\(Colors.off): \(pad(String(cells.count), to: 2)) cells [\(class_vector)]")
     }
 }
 
