@@ -9,7 +9,7 @@ struct CellNoise2D:Noise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = 2.squareRoot() * amplitude
+        self.amplitude = amplitude * 1/2.squareRoot()
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
     }
@@ -19,31 +19,15 @@ struct CellNoise2D:Noise
     {
         let hash:Int = self.permutation_table.hash(generating_point.a, generating_point.b)
         // hash is within 0 ... 255, take it to 0 ... 0.5
-        let length:Double = Double(hash) * 0.5/255,
-            diagonal:Double = length * (1 / 2.squareRoot())
 
-        let (dpx, dpy):(Double, Double)
-        switch hash & 0b0111
-        {
-        case 0:
-            (dpx, dpy) = ( diagonal,  diagonal)
-        case 1:
-            (dpx, dpy) = (-diagonal,  diagonal)
-        case 2:
-            (dpx, dpy) = (-diagonal, -diagonal)
-        case 3:
-            (dpx, dpy) = ( diagonal, -diagonal)
-        case 4:
-            (dpx, dpy) = ( length, 0)
-        case 5:
-            (dpx, dpy) = (0,  length)
-        case 6:
-            (dpx, dpy) = (-length, 0)
-        case 7:
-            (dpx, dpy) = ( 0, -length)
-        default:
-            fatalError("unreachable")
-        }
+        // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
+        // to be divided up between 2 axes. We can assign 4 bits to the x and y
+        // axes each (16 levels each)
+
+        //          0b XXXX YYYY
+
+        let dpx:Double = (Double(hash >> 4         ) - 15/2) * 1/16,
+            dpy:Double = (Double(hash      & 0b1111) - 15/2) * 1/16
 
         let dx:Double = Double(generating_point.a) + dpx - sample_point.x,
             dy:Double = Double(generating_point.b) + dpy - sample_point.y
@@ -60,7 +44,7 @@ struct CellNoise2D:Noise
 
         // determine kernel
 
-        // The control points do not live within the grid cells, rather they float
+        // The feature points do not live within the grid cells, rather they float
         // around the *corners* of the grid cells (the ‘O’s in the diagram).
         // The grid cell that the sample point has been binned into is shaded.
 
@@ -73,28 +57,29 @@ struct CellNoise2D:Noise
         //          |     |      |     |
         //          +------------------+
 
-        // The bin itself is divided into quadrants to classify the four corners as
-        // “near” and “far” points. We call these points the *generating points*.
+        // The bin itself is divided into quadrants to classify the four corners
+        // as “near” and “far” points. We call these points the *generating points*.
         // The sample point (example) has been marked with an ‘*’.
 
-        //          O ------- far
+        //          A ------- far
         //          |    |    |
         //          |----+----|
         //          |  * |    |
-        //       near ------- O
+        //       near ------- A
 
-        // The actual control points never spawn more than 0.5 normalized units
-        // away from the near and far points, and their cross-analogues. Therefore,
-        // the quadrants also provide a means of early exit, since if a sample is
-        // closer to a control point than the quadrant dividers, it is impossible
-        // for the sample to be closer to the control point that lives on the
-        // other side of the divider.
+        // The actual feature points never spawn outside of the unit square surrounding
+        // their generating points. Therefore, the boundaries of the generating
+        // squares serve as a useful means of early exit — if the square is farther
+        // away than a point already found, then there is no point checking that
+        // square since it cannot produce a feature point closer than we have already
+        // found.
 
         let quadrant:(x:Bool, y:Bool) = (offset.x > 0.5, offset.y > 0.5),
             near:(a:Int, b:Int) = (bin.a + (quadrant.x ? 1 : 0), bin.b + (quadrant.y ? 1 : 0)),
             far:(a:Int, b:Int)  = (bin.a + (quadrant.x ? 0 : 1), bin.b + (quadrant.y ? 0 : 1))
 
-        let divider_distance:(x:Double, y:Double) = ((offset.x - 0.5) * (offset.x - 0.5), (offset.y - 0.5) * (offset.y - 0.5))
+        let nearpoint_disp:(x:Double, y:Double) = (abs(offset.x - (quadrant.x ? 1 : 0)),
+                                                   abs(offset.y - (quadrant.y ? 1 : 0)))
 
         var r2_min:Double = self.distance(from: sample, generating_point: near)
 
@@ -109,19 +94,82 @@ struct CellNoise2D:Noise
             }
         }
 
-        if divider_distance.x < r2_min
+        // A points
+        if (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
         {
-            test(generating_point: (far.a, near.b)) // near point horizontal
+            test(generating_point: (near.a, far.b))
         }
 
-        if divider_distance.y < r2_min
+        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) < r2_min
         {
-            test(generating_point: (near.a, far.b)) // near point vertical
+            test(generating_point: (far.a, near.b))
         }
 
-        if divider_distance.x < r2_min && divider_distance.y < r2_min
+        // far point
+        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) + (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
         {
             test(generating_point: far)
+        }
+
+        // This is the part where shit hits the fan. (`inner` and `outer` are never
+        // sampled directly, they are used for calculating the coordinates of the
+        // generating point.)
+
+        //          +-------- D ------- E ----- outer
+        //          |    |    |    |    |    |    |
+        //          |----+----|----+----|----+----|
+        //          |    |    |    |    |    |    |
+        //          C ------- A —————— far ------ E
+        //          |    |    |    |    |    |    |
+        //          |----+----|----+----|----+----|
+        //          |    |    |  * |    |    |    |
+        //          B ----- near —————— A ------- D
+        //          |    |    |    |    |    |    |
+        //          |----+----|----+----|----+----|
+        //          |    |    |    |    |    |    |
+        //        inner ----- B ------- C --------+
+
+        let inner:(a:Int, b:Int) = (bin.a + (quadrant.x ?  2 : -1), bin.b + (quadrant.y ?  2 : -1)),
+            outer:(a:Int, b:Int) = (bin.a + (quadrant.x ? -1 :  2), bin.b + (quadrant.y ? -1 :  2))
+
+        // B points
+        if (nearpoint_disp.x + 0.5) * (nearpoint_disp.x + 0.5) < r2_min
+        {
+            test(generating_point: (inner.a, near.b))
+        }
+        if (nearpoint_disp.y + 0.5) * (nearpoint_disp.y + 0.5) < r2_min
+        {
+            test(generating_point: (near.a, inner.b))
+        }
+
+        // C points
+        if (nearpoint_disp.x + 0.5) * (nearpoint_disp.x + 0.5) + (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
+        {
+            test(generating_point: (inner.a, far.b))
+        }
+        if (nearpoint_disp.y + 0.5) * (nearpoint_disp.y + 0.5) + (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) < r2_min
+        {
+            test(generating_point: (far.a, inner.b))
+        }
+
+        // D points
+        if (1.5 - nearpoint_disp.y) * (1.5 - nearpoint_disp.y) < r2_min
+        {
+            test(generating_point: (near.a, outer.b))
+        }
+        if (1.5 - nearpoint_disp.x) * (1.5 - nearpoint_disp.x) < r2_min
+        {
+            test(generating_point: (outer.a, near.b))
+        }
+
+        // E points
+        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) + (1.5 - nearpoint_disp.y) * (1.5 - nearpoint_disp.y) < r2_min
+        {
+            test(generating_point: (far.a, outer.b))
+        }
+        if (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) + (1.5 - nearpoint_disp.x) * (1.5 - nearpoint_disp.x) < r2_min
+        {
+            test(generating_point: (outer.a, far.b))
         }
 
         return self.amplitude * r2_min
@@ -178,14 +226,14 @@ struct CellNoise3D:Noise
         // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
         // to be divided up between three axes. We can assign 3 bits to the x and
         // y axes each (8 levels each), and 2 bits to the z axis (4 levels). To
-        // compensate for the lack of z resolution, we bump up every other control
+        // compensate for the lack of z resolution, we bump up every other feature
         // point by half a level.
 
         //          0b XXX YYY ZZ
 
-        let dpx:Double = (Double(hash >> 5                                         ) - 3.5) * 0.25,
-            dpy:Double = (Double(hash >> 2 & 0b0111                                ) - 3.5) * 0.25,
-            dpz:Double = (Double(hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)) - 3.5) * 0.25
+        let dpx:Double = (Double(hash >> 5                                         ) - 7/2) * 1/8,
+            dpy:Double = (Double(hash >> 2 & 0b0111                                ) - 7/2) * 1/8,
+            dpz:Double = (Double(hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)) - 7/2) * 1/8
 
         let dx:Double = Double(generating_point.a) + dpx - sample_point.x,
             dy:Double = Double(generating_point.b) + dpy - sample_point.y,
@@ -196,80 +244,6 @@ struct CellNoise3D:Noise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        /*
-        let sample:(x:Double, y:Double) = (x * self.frequency, y * self.frequency)
-
-        let bin:(a:Int, b:Int)          = (floor(sample.x), floor(sample.y)),
-            offset:(x:Double, y:Double) = (sample.x - Double(bin.a), sample.y - Double(bin.b))
-
-        // determine kernel
-
-        // The control points do not live within the grid cells, rather they float
-        // around the *corners* of the grid cells (the ‘O’s in the diagram).
-        // The grid cell that the sample point has been binned into is shaded.
-
-        //               xb   xb + 1
-        //          +------------------+
-        //          |     |      |     |
-        //       yb |---- O//////O ----|
-        //          |     |//////|     |
-        //   yb + 1 |---- O//////O ----|
-        //          |     |      |     |
-        //          +------------------+
-
-        // The bin itself is divided into quadrants to classify the four corners as
-        // “near” and “far” points. We call these points the *generating points*.
-        // The sample point (example) has been marked with an ‘*’.
-
-        //          O ------- far
-        //          |    |    |
-        //          |----+----|
-        //          |  * |    |
-        //       near ------- O
-
-        // The actual control points never spawn more than 0.5 normalized units
-        // away from the near and far points, and their cross-analogues. Therefore,
-        // the quadrants also provide a means of early exit, since if a sample is
-        // closer to a control point than the quadrant dividers, it is impossible
-        // for the sample to be closer to the control point that lives on the
-        // other side of the divider.
-
-        let quadrant:(x:Bool, y:Bool) = (offset.x > 0.5, offset.y > 0.5),
-            near:(a:Int, b:Int) = (bin.a + (quadrant.x ? 1 : 0), bin.b + (quadrant.y ? 1 : 0)),
-            far:(a:Int, b:Int)  = (bin.a + (quadrant.x ? 0 : 1), bin.b + (quadrant.y ? 0 : 1))
-
-        let divider_distance:(x:Double, y:Double) = ((offset.x - 0.5) * (offset.x - 0.5), (offset.y - 0.5) * (offset.y - 0.5))
-
-        var r2_min:Double = self.distance(from: sample, generating_point: near)
-
-        @inline(__always)
-        func test(generating_point:(a:Int, b:Int))
-        {
-            let r2:Double = self.distance(from: sample, generating_point: generating_point)
-
-            if r2 < r2_min
-            {
-                r2_min = r2
-            }
-        }
-
-        if divider_distance.x < r2_min
-        {
-            test(generating_point: (far.a, near.b)) // near point horizontal
-        }
-
-        if divider_distance.y < r2_min
-        {
-            test(generating_point: (near.a, far.b)) // near point vertical
-        }
-
-        if divider_distance.x < r2_min && divider_distance.y < r2_min
-        {
-            test(generating_point: far)
-        }
-
-        return self.amplitude * r2_min
-        */
         return 0
     }
 
