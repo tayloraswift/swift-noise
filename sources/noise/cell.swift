@@ -270,11 +270,11 @@ struct CellNoise3D:Noise
 
         // Same idea as with the 2D points, except in 3 dimensions
 
-        //   near - quadrant ---- near - quadrant.y
-        //               |    |    |
-        //               |----+----|
-        //               |    | *  |
-        //   near - quadrant.x -- near               quadrant →
+        //   near - quadrant.xy ———— near - quadrant.y
+        //                  |    |    |
+        //                  |----+----|
+        //                  |    | *  |
+        //   near - quadrant.x ————— near            quadrant →
         //                                              ↓
 
         let quadrant:IntV3 = (offset.x > 0.5 ? 1 : -1, offset.y > 0.5 ? 1 : -1, offset.z > 0.5 ? 1 : -1),
@@ -284,9 +284,9 @@ struct CellNoise3D:Noise
                                        abs(offset.y - Double((quadrant.b + 1) >> 1)),
                                        abs(offset.z - Double((quadrant.c + 1) >> 1)))
 
-        var r2_min:Double = self.distance(from: sample, generating_point: near)
+        var r2:Double = self.distance(from: sample, generating_point: near)
 
-        let kernel:[(r:Double, cell_offsets:[(Int, Int, Int)])] =
+        let kernel:[(r2:Double, cell_offsets:[(Int, Int, Int)])] =
         [
             (0.0 , [/*(0, 0, 0), */(-1, 0, 0), (0, -1, 0), (-1, -1, 0), (0, 0, -1), (-1, 0, -1), (0, -1, -1), (-1, -1, -1)]),
             (0.25, [(0, 0, 1), (-1, 0, 1), (0, -1, 1), (-1, -1, 1), (0, 1, 0), (-1, 1, 0), (1, 0, 0), (1, -1, 0),
@@ -306,9 +306,10 @@ struct CellNoise3D:Noise
             (2.75, [(1, 1, 2), (1, 2, 1), (2, 1, 1)])
         ]
 
-        for (kernel_radius, cell_offsets):(r:Double, cell_offsets:[(Int, Int, Int)]) in kernel
+        for (kernel_radius2, cell_offsets):(r2:Double, cell_offsets:[(Int, Int, Int)]) in kernel
         {
-            if r2_min < kernel_radius
+            guard kernel_radius2 < r2
+            else
             {
                 break // EARLY EXIT
             }
@@ -339,7 +340,7 @@ struct CellNoise3D:Noise
                     cell_distance2 += dz*dz
                 }
 
-                guard cell_distance2 < r2_min
+                guard cell_distance2 < r2
                 else
                 {
                     continue
@@ -348,17 +349,16 @@ struct CellNoise3D:Noise
                 let generating_point:IntV3 = (near.a + quadrant.a*cell_offset.a,
                                               near.b + quadrant.b*cell_offset.b,
                                               near.c + quadrant.c*cell_offset.c)
-                let r2:Double = self.distance(from: sample, generating_point: generating_point)
-                r2_min = min(r2, r2_min)
+                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
             }
         }
 
-        return self.amplitude * r2_min
+        return self.amplitude * r2
     }
 
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
     {
-        return self.evaluate(x, y)
+        return self.evaluate(x, y, z)
     }
 }
