@@ -153,8 +153,9 @@ func kernel3d()
     for r2:Double in cell_classes.keys.sorted()
     {
         let cells:[Cell3D] = cell_classes[r2]!
-        let class_vector:String = cells.map{ String(describing: -$0.root) }.joined(separator: ", ")
-        print("\(Colors.bold)\(pad(String(r2), to: 5))\(Colors.off): \(pad(String(cells.count), to: 2)) cells [\(class_vector)]")
+        let class_vector:String = cells.reversed().map{ String(describing: $0.root) }.joined(separator: ", ")
+        //print("\(Colors.bold)\(pad(String(r2), to: 5))\(Colors.off): \(pad(String(cells.count), to: 2)) cells [\(class_vector)]")
+        print("(\(Colors.bold)\(pad(String(r2), to: 5))\(Colors.off), [\(class_vector)]),")
     }
 }
 

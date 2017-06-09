@@ -24,13 +24,17 @@
 
     Also known as Worley noise, produces a cellular, bulby texture.
 
+* Voronoi noise (3D)
+
+    3 dimensional cell/worley noise.
+
 * Poisson sample noise (2D)
 
     Two dimensional point noise with a visually uniform distribution, and no clumping.
 
 
 ![](super_simplex3D.png)
-![](voronoi.png)
+![](voronoi3D.png)
 ![](poisson.png)
 
 ### A note on building
