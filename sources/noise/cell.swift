@@ -15,7 +15,7 @@ struct CellNoise2D:Noise
     }
 
     private
-    func distance(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
     {
         let hash:Int = self.permutation_table.hash(generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
@@ -80,14 +80,14 @@ struct CellNoise2D:Noise
         let nearpoint_disp:Math.DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
                                             abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
 
-        var r2:Double = self.distance(from: sample, generating_point: near)
+        var r2:Double = self.distance2(from: sample, generating_point: near)
 
         @inline(__always)
         func _inspect(generating_point:Math.IntV2, dx:Double = 0, dy:Double = 0)
         {
             if dx*dx + dy*dy < r2
             {
-                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
+                r2 = min(r2, self.distance2(from: sample, generating_point: generating_point))
             }
         }
 
@@ -192,7 +192,7 @@ struct CellNoise3D:Noise
     }
 
     private
-    func distance(from sample_point:Math.DoubleV3, generating_point:Math.IntV3) -> Double
+    func distance2(from sample_point:Math.DoubleV3, generating_point:Math.IntV3) -> Double
     {
         let hash:Int = self.permutation_table.hash(generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
@@ -248,7 +248,7 @@ struct CellNoise3D:Noise
                                             abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
                                             abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
 
-        var r2:Double = self.distance(from: sample, generating_point: near)
+        var r2:Double = self.distance2(from: sample, generating_point: near)
 
         @inline(__always)
         func _inspect_cell(offset:Math.IntV3)
@@ -286,7 +286,7 @@ struct CellNoise3D:Noise
             let generating_point:Math.IntV3  = (near.a + quadrant.a*offset.a,
                                                 near.b + quadrant.b*offset.b,
                                                 near.c + quadrant.c*offset.c)
-            r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
+            r2 = min(r2, self.distance2(from: sample, generating_point: generating_point))
         }
 
         // check each cell group, exiting early if we are guaranteed to have found
