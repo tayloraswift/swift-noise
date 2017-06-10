@@ -42,10 +42,9 @@ struct CellNoise2D:Noise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let sample:DoubleV2 = (x * self.frequency, y * self.frequency)
-
-        let bin:IntV2       = (floor(sample.x), floor(sample.y)),
-            offset:DoubleV2 = (sample.x - Double(bin.a), sample.y - Double(bin.b))
+        let sample:DoubleV2     = (x * self.frequency      , y * self.frequency),
+            bin:IntV2           = (floor(sample.x)         , floor(sample.y)),
+            sample_rel:DoubleV2 = (sample.x - Double(bin.a), sample.y - Double(bin.b))
 
         // determine kernel
 
@@ -80,17 +79,17 @@ struct CellNoise2D:Noise
         // square since it cannot produce a feature point closer than we have already
         // found.
 
-        let quadrant:IntV2 = (offset.x > 0.5 ? 1 : -1, offset.y > 0.5 ? 1 : -1),
+        let quadrant:IntV2 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1),
             near:IntV2     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1),
-            far:IntV2      = (near.a - quadrant.a, near.b - quadrant.b)
+            far:IntV2      = (near.a - quadrant.a          , near.b - quadrant.b)
 
-        let nearpoint_disp:DoubleV2 = (abs(offset.x - Double((quadrant.a + 1) >> 1)),
-                                       abs(offset.y - Double((quadrant.b + 1) >> 1)))
+        let nearpoint_disp:DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
+                                       abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
         @inline(__always)
-        func test(generating_point:IntV2, dx:Double = 0, dy:Double = 0)
+        func _inspect(generating_point:IntV2, dx:Double = 0, dy:Double = 0)
         {
             if dx*dx + dy*dy < r2
             {
@@ -98,16 +97,19 @@ struct CellNoise2D:Noise
             }
         }
 
+        // Cell group:
+        //                 within r^2 = 0.25
+        // cumulative sample coverage = 65.50%
+
         // A points
-        test(generating_point: (near.a, far.b), dy: nearpoint_disp.y - 0.5)
-        test(generating_point: (far.a, near.b), dx: nearpoint_disp.x - 0.5)
+        _inspect(generating_point: (near.a, far.b), dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: (far.a, near.b), dx: nearpoint_disp.x - 0.5)
 
         // far point
-        test(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
 
-        // EARLY EXIT: if we have a point within 0.5 units, we don’t have to check
-        // the outer kernel
-        if r2 < 0.25
+        guard r2 > 0.25
+        else
         {
             return self.amplitude * r2
         }
@@ -131,32 +133,37 @@ struct CellNoise2D:Noise
         //        inner ----- B ------- C --------+               ← quadrant
         //                                                             ↓
 
+        // Cell group:
+        //                 within r^2 = 1.0
+        // cumulative sample coverage = 99.96%
         let inner:IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
 
         // B points
-        test(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
-        test(generating_point: (near.a, inner.b), dy: nearpoint_disp.y + 0.5)
+        _inspect(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
+        _inspect(generating_point: (near.a, inner.b), dy: nearpoint_disp.y + 0.5)
 
         // C points
-        test(generating_point: (inner.a, far.b), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
-        test(generating_point: (far.a, inner.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
+        _inspect(generating_point: (inner.a, far.b), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: (far.a, inner.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
 
-        // EARLY EXIT: if we have a point within 1 unit, we don’t have to check
-        // the D points or the E points
-        if r2 < 1
+        guard r2 > 1.0
+        else
         {
             return self.amplitude * r2
         }
 
+        // Cell group:
+        //                 within r^2 = 2.0
+        // cumulative sample coverage = 100%
         let outer:IntV2 = (far.a  - quadrant.a, far.b  - quadrant.b)
 
         // D points
-        test(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
-        test(generating_point: (outer.a, near.b), dx: nearpoint_disp.x - 1.5)
+        _inspect(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
+        _inspect(generating_point: (outer.a, near.b), dx: nearpoint_disp.x - 1.5)
 
         // E points
-        test(generating_point: (far.a, outer.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
-        test(generating_point: (outer.a, far.b), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: (far.a, outer.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
+        _inspect(generating_point: (outer.a, far.b), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
 
         return self.amplitude * r2
     }
@@ -228,8 +235,9 @@ struct CellNoise3D:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let sample:DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency),
-            bin:IntV3       = (floor(sample.x), floor(sample.y), floor(sample.z))
+        let sample:DoubleV3     = (x * self.frequency      , y * self.frequency      , z * self.frequency),
+            bin:IntV3           = (floor(sample.x)         , floor(sample.y)         , floor(sample.z)),
+            sample_rel:DoubleV3 = (sample.x - Double(bin.a), sample.y - Double(bin.b), sample.z - Double(bin.c))
 
         // determine kernel
 
@@ -242,14 +250,12 @@ struct CellNoise3D:Noise
         //   near - quadrant.x ————— near            quadrant →
         //                                              ↓
 
-        let quadrant:IntV3 = (sample.x - Double(bin.a) > 0.5 ? 1 : -1,
-                              sample.y - Double(bin.b) > 0.5 ? 1 : -1,
-                              sample.z - Double(bin.c) > 0.5 ? 1 : -1)
+        let quadrant:IntV3 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1  , sample_rel.z > 0.5 ? 1 : -1)
         let near:IntV3     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1, bin.c + (quadrant.c + 1) >> 1)
 
-        let nearpoint_disp:DoubleV3 = (abs(offset.x - Double((quadrant.a + 1) >> 1)),
-                                       abs(offset.y - Double((quadrant.b + 1) >> 1)),
-                                       abs(offset.z - Double((quadrant.c + 1) >> 1)))
+        let nearpoint_disp:DoubleV3 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
+                                       abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
+                                       abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
@@ -258,9 +264,9 @@ struct CellNoise3D:Noise
         {
             // calculate distance from quadrant volume to kernel cell
             var cell_distance2:Double
-            if cell_offset.a != 0
+            if offset.a != 0
             {                                                                // move by 0.5 towards zero
-                let dx:Double = nearpoint_disp.x + Double(cell_offset.a) + (cell_offset.a > 0 ? -0.5 : 0.5)
+                let dx:Double = nearpoint_disp.x + Double(offset.a) + (offset.a > 0 ? -0.5 : 0.5)
                 cell_distance2 = dx*dx
             }
             else
@@ -268,15 +274,15 @@ struct CellNoise3D:Noise
                 cell_distance2 = 0
             }
 
-            if cell_offset.b != 0
+            if offset.b != 0
             {                                                                // move by 0.5 towards zero
-                let dy:Double = nearpoint_disp.y + Double(cell_offset.b) + (cell_offset.b > 0 ? -0.5 : 0.5)
+                let dy:Double = nearpoint_disp.y + Double(offset.b) + (offset.b > 0 ? -0.5 : 0.5)
                 cell_distance2 += dy*dy
             }
 
-            if cell_offset.c != 0
+            if offset.c != 0
             {                                                                // move by 0.5 towards zero
-                let dz:Double = nearpoint_disp.z + Double(cell_offset.c) + (cell_offset.c > 0 ? -0.5 : 0.5)
+                let dz:Double = nearpoint_disp.z + Double(offset.c) + (offset.c > 0 ? -0.5 : 0.5)
                 cell_distance2 += dz*dz
             }
 
@@ -286,9 +292,9 @@ struct CellNoise3D:Noise
                 return
             }
 
-            let generating_point:IntV3 = (near.a + quadrant.a*cell_offset.a,
-                                          near.b + quadrant.b*cell_offset.b,
-                                          near.c + quadrant.c*cell_offset.c)
+            let generating_point:IntV3 = (near.a + quadrant.a*offset.a,
+                                          near.b + quadrant.b*offset.b,
+                                          near.c + quadrant.c*offset.c)
             r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
         }
 
@@ -316,11 +322,11 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 0.5
         // cumulative sample coverage = 88.60%
-        for cell_offset in [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
-                            (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
-                            (1, -1, -1), (-1, 1, -1), (-1, -1,  1)]
+        for offset in  [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
+                        (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
+                        (1, -1, -1), (-1, 1, -1), (-1, -1,  1)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 0.5
         else
@@ -331,9 +337,9 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 0.75
         // cumulative sample coverage = 98.26%
-        for cell_offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
+        for offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 0.75
         else
@@ -354,11 +360,11 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 1.25
         // cumulative sample coverage > 99.99%
-        for cell_offset in [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
-                            ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
-                            (-2, -1, -1), (-1, -2, -1), (-1, -1, -2)]
+        for offset in  [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
+                        ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
+                        (-2, -1, -1), (-1, -2, -1), (-1, -1, -2)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 1.25
         else
@@ -369,10 +375,10 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 1.5
         // cumulative sample coverage > 99.99%
-        for cell_offset in [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
-                            (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
+        for offset in  [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
+                        (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 1.5
         else
@@ -395,9 +401,9 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 2.25
         // cumulative sample coverage > 99.99%
-        for cell_offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
+        for offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 2.25
         else
@@ -408,11 +414,11 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 2.5
         // cumulative sample coverage > 99.99%
-        for cell_offset in [(2, 0, 0), (0, 2, 0), (0, 0, 2),
-                            (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
-                            (1, -2, -2), (2, -1, -1), (-2, -2, 1), (-1, -1,  2), (-2, 1, -2), (-1,  2, -1)]
+        for offset in  [(2, 0, 0), (0, 2, 0), (0, 0, 2),
+                        (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
+                        (1, -2, -2), (2, -1, -1), (-2, -2, 1), (-1, -1,  2), (-2, 1, -2), (-1,  2, -1)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 2.5
         else
@@ -423,10 +429,10 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 2.75
         // cumulative sample coverage > 99.99%
-        for cell_offset in [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
-                            (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
+        for offset in  [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
+                        (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         guard r2 > 2.75
         else
@@ -437,9 +443,9 @@ struct CellNoise3D:Noise
         // Cell group:
         //                 within r^2 = 3.0
         // cumulative sample coverage = 100%
-        for cell_offset in [(2, 1, 1), (1, 2, 1), (1, 1, 2)]
+        for offset in [(2, 1, 1), (1, 2, 1), (1, 1, 2)]
         {
-            _inspect_cell(offset: cell_offset)
+            _inspect_cell(offset: offset)
         }
         return self.amplitude * r2
     }
