@@ -35,6 +35,7 @@
 
 ![](super_simplex3D.png)
 ![](voronoi3D.png)
+![](cells3D.png)
 ![](poisson.png)
 
 ### A note on building

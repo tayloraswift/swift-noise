@@ -256,11 +256,13 @@ struct RandomXORShift
     }
 }
 
+public
 struct PermutationTable
 {
     private
     let permut:[UInt8] // keep these small to minimize cache misses
 
+    public
     init(seed:Int)
     {
         var permutations:[UInt8] = [UInt8](0 ... 255),
@@ -282,4 +284,8 @@ struct PermutationTable
     {
         return Int(self.permut[self.hash((n3.a, n3.b)) ^ (n3.c & 255)])
     }
+
+    public func hash(_ h1:Int)                     -> UInt8 { return self.permut[h1 & 255] }
+    public func hash(_ h1:Int, _ h2:Int)           -> UInt8 { return self.permut[Int(self.hash(h1    )) ^ (h2 & 255)] }
+    public func hash(_ h1:Int, _ h2:Int, _ h3:Int) -> UInt8 { return self.permut[Int(self.hash(h1, h2)) ^ (h3 & 255)] }
 }
