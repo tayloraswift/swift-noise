@@ -1,6 +1,9 @@
 import func Glibc.sin
 import func Glibc.cos
 
+fileprivate let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1)
+fileprivate let STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
+
 fileprivate
 protocol GradientNoise2D:Noise
 {
@@ -71,8 +74,8 @@ struct SimplexNoise2D:GradientNoise2D
             v:Double = y + squish_offset
 
         // get integral (u, v) coordinates of the rhombus
-        let ub:Int = floor(u),
-            vb:Int = floor(v)
+        let ub:Int = Math.ifloor(u),
+            vb:Int = Math.ifloor(v)
 
         //   (0, 0) ----- (1, 0)
         //       \    A    / \
@@ -354,8 +357,8 @@ struct SuperSimplexNoise2D:GradientNoise2D
         //                       (1, 2)
 
         // use the (u, v) coordinates to bin the triangle
-        let ub:Int = floor(u),
-            vb:Int = floor(v)
+        let ub:Int = Math.ifloor(u),
+            vb:Int = Math.ifloor(v)
 
         // get relative offsets from the top-left corner of the square (in (u, v) space)
         let du0:Double = u - Double(ub),
@@ -618,12 +621,12 @@ struct SuperSimplexNoise3D:Noise
             w2:Double = w1 + 512.5
 
         // get integral (u, v, w) cube coordinates (can Swift vectorize this??)
-        let ub1:Int = floor(u1),
-            vb1:Int = floor(v1),
-            wb1:Int = floor(w1),
-            ub2:Int = floor(u2),
-            vb2:Int = floor(v2),
-            wb2:Int = floor(w2)
+        let ub1:Int = Math.ifloor(u1),
+            vb1:Int = Math.ifloor(v1),
+            wb1:Int = Math.ifloor(w1),
+            ub2:Int = Math.ifloor(u2),
+            vb2:Int = Math.ifloor(v2),
+            wb2:Int = Math.ifloor(w2)
 
         // get offsets inside the cubes from the cube origins
         let du1:Double = u1 - Double(ub1),

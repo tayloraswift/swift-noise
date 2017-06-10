@@ -1,11 +1,3 @@
-func floor(_ x:Double) -> Int
-{
-    return x > 0 ? Int(x) : Int(x) - 1
-}
-
-let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1)
-let STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
-
 public
 protocol Noise
 {
@@ -52,40 +44,13 @@ extension Noise
     }
 }
 
-struct PermutationTable
+enum Math
 {
-    private
-    let permut:[UInt8] // keep these small to minimize cache misses
-
-    init(seed:Int)
+    @inline(__always)
+    static
+    func ifloor(_ x:Double) -> Int
     {
-        var permutations:[UInt8] = [UInt8](0 ... 255),
-            state128:(UInt32, UInt32, UInt32, UInt32) = (1, 0, UInt32(extendingOrTruncating: seed >> 32), UInt32(extendingOrTruncating: seed))
-        for i in 0 ..< 255 - 1
-        {
-            var t:UInt32 = state128.3
-            t ^= t &<< 11
-            t ^= t &>> 8
-            state128.3 = state128.2
-            state128.2 = state128.1
-            state128.1 = state128.0
-            t ^= state128.0
-            t ^= state128.0 &>> 19
-            state128.0 = t
-            permutations.swapAt(i, Int(t) & 255)
-        }
-
-        self.permut = permutations
-    }
-
-    func hash(_ n1:Int, _ n2:Int) -> Int
-    {
-        return Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
-    }
-
-    func hash(_ n1:Int, _ n2:Int, _ n3:Int) -> Int
-    {
-        return Int(self.permut[self.hash(n1, n2) ^ (n3 & 255)])
+        return x > 0 ? Int(x) : Int(x) - 1
     }
 }
 
@@ -149,5 +114,77 @@ struct fBm<Generator:Noise>:Noise
             u += generator.evaluate(x, y, z, w)
         }
         return u
+    }
+}
+
+struct RandomXORShift
+{
+    private
+    var state128:(UInt32, UInt32, UInt32, UInt32)
+
+    var max:UInt32
+    {
+        return UInt32.max
+    }
+
+    init(seed:Int)
+    {
+        self.state128 = (1, 0, UInt32(extendingOrTruncating: seed >> 32), UInt32(extendingOrTruncating: seed))
+    }
+
+    mutating
+    func generate() -> UInt32
+    {
+        var t:UInt32 = self.state128.3
+        t ^= t &<< 11
+        t ^= t &>> 8
+        self.state128.3 = self.state128.2
+        self.state128.2 = self.state128.1
+        self.state128.1 = self.state128.0
+        t ^= self.state128.0
+        t ^= self.state128.0 &>> 19
+        self.state128.0 = t
+        return t
+    }
+
+    mutating
+    func generate(less_than maximum:UInt32) -> UInt32
+    {
+        let upper_bound:UInt32 = UInt32.max - UInt32.max % maximum
+        var x:UInt32 = 0
+        repeat
+        {
+            x = self.generate()
+        } while x >= upper_bound
+
+        return x % maximum
+    }
+}
+
+struct PermutationTable
+{
+    private
+    let permut:[UInt8] // keep these small to minimize cache misses
+
+    init(seed:Int)
+    {
+        var permutations:[UInt8] = [UInt8](0 ... 255),
+            rng:RandomXORShift = RandomXORShift(seed: seed)
+        for i in 0 ..< 255 - 1
+        {
+            permutations.swapAt(i, Int(rng.generate()) & 255)
+        }
+
+        self.permut = permutations
+    }
+
+    func hash(_ n1:Int, _ n2:Int) -> Int
+    {
+        return Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
+    }
+
+    func hash(_ n1:Int, _ n2:Int, _ n3:Int) -> Int
+    {
+        return Int(self.permut[self.hash(n1, n2) ^ (n3 & 255)])
     }
 }

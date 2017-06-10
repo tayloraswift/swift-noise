@@ -1,7 +1,3 @@
-import func Glibc.rand
-import func Glibc.srand
-import var Glibc.RAND_MAX
-
 public
 struct PoissonSampler
 {
@@ -23,7 +19,8 @@ struct PoissonSampler
     let candidate_ring:[Point]
 
     private
-    var candidate_index:Int = 0
+    var rng:RandomXORShift,
+        candidate_index:Int = 0
 
     private
     var candidate_offset:Point
@@ -31,17 +28,14 @@ struct PoissonSampler
         return self.candidate_ring[self.candidate_index]
     }
 
-    //private
-    //var grid:[Bool] = []
-
     private static
     let candidate_table_bitmask:Int = 0b1111111111 // 1023
 
     public
     init(seed:Int = 0)
     {
-        let rand_scale:Double = 4 / Double(CInt.max)
-        srand(UInt32(extendingOrTruncating: seed))
+        self.rng = RandomXORShift(seed: seed)
+        let rand_scale:Double = 4 / Double(self.rng.max)
 
         var candidates_generated:Int = 0
         var candidate_ring:[Point] = []
@@ -49,8 +43,8 @@ struct PoissonSampler
 
         while candidates_generated <= PoissonSampler.candidate_table_bitmask
         {
-            let x:Double  = Double(rand()) * rand_scale - 1,
-                y:Double  = Double(rand()) * rand_scale - 1,
+            let x:Double  = Double(self.rng.generate()) * rand_scale - 1,
+                y:Double  = Double(self.rng.generate()) * rand_scale - 1,
                 r2:Double = x*x + y*y
 
             guard r2 < 4 && r2 > 1
@@ -104,7 +98,7 @@ struct PoissonSampler
                 {
                     points.append(Point(candidate.x * radius, candidate.y * radius))
                     queue.append(candidate)
-                    queue.swapAt(queue.endIndex - 1, PoissonSampler.random(less_than: queue.endIndex))
+                    queue.swapAt(queue.endIndex - 1, Int(self.rng.generate(less_than: UInt32(queue.endIndex))))
                     continue outer
                 }
             }
@@ -151,18 +145,5 @@ struct PoissonSampler
 
         grid[i][j] = candidate
         return true
-    }
-
-    private static
-    func random(less_than maximum:Int) -> Int
-    {
-        let upper_bound:CInt = RAND_MAX - RAND_MAX % CInt(maximum)
-        var x:CInt = 0
-        repeat
-        {
-            x = rand()
-        } while x >= upper_bound
-
-        return Int(x) % maximum
     }
 }
