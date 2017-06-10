@@ -66,8 +66,9 @@ struct PoissonSampler
         let normalized_width:Double  = Double(width ) / radius,
             normalized_height:Double = Double(height) / radius,
             grid_width:Int  = Int((2.squareRoot() * normalized_width ).rounded(.up)),
-            grid_height:Int = Int((2.squareRoot() * normalized_height).rounded(.up))
-        var grid = [[Math.DoubleV2?]](repeating: [Math.DoubleV2?](repeating: nil, count: grid_width + 4), count: grid_height + 4)
+            grid_height:Int = Int((2.squareRoot() * normalized_height).rounded(.up)),
+            grid_stride:Int = grid_width + 4
+        var grid = [Math.DoubleV2?](repeating: nil, count: grid_stride * (grid_height + 4))
 
         var queue:[Math.DoubleV2]
         if let seed:Math.DoubleV2 = seed
@@ -93,7 +94,7 @@ struct PoissonSampler
                     continue
                 }
 
-                if PoissonSampler.attempt_insert(candidate: candidate, into_grid: &grid)
+                if PoissonSampler.attempt_insert(candidate: candidate, into_grid: &grid, grid_stride: grid_stride)
                 {
                     points.append((candidate.x * radius, candidate.y * radius))
                     queue.append(candidate)
@@ -108,22 +109,28 @@ struct PoissonSampler
     }
 
     private static
-    func attempt_insert(candidate:Math.DoubleV2, into_grid grid:inout [[Math.DoubleV2?]]) -> Bool
+    func attempt_insert(candidate:Math.DoubleV2, into_grid grid:inout [Math.DoubleV2?], grid_stride:Int) -> Bool
     {
-        let i:Int = Int(candidate.y * 2.squareRoot()) + 2,
-            j:Int = Int(candidate.x * 2.squareRoot()) + 2
+        let i:Int      = Int(candidate.y * 2.squareRoot()) + 2,
+            j:Int      = Int(candidate.x * 2.squareRoot()) + 2,
+            center:Int = i * grid_stride + j
 
-        guard grid[i][j] == nil
+        guard grid[center] == nil
         else
         {
             return false
         }
 
-        let ring:[Math.DoubleV2?] = [           grid[i - 2][j - 1], grid[i - 2][j], grid[i - 2][j + 1],
-                            grid[i - 1][j - 2], grid[i - 1][j - 1], grid[i - 1][j], grid[i - 1][j + 1], grid[i - 1][j + 2],
-                            grid[i    ][j - 2], grid[i    ][j - 1],                 grid[i    ][j + 1], grid[i    ][j + 2],
-                            grid[i + 1][j - 2], grid[i + 1][j - 1], grid[i + 1][j], grid[i + 1][j + 1], grid[i + 1][j + 2],
-                                                grid[i + 2][j - 1], grid[i + 2][j], grid[i + 2][j + 1]]
+        let base:(Int, Int, Int, Int) = (center - 2*grid_stride,
+                                         center -   grid_stride,
+                                         center +   grid_stride,
+                                         center + 2*grid_stride)
+
+        let ring:[Math.DoubleV2?] = [         grid[base.0 - 1], grid[base.0], grid[base.0 + 1],
+                            grid[base.1 - 2], grid[base.1 - 1], grid[base.1], grid[base.1 + 1], grid[base.1 + 2],
+                            grid[center - 2], grid[center - 1],               grid[center + 1], grid[center + 2],
+                            grid[base.2 - 2], grid[base.2 - 1], grid[base.2], grid[base.2 + 1], grid[base.2 + 2],
+                                              grid[base.3 - 1], grid[base.3], grid[base.3 + 1]]
         for cell:Math.DoubleV2? in ring
         {
             guard let occupant:Math.DoubleV2 = cell
@@ -141,7 +148,7 @@ struct PoissonSampler
             }
         }
 
-        grid[i][j] = candidate
+        grid[center] = candidate
         return true
     }
 }
