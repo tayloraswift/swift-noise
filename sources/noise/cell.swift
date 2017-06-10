@@ -253,6 +253,10 @@ struct CellNoise3D:Noise
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
+        // the following unrolled code is not actually necessary — the loop at the
+        // bottom of the function is capable of handling all cases, but unrolling
+        // it partially results in an enormous performance gain, about a factor
+        // of 7 over the pure loop version.
         @inline(__always)
         func test(generating_point:IntV3, dx:Double = 0, dy:Double = 0, dz:Double = 0)
         {
@@ -274,7 +278,7 @@ struct CellNoise3D:Noise
 
         test(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
 
-        // Testing shows about 47.85% of samples are eliminated by here
+        // EARLY EXIT: Testing shows about 47.85% of samples are eliminated by here
         // (0.25, [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
         //         (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0,  1), (-1,  1, 0), (1, -1, 0),
         //         (1, -1, -1), (-1, 1, -1), (-1, -1,  1)])
@@ -300,7 +304,7 @@ struct CellNoise3D:Noise
         test(generating_point: (far.a, inner.b, far.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
         test(generating_point: (far.a, far.b, inner.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
 
-        // Testing shows about 88.60% of samples are eliminated by here
+        // EARLY EXIT: Testing shows about 88.60% of samples are eliminated by here
         // (0.5 , [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)])
         guard r2 > 0.5
         else
@@ -316,7 +320,7 @@ struct CellNoise3D:Noise
         test(generating_point: (inner.a, far.b, inner.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
         test(generating_point: (inner.a, inner.b, far.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
 
-        // Testing shows about 98.26% of samples are eliminated by here
+        // EARLY EXIT: Testing shows about 98.26% of samples are eliminated by here
         // (0.75, [(1, 1, 1)])
         guard r2 > 0.75
         else
@@ -353,10 +357,11 @@ struct CellNoise3D:Noise
 
         for (kernel_radius2, cell_offsets):(r2:Double, cell_offsets:[(Int, Int, Int)]) in kernel
         {
+            // EARLY EXIT
             guard kernel_radius2 < r2
             else
             {
-                break // EARLY EXIT
+                break
             }
 
             for cell_offset:IntV3 in cell_offsets
