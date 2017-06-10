@@ -49,7 +49,7 @@ t0 = clock()
 pixbuf = V3.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 0)
 print(clock() - t0)
 try png_encode(path: "voronoi3D.png", raw_data: pixbuf, properties: png_properties)
-
+print(1 - Double(CellNoise3D._ccount) / Double(CellNoise3D._ctotal))
 
 let S:fBm<SimplexNoise2D> = fBm<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
