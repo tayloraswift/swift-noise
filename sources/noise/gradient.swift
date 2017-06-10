@@ -238,52 +238,12 @@ struct SuperSimplexNoise2D:GradientNoise2D
         var points:[LatticePoint] = []
             points.reserveCapacity(32)
 
-        for n in 0 ..< 8
+        for (i1, j1, i2, j2):(Int, Int, Int, Int) in
+        [
+            (-1, 0, 0, -1), (0, 1, 1, 0), (1, 0, 0, -1), (2, 1, 1, 0),
+            (-1, 0, 0,  1), (0, 1, 1, 2), (1, 0, 0,  1), (2, 1, 1, 2)
+        ]
         {
-            let i1:Int, j1:Int,
-                i2:Int, j2:Int
-
-            if n & 1 != 0
-            {
-                if n & 2 != 0
-                {
-                    i1 =  2; j1 =  1
-                }
-                else
-                {
-                    i1 =  0; j1 =  1
-                }
-
-                if n & 4 != 0
-                {
-                    i2 =  1; j2 =  2
-                }
-                else
-                {
-                    i2 =  1; j2 =  0
-                }
-            }
-            else
-            {
-                if n & 2 != 0
-                {
-                    i1 =  1; j1 =  0
-                }
-                else
-                {
-                    i1 = -1; j1 =  0
-                }
-
-                if n & 4 != 0
-                {
-                    i2 =  0; j2 =  1
-                }
-                else
-                {
-                    i2 =  0; j2 = -1
-                }
-            }
-
             points.append(LatticePoint(u:  0, v:  0))
             points.append(LatticePoint(u:  1, v:  1))
             points.append(LatticePoint(u: i1, v: j1))
