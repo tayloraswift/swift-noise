@@ -253,13 +253,91 @@ struct CellNoise3D:Noise
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
+        @inline(__always)
+        func test(generating_point:IntV3, dx:Double = 0, dy:Double = 0, dz:Double = 0)
+        {
+            if dx*dx + dy*dy + dz*dz < r2
+            {
+                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
+            }
+        }
+
+        // (0.0 , [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (0, -1, -1), (-1, 0, -1), (-1, -1, 0), (-1, -1, -1)])
+        let far:IntV3 = (near.a - quadrant.a, near.b - quadrant.b, near.c - quadrant.c)
+        test(generating_point: (far.a, near.b, near.c), dx: nearpoint_disp.x - 0.5)
+        test(generating_point: (near.a, far.b, near.c), dy: nearpoint_disp.y - 0.5)
+        test(generating_point: (near.a, near.b, far.c), dz: nearpoint_disp.z - 0.5)
+
+        test(generating_point: (near.a, far.b, far.c), dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (far.a, near.b, far.c), dx: nearpoint_disp.x - 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (far.a, far.b, near.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
+
+        test(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
+
+        // Testing shows about 47.85% of samples are eliminated by here
+        // (0.25, [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
+        //         (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0,  1), (-1,  1, 0), (1, -1, 0),
+        //         (1, -1, -1), (-1, 1, -1), (-1, -1,  1)])
+        guard r2 > 0.25
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        let inner:IntV3 = (near.a + quadrant.a, near.b + quadrant.b, near.c + quadrant.c)
+        test(generating_point: (inner.a, near.b, near.c), dx: nearpoint_disp.x + 0.5)
+        test(generating_point: (near.a, inner.b, near.c), dy: nearpoint_disp.y + 0.5)
+        test(generating_point: (near.a, near.b, inner.c), dz: nearpoint_disp.z + 0.5)
+
+        test(generating_point: (near.a, far.b, inner.c), dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (near.a, inner.b, far.c), dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (inner.a, near.b, far.c), dx: nearpoint_disp.x + 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (far.a, near.b, inner.c), dx: nearpoint_disp.x - 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (far.a, inner.b, near.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
+        test(generating_point: (inner.a, far.b, near.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
+
+        test(generating_point: (inner.a, far.b, far.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (far.a, inner.b, far.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
+        test(generating_point: (far.a, far.b, inner.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
+
+        // Testing shows about 88.60% of samples are eliminated by here
+        // (0.5 , [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)])
+        guard r2 > 0.5
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        test(generating_point: (near.a, inner.b, inner.c), dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (inner.a, near.b, inner.c), dx: nearpoint_disp.x + 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (inner.a, inner.b, near.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5)
+
+        test(generating_point: (far.a, inner.b, inner.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (inner.a, far.b, inner.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
+        test(generating_point: (inner.a, inner.b, far.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
+
+        // Testing shows about 98.26% of samples are eliminated by here
+        // (0.75, [(1, 1, 1)])
+        guard r2 > 0.75
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        test(generating_point: inner, dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
+
+        // Testing shows about 99.94% of samples are eliminated by here
+
+        // The following loop is responsible for about 25% of the noise generator’s
+        // runtime. While it is possible to unroll the rest of it, we run up against
+        // diminishing returns.
         let kernel:[(r2:Double, cell_offsets:[(Int, Int, Int)])] =
         [
-            (0.0 , [/*(0, 0, 0), */(-1, 0, 0), (0, -1, 0), (-1, -1, 0), (0, 0, -1), (-1, 0, -1), (0, -1, -1), (-1, -1, -1)]),
-            (0.25, [(0, 0, 1), (-1, 0, 1), (0, -1, 1), (-1, -1, 1), (0, 1, 0), (-1, 1, 0), (1, 0, 0), (1, -1, 0),
-                    (0, 1, -1), (-1, 1, -1), (1, 0, -1), (1, -1, -1)]),
-            (0.5 , [(0, 1, 1), (-1, 1, 1), (1, 0, 1), (1, -1, 1), (1, 1, 0), (1, 1, -1)]),
-            (0.75, [(1, 1, 1)]),
+            // (0.0 , [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (-1, -1, 0), (-1, 0, -1), (0, -1, -1), (-1, -1, -1)]),
+            // (0.25, [(1, 0, 0), (0, 1, 0), (0, 0, 1), (-1, 0, 1), (0, -1, 1), (-1, -1, 1), (-1, 1, 0), (1, -1, 0),
+            //         (0, 1, -1), (-1, 1, -1), (1, 0, -1), (1, -1, -1)]),
+            // (0.5 , [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]),
+            // (0.75, [(1, 1, 1)]),
             (1.0 , [(-2, 0, 0), (-2, -1, 0), (0, -2, 0), (-1, -2, 0), (-2, 0, -1), (-2, -1, -1), (0, -2, -1), (-1, -2, -1),
                     (0, 0, -2), (-1, 0, -2), (0, -1, -2), (-1, -1, -2)]),
             (1.25, [(-2, 0, 1), (-2, -1, 1), (0, -2, 1), (-1, -2, 1), (-2, 1, 0), (1, -2, 0), (-2, 1, -1), (1, -2, -1),
