@@ -228,10 +228,8 @@ struct CellNoise3D:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let sample:DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
-
-        let bin:IntV3       = (floor(sample.x), floor(sample.y), floor(sample.z)),
-            offset:DoubleV3 = (sample.x - Double(bin.a), sample.y - Double(bin.b), sample.z - Double(bin.c))
+        let sample:DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency),
+            bin:IntV3       = (floor(sample.x), floor(sample.y), floor(sample.z))
 
         // determine kernel
 
@@ -244,8 +242,10 @@ struct CellNoise3D:Noise
         //   near - quadrant.x ————— near            quadrant →
         //                                              ↓
 
-        let quadrant:IntV3 = (offset.x > 0.5 ? 1 : -1, offset.y > 0.5 ? 1 : -1, offset.z > 0.5 ? 1 : -1),
-            near:IntV3     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1, bin.c + (quadrant.c + 1) >> 1)
+        let quadrant:IntV3 = (sample.x - Double(bin.a) > 0.5 ? 1 : -1,
+                              sample.y - Double(bin.b) > 0.5 ? 1 : -1,
+                              sample.z - Double(bin.c) > 0.5 ? 1 : -1)
+        let near:IntV3     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1, bin.c + (quadrant.c + 1) >> 1)
 
         let nearpoint_disp:DoubleV3 = (abs(offset.x - Double((quadrant.a + 1) >> 1)),
                                        abs(offset.y - Double((quadrant.b + 1) >> 1)),
@@ -253,156 +253,194 @@ struct CellNoise3D:Noise
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
-        // the following unrolled code is not actually necessary — the loop at the
-        // bottom of the function is capable of handling all cases, but unrolling
-        // it partially results in an enormous performance gain, about a factor
-        // of 7 over the pure loop version.
         @inline(__always)
-        func test(generating_point:IntV3, dx:Double = 0, dy:Double = 0, dz:Double = 0)
+        func _inspect_cell(offset:IntV3)
         {
-            if dx*dx + dy*dy + dz*dz < r2
-            {
-                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
+            // calculate distance from quadrant volume to kernel cell
+            var cell_distance2:Double
+            if cell_offset.a != 0
+            {                                                                // move by 0.5 towards zero
+                let dx:Double = nearpoint_disp.x + Double(cell_offset.a) + (cell_offset.a > 0 ? -0.5 : 0.5)
+                cell_distance2 = dx*dx
             }
+            else
+            {
+                cell_distance2 = 0
+            }
+
+            if cell_offset.b != 0
+            {                                                                // move by 0.5 towards zero
+                let dy:Double = nearpoint_disp.y + Double(cell_offset.b) + (cell_offset.b > 0 ? -0.5 : 0.5)
+                cell_distance2 += dy*dy
+            }
+
+            if cell_offset.c != 0
+            {                                                                // move by 0.5 towards zero
+                let dz:Double = nearpoint_disp.z + Double(cell_offset.c) + (cell_offset.c > 0 ? -0.5 : 0.5)
+                cell_distance2 += dz*dz
+            }
+
+            guard cell_distance2 < r2
+            else
+            {
+                return
+            }
+
+            let generating_point:IntV3 = (near.a + quadrant.a*cell_offset.a,
+                                          near.b + quadrant.b*cell_offset.b,
+                                          near.c + quadrant.c*cell_offset.c)
+            r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
         }
 
-        // (0.0 , [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (0, -1, -1), (-1, 0, -1), (-1, -1, 0), (-1, -1, -1)])
-        let far:IntV3 = (near.a - quadrant.a, near.b - quadrant.b, near.c - quadrant.c)
-        test(generating_point: (far.a, near.b, near.c), dx: nearpoint_disp.x - 0.5)
-        test(generating_point: (near.a, far.b, near.c), dy: nearpoint_disp.y - 0.5)
-        test(generating_point: (near.a, near.b, far.c), dz: nearpoint_disp.z - 0.5)
+        // check each cell group, exiting early if we are guaranteed to have found
+        // the closest point
 
-        test(generating_point: (near.a, far.b, far.c), dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (far.a, near.b, far.c), dx: nearpoint_disp.x - 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (far.a, far.b, near.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
+        // Cell group:
+        //                 within r^2 = 0.25
+        // cumulative sample coverage = 47.85%
+        _inspect_cell(offset: (-1,  0,  0))
+        _inspect_cell(offset: ( 0, -1,  0))
+        _inspect_cell(offset: ( 0,  0, -1))
 
-        test(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
+        _inspect_cell(offset: ( 0, -1, -1))
+        _inspect_cell(offset: (-1,  0, -1))
+        _inspect_cell(offset: (-1, -1,  0))
 
-        // EARLY EXIT: Testing shows about 47.85% of samples are eliminated by here
-        // (0.25, [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
-        //         (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0,  1), (-1,  1, 0), (1, -1, 0),
-        //         (1, -1, -1), (-1, 1, -1), (-1, -1,  1)])
+        _inspect_cell(offset: (-1, -1, -1))
         guard r2 > 0.25
         else
         {
             return self.amplitude * r2
         }
 
-        let inner:IntV3 = (near.a + quadrant.a, near.b + quadrant.b, near.c + quadrant.c)
-        test(generating_point: (inner.a, near.b, near.c), dx: nearpoint_disp.x + 0.5)
-        test(generating_point: (near.a, inner.b, near.c), dy: nearpoint_disp.y + 0.5)
-        test(generating_point: (near.a, near.b, inner.c), dz: nearpoint_disp.z + 0.5)
-
-        test(generating_point: (near.a, far.b, inner.c), dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (near.a, inner.b, far.c), dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (inner.a, near.b, far.c), dx: nearpoint_disp.x + 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (far.a, near.b, inner.c), dx: nearpoint_disp.x - 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (far.a, inner.b, near.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
-        test(generating_point: (inner.a, far.b, near.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
-
-        test(generating_point: (inner.a, far.b, far.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (far.a, inner.b, far.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
-        test(generating_point: (far.a, far.b, inner.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
-
-        // EARLY EXIT: Testing shows about 88.60% of samples are eliminated by here
-        // (0.5 , [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)])
+        // Cell group:
+        //                 within r^2 = 0.5
+        // cumulative sample coverage = 88.60%
+        for cell_offset in [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
+                            (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
+                            (1, -1, -1), (-1, 1, -1), (-1, -1,  1)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
         guard r2 > 0.5
         else
         {
             return self.amplitude * r2
         }
 
-        test(generating_point: (near.a, inner.b, inner.c), dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (inner.a, near.b, inner.c), dx: nearpoint_disp.x + 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (inner.a, inner.b, near.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5)
-
-        test(generating_point: (far.a, inner.b, inner.c), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (inner.a, far.b, inner.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5, dz: nearpoint_disp.z + 0.5)
-        test(generating_point: (inner.a, inner.b, far.c), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z - 0.5)
-
-        // EARLY EXIT: Testing shows about 98.26% of samples are eliminated by here
-        // (0.75, [(1, 1, 1)])
+        // Cell group:
+        //                 within r^2 = 0.75
+        // cumulative sample coverage = 98.26%
+        for cell_offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
         guard r2 > 0.75
         else
         {
             return self.amplitude * r2
         }
 
-        test(generating_point: inner, dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y + 0.5, dz: nearpoint_disp.z + 0.5)
-
-        // Testing shows about 99.94% of samples are eliminated by here
-
-        // The following loop is responsible for about 25% of the noise generator’s
-        // runtime. While it is possible to unroll the rest of it, we run up against
-        // diminishing returns.
-        let kernel:[(r2:Double, cell_offsets:[(Int, Int, Int)])] =
-        [
-            // (0.0 , [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (-1, -1, 0), (-1, 0, -1), (0, -1, -1), (-1, -1, -1)]),
-            // (0.25, [(1, 0, 0), (0, 1, 0), (0, 0, 1), (-1, 0, 1), (0, -1, 1), (-1, -1, 1), (-1, 1, 0), (1, -1, 0),
-            //         (0, 1, -1), (-1, 1, -1), (1, 0, -1), (1, -1, -1)]),
-            // (0.5 , [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]),
-            // (0.75, [(1, 1, 1)]),
-            (1.0 , [(-2, 0, 0), (-2, -1, 0), (0, -2, 0), (-1, -2, 0), (-2, 0, -1), (-2, -1, -1), (0, -2, -1), (-1, -2, -1),
-                    (0, 0, -2), (-1, 0, -2), (0, -1, -2), (-1, -1, -2)]),
-            (1.25, [(-2, 0, 1), (-2, -1, 1), (0, -2, 1), (-1, -2, 1), (-2, 1, 0), (1, -2, 0), (-2, 1, -1), (1, -2, -1),
-                    (0, 1, -2), (-1, 1, -2), (1, 0, -2), (1, -1, -2)]),
-            (1.5 , [(-2, 1, 1), (1, -2, 1), (1, 1, -2)]),
-            (2.0 , [(-2, -2, 0), (-2, -2, -1), (-2, 0, -2), (-2, -1, -2), (0, -2, -2), (-1, -2, -2)]),
-            (2.25, [(0, 0, 2), (-1, 0, 2), (0, -1, 2), (-1, -1, 2), (-2, -2, 1), (0, 2, 0), (-1, 2, 0), (2, 0, 0),
-                    (2, -1, 0), (0, 2, -1), (-1, 2, -1), (2, 0, -1), (2, -1, -1), (-2, 1, -2), (1, -2, -2)]),
-            (2.5 , [(0, 1, 2), (-1, 1, 2), (1, 0, 2), (1, -1, 2), (0, 2, 1), (-1, 2, 1), (2, 0, 1), (2, -1, 1),
-                    (1, 2, 0), (2, 1, 0), (1, 2, -1), (2, 1, -1)]),
-            (2.75, [(1, 1, 2), (1, 2, 1), (2, 1, 1)])
-        ]
-
-        for (kernel_radius2, cell_offsets):(r2:Double, cell_offsets:[(Int, Int, Int)]) in kernel
+        // Cell group:
+        //                 within r^2 = 1.0
+        // cumulative sample coverage = 99.94%
+        _inspect_cell(offset: (1, 1, 1))
+        guard r2 > 1.0
+        else
         {
-            // EARLY EXIT
-            guard kernel_radius2 < r2
-            else
-            {
-                break
-            }
-
-            for cell_offset:IntV3 in cell_offsets
-            {
-                // calculate distance from quadrant volume to kernel cell
-                var cell_distance2:Double
-                if cell_offset.a == 0
-                {
-                    cell_distance2 = 0
-                }
-                else
-                {                                                                // move by 0.5 towards zero
-                    let dx:Double = nearpoint_disp.x + Double(cell_offset.a) + (cell_offset.a > 0 ? -0.5 : 0.5)
-                    cell_distance2 = dx*dx
-                }
-
-                if cell_offset.b != 0
-                {                                                                // move by 0.5 towards zero
-                    let dy:Double = nearpoint_disp.y + Double(cell_offset.b) + (cell_offset.b > 0 ? -0.5 : 0.5)
-                    cell_distance2 += dy*dy
-                }
-
-                if cell_offset.c != 0
-                {                                                                // move by 0.5 towards zero
-                    let dz:Double = nearpoint_disp.z + Double(cell_offset.c) + (cell_offset.c > 0 ? -0.5 : 0.5)
-                    cell_distance2 += dz*dz
-                }
-
-                guard cell_distance2 < r2
-                else
-                {
-                    continue
-                }
-
-                let generating_point:IntV3 = (near.a + quadrant.a*cell_offset.a,
-                                              near.b + quadrant.b*cell_offset.b,
-                                              near.c + quadrant.c*cell_offset.c)
-                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
-            }
+            return self.amplitude * r2
         }
 
+        // Cell group:
+        //                 within r^2 = 1.25
+        // cumulative sample coverage > 99.99%
+        for cell_offset in [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
+                            ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
+                            (-2, -1, -1), (-1, -2, -1), (-1, -1, -2)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
+        guard r2 > 1.25
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 1.5
+        // cumulative sample coverage > 99.99%
+        for cell_offset in [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
+                            (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
+        guard r2 > 1.5
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 2.0
+        // cumulative sample coverage > 99.99%
+        _inspect_cell(offset: (-2,  1,  1))
+        _inspect_cell(offset: ( 1, -2,  1))
+        _inspect_cell(offset: ( 1,  1, -2))
+        guard r2 > 2.0
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 2.25
+        // cumulative sample coverage > 99.99%
+        for cell_offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
+        guard r2 > 2.25
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 2.5
+        // cumulative sample coverage > 99.99%
+        for cell_offset in [(2, 0, 0), (0, 2, 0), (0, 0, 2),
+                            (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
+                            (1, -2, -2), (2, -1, -1), (-2, -2, 1), (-1, -1,  2), (-2, 1, -2), (-1,  2, -1)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
+        guard r2 > 2.5
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 2.75
+        // cumulative sample coverage > 99.99%
+        for cell_offset in [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
+                            (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
+        guard r2 > 2.75
+        else
+        {
+            return self.amplitude * r2
+        }
+
+        // Cell group:
+        //                 within r^2 = 3.0
+        // cumulative sample coverage = 100%
+        for cell_offset in [(2, 1, 1), (1, 2, 1), (1, 1, 2)]
+        {
+            _inspect_cell(offset: cell_offset)
+        }
         return self.amplitude * r2
     }
 
