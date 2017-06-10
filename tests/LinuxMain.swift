@@ -29,7 +29,7 @@ var t0:Int
 var poisson = PoissonSampler(seed: 0)
 t0 = clock()
 pixbuf = [UInt8](repeating: 0, count: viewer_size * viewer_size)
-for point:PoissonSampler.Point in poisson.generate(radius: 10, width: viewer_size, height: viewer_size)
+for point:(x:Double, y:Double) in poisson.generate(radius: 10, width: viewer_size, height: viewer_size)
 {
     pixbuf[Int(point.y) * viewer_size + Int(point.x)] = 255
 }

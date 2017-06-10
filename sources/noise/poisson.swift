@@ -16,14 +16,14 @@ struct PoissonSampler
     }
 
     private
-    let candidate_ring:[Point]
+    let candidate_ring:[Math.DoubleV2]
 
     private
     var rng:RandomXORShift,
         candidate_index:Int = 0
 
     private
-    var candidate_offset:Point
+    var candidate_offset:Math.DoubleV2
     {
         return self.candidate_ring[self.candidate_index]
     }
@@ -38,7 +38,7 @@ struct PoissonSampler
         let rand_scale:Double = 4 / Double(self.rng.max)
 
         var candidates_generated:Int = 0
-        var candidate_ring:[Point] = []
+        var candidate_ring:[Math.DoubleV2] = []
             candidate_ring.reserveCapacity(PoissonSampler.candidate_table_bitmask + 1)
 
         while candidates_generated <= PoissonSampler.candidate_table_bitmask
@@ -53,7 +53,7 @@ struct PoissonSampler
                 continue
             }
 
-            candidate_ring.append(Point(x, y))
+            candidate_ring.append((x, y))
             candidates_generated += 1
         }
 
@@ -61,31 +61,30 @@ struct PoissonSampler
     }
 
     public mutating
-    func generate(radius:Double, width:Int, height:Int, k:Int = 32, seed:Point? = nil) -> [Point]
+    func generate(radius:Double, width:Int, height:Int, k:Int = 32, seed:(Double, Double)? = nil) -> [(Double, Double)]
     {
         let normalized_width:Double  = Double(width ) / radius,
             normalized_height:Double = Double(height) / radius,
             grid_width:Int  = Int((2.squareRoot() * normalized_width ).rounded(.up)),
             grid_height:Int = Int((2.squareRoot() * normalized_height).rounded(.up))
-        var grid:[[Point?]] = [[Point?]](repeating: [Point?](repeating: nil, count: grid_width + 4), count: grid_height + 4)
+        var grid = [[Math.DoubleV2?]](repeating: [Math.DoubleV2?](repeating: nil, count: grid_width + 4), count: grid_height + 4)
 
-        var queue:[Point]
-        if let seed:Point = seed
+        var queue:[Math.DoubleV2]
+        if let seed:Math.DoubleV2 = seed
         {
-            queue = [Point(Double(seed.x) / radius, Double(seed.y) / radius)]
+            queue = [(Double(seed.x) / radius, Double(seed.y) / radius)]
         }
         else
         {
-            queue = [Point(0.5 * normalized_width, 0.5 * normalized_height)]
+            queue = [(0.5 * normalized_width, 0.5 * normalized_height)]
         }
 
-        var points:[Point] = queue
-        outer: while let front:Point = queue.last
+        var points:[(Double, Double)] = queue
+        outer: while let front:Math.DoubleV2 = queue.last
         {
             for _ in 0 ..< k
             {
-                let offset:Point    = self.candidate_offset,
-                    candidate:Point = Point(front.x + offset.x, front.y + offset.y)
+                let candidate:Math.DoubleV2 = Math.add(front, self.candidate_offset)
                 self.candidate_index = (self.candidate_index + 1) & PoissonSampler.candidate_table_bitmask
 
                 guard 0 ..< normalized_width ~= candidate.x && 0 ..< normalized_height ~= candidate.y
@@ -96,7 +95,7 @@ struct PoissonSampler
 
                 if PoissonSampler.attempt_insert(candidate: candidate, into_grid: &grid)
                 {
-                    points.append(Point(candidate.x * radius, candidate.y * radius))
+                    points.append((candidate.x * radius, candidate.y * radius))
                     queue.append(candidate)
                     queue.swapAt(queue.endIndex - 1, Int(self.rng.generate(less_than: UInt32(queue.endIndex))))
                     continue outer
@@ -109,7 +108,7 @@ struct PoissonSampler
     }
 
     private static
-    func attempt_insert(candidate:Point, into_grid grid:inout [[Point?]]) -> Bool
+    func attempt_insert(candidate:Math.DoubleV2, into_grid grid:inout [[Math.DoubleV2?]]) -> Bool
     {
         let i:Int = Int(candidate.y * 2.squareRoot()) + 2,
             j:Int = Int(candidate.x * 2.squareRoot()) + 2
@@ -120,23 +119,22 @@ struct PoissonSampler
             return false
         }
 
-        let ring:[Point?] = [                   grid[i - 2][j - 1], grid[i - 2][j], grid[i - 2][j + 1],
+        let ring:[Math.DoubleV2?] = [           grid[i - 2][j - 1], grid[i - 2][j], grid[i - 2][j + 1],
                             grid[i - 1][j - 2], grid[i - 1][j - 1], grid[i - 1][j], grid[i - 1][j + 1], grid[i - 1][j + 2],
                             grid[i    ][j - 2], grid[i    ][j - 1],                 grid[i    ][j + 1], grid[i    ][j + 2],
                             grid[i + 1][j - 2], grid[i + 1][j - 1], grid[i + 1][j], grid[i + 1][j + 1], grid[i + 1][j + 2],
                                                 grid[i + 2][j - 1], grid[i + 2][j], grid[i + 2][j + 1]]
-        for cell:Point? in ring
+        for cell:Math.DoubleV2? in ring
         {
-            guard let occupant:Point = cell
+            guard let occupant:Math.DoubleV2 = cell
             else
             {
                 continue
             }
 
-            let dx:Double = occupant.x - candidate.x,
-                dy:Double = occupant.y - candidate.y
+            let dv:Math.DoubleV2 = Math.sub(occupant, candidate)
 
-            guard dx * dx + dy * dy > 1
+            guard Math.dot(dv, dv) > 1
             else
             {
                 return false

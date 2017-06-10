@@ -46,11 +46,106 @@ extension Noise
 
 enum Math
 {
+    typealias IntV2    = (a:Int, b:Int)
+    typealias IntV3    = (a:Int, b:Int, c:Int)
+    typealias DoubleV2 = (x:Double, y:Double)
+    typealias DoubleV3 = (x:Double, y:Double, z:Double)
+
+    @inline(__always)
+    private static
+    func fraction(_ x:Double) -> (Int, Double)
+    {
+        let integer:Int = x > 0 ? Int(x) : Int(x) - 1
+        return (integer, x - Double(integer))
+    }
+
     @inline(__always)
     static
-    func ifloor(_ x:Double) -> Int
+    func fraction(_ v:DoubleV2) -> (IntV2, DoubleV2)
     {
-        return x > 0 ? Int(x) : Int(x) - 1
+        let (i1, f1):(Int, Double) = Math.fraction(v.0),
+            (i2, f2):(Int, Double) = Math.fraction(v.1)
+        return ((i1, i2), (f1, f2))
+    }
+
+    @inline(__always)
+    static
+    func fraction(_ v:DoubleV3) -> (IntV3, DoubleV3)
+    {
+        let (i1, f1):(Int, Double) = Math.fraction(v.0),
+            (i2, f2):(Int, Double) = Math.fraction(v.1),
+            (i3, f3):(Int, Double) = Math.fraction(v.2)
+        return ((i1, i2, i3), (f1, f2, f3))
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:IntV2, _ v2:IntV2) -> IntV2
+    {
+        return (v1.a + v2.a, v1.b + v2.b)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:IntV3, _ v2:IntV3) -> IntV3
+    {
+        return (v1.a + v2.a, v1.b + v2.b, v1.c + v2.c)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
+    {
+        return (v1.x + v2.x, v1.y + v2.y)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
+    {
+        return (v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
+    }
+
+    @inline(__always)
+    static
+    func sub(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
+    {
+        return (v1.x - v2.x, v1.y - v2.y)
+    }
+
+    @inline(__always)
+    static
+    func sub(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
+    {
+        return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+    }
+
+    @inline(__always)
+    static
+    func dot(_ v1:DoubleV2, _ v2:DoubleV2) -> Double
+    {
+        return v1.x * v2.x + v1.y * v2.y
+    }
+
+    @inline(__always)
+    static
+    func dot(_ v1:DoubleV3, _ v2:DoubleV3) -> Double
+    {
+        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+    }
+
+    @inline(__always)
+    static
+    func cast_double(_ v:IntV2) -> DoubleV2
+    {
+        return (Double(v.a), Double(v.b))
+    }
+
+    @inline(__always)
+    static
+    func cast_double(_ v:IntV3) -> DoubleV3
+    {
+        return (Double(v.a), Double(v.b), Double(v.c))
     }
 }
 
@@ -178,13 +273,13 @@ struct PermutationTable
         self.permut = permutations
     }
 
-    func hash(_ n1:Int, _ n2:Int) -> Int
+    func hash(_ n2:Math.IntV2) -> Int
     {
-        return Int(self.permut[Int(self.permut[n1 & 255]) ^ (n2 & 255)])
+        return Int(self.permut[Int(self.permut[n2.a & 255]) ^ (n2.b & 255)])
     }
 
-    func hash(_ n1:Int, _ n2:Int, _ n3:Int) -> Int
+    func hash(_ n3:Math.IntV3) -> Int
     {
-        return Int(self.permut[self.hash(n1, n2) ^ (n3 & 255)])
+        return Int(self.permut[self.hash((n3.a, n3.b)) ^ (n3.c & 255)])
     }
 }
