@@ -43,7 +43,7 @@ struct CellNoise2D:Noise
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
         let sample:DoubleV2     = (x * self.frequency      , y * self.frequency),
-            bin:IntV2           = (floor(sample.x)         , floor(sample.y)),
+            bin:IntV2           = (Math.ifloor(sample.x)   , Math.ifloor(sample.y)),
             sample_rel:DoubleV2 = (sample.x - Double(bin.a), sample.y - Double(bin.b))
 
         // determine kernel
@@ -97,7 +97,7 @@ struct CellNoise2D:Noise
             }
         }
 
-        // Cell group:
+        // Cell group I:
         //                 within r^2 = 0.25
         // cumulative sample coverage = 65.50%
 
@@ -133,7 +133,7 @@ struct CellNoise2D:Noise
         //        inner ----- B ------- C --------+               ← quadrant
         //                                                             ↓
 
-        // Cell group:
+        // Cell group II:
         //                 within r^2 = 1.0
         // cumulative sample coverage = 99.96%
         let inner:IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
@@ -152,7 +152,7 @@ struct CellNoise2D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group III:
         //                 within r^2 = 2.0
         // cumulative sample coverage = 100%
         let outer:IntV2 = (far.a  - quadrant.a, far.b  - quadrant.b)
@@ -236,7 +236,7 @@ struct CellNoise3D:Noise
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
         let sample:DoubleV3     = (x * self.frequency      , y * self.frequency      , z * self.frequency),
-            bin:IntV3           = (floor(sample.x)         , floor(sample.y)         , floor(sample.z)),
+            bin:IntV3           = (Math.ifloor(sample.x)   , Math.ifloor(sample.y)   , Math.ifloor(sample.z)),
             sample_rel:DoubleV3 = (sample.x - Double(bin.a), sample.y - Double(bin.b), sample.z - Double(bin.c))
 
         // determine kernel
@@ -301,7 +301,7 @@ struct CellNoise3D:Noise
         // check each cell group, exiting early if we are guaranteed to have found
         // the closest point
 
-        // Cell group:
+        // Cell group I:
         //                 within r^2 = 0.25
         // cumulative sample coverage = 47.85%
         _inspect_cell(offset: (-1,  0,  0))
@@ -319,7 +319,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group II:
         //                 within r^2 = 0.5
         // cumulative sample coverage = 88.60%
         for offset in  [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
@@ -334,7 +334,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group III:
         //                 within r^2 = 0.75
         // cumulative sample coverage = 98.26%
         for offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
@@ -347,7 +347,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group IV:
         //                 within r^2 = 1.0
         // cumulative sample coverage = 99.94%
         _inspect_cell(offset: (1, 1, 1))
@@ -357,7 +357,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group V:
         //                 within r^2 = 1.25
         // cumulative sample coverage > 99.99%
         for offset in  [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
@@ -372,7 +372,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group VI:
         //                 within r^2 = 1.5
         // cumulative sample coverage > 99.99%
         for offset in  [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
@@ -386,7 +386,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group VII:
         //                 within r^2 = 2.0
         // cumulative sample coverage > 99.99%
         _inspect_cell(offset: (-2,  1,  1))
@@ -398,7 +398,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group VIII:
         //                 within r^2 = 2.25
         // cumulative sample coverage > 99.99%
         for offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
@@ -411,7 +411,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group IX:
         //                 within r^2 = 2.5
         // cumulative sample coverage > 99.99%
         for offset in  [(2, 0, 0), (0, 2, 0), (0, 0, 2),
@@ -426,7 +426,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group X:
         //                 within r^2 = 2.75
         // cumulative sample coverage > 99.99%
         for offset in  [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
@@ -440,7 +440,7 @@ struct CellNoise3D:Noise
             return self.amplitude * r2
         }
 
-        // Cell group:
+        // Cell group XI:
         //                 within r^2 = 3.0
         // cumulative sample coverage = 100%
         for offset in [(2, 1, 1), (1, 2, 1), (1, 1, 2)]

@@ -21,7 +21,6 @@ func rgba_from_argb32(_ argb32:[UInt32]) -> [UInt8]
 import func Glibc.clock
 
 
-
 var pixbuf:[UInt8]
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
 
