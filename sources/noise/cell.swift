@@ -2,11 +2,6 @@ public
 struct CellNoise2D:Noise
 {
     private
-    typealias IntV2    = (a:Int, b:Int)
-    private
-    typealias DoubleV2 = (x:Double, y:Double)
-
-    private
     let permutation_table:PermutationTable,
         amplitude:Double,
         frequency:Double
@@ -20,9 +15,9 @@ struct CellNoise2D:Noise
     }
 
     private
-    func distance(from sample_point:DoubleV2, generating_point:IntV2) -> Double
+    func distance(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
     {
-        let hash:Int = self.permutation_table.hash(generating_point.a, generating_point.b)
+        let hash:Int = self.permutation_table.hash(generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
 
         // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
@@ -31,20 +26,19 @@ struct CellNoise2D:Noise
 
         //          0b XXXX YYYY
 
-        let dpx:Double = (Double(hash >> 4         ) - 15/2) * 1/16,
-            dpy:Double = (Double(hash      & 0b1111) - 15/2) * 1/16
+        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15/2) * 1/16,
+                                (Double(hash      & 0b1111) - 15/2) * 1/16)
 
-        let dx:Double = Double(generating_point.a) + dpx - sample_point.x,
-            dy:Double = Double(generating_point.b) + dpy - sample_point.y
-        return dx*dx + dy*dy
+        let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
+        return Math.dot(dv, dv)
     }
 
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let sample:DoubleV2     = (x * self.frequency      , y * self.frequency),
-            bin:IntV2           = (Math.ifloor(sample.x)   , Math.ifloor(sample.y)),
-            sample_rel:DoubleV2 = (sample.x - Double(bin.a), sample.y - Double(bin.b))
+        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
+
+        let (bin, sample_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample)
 
         // determine kernel
 
@@ -79,17 +73,17 @@ struct CellNoise2D:Noise
         // square since it cannot produce a feature point closer than we have already
         // found.
 
-        let quadrant:IntV2 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1),
-            near:IntV2     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1),
-            far:IntV2      = (near.a - quadrant.a          , near.b - quadrant.b)
+        let quadrant:Math.IntV2 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1),
+            near:Math.IntV2     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1),
+            far:Math.IntV2      = (near.a - quadrant.a          , near.b - quadrant.b)
 
-        let nearpoint_disp:DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
-                                       abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
+        let nearpoint_disp:Math.DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
+                                            abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
         @inline(__always)
-        func _inspect(generating_point:IntV2, dx:Double = 0, dy:Double = 0)
+        func _inspect(generating_point:Math.IntV2, dx:Double = 0, dy:Double = 0)
         {
             if dx*dx + dy*dy < r2
             {
@@ -136,7 +130,7 @@ struct CellNoise2D:Noise
         // Cell group II:
         //                 within r^2 = 1.0
         // cumulative sample coverage = 99.96%
-        let inner:IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
+        let inner:Math.IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
 
         // B points
         _inspect(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
@@ -155,7 +149,7 @@ struct CellNoise2D:Noise
         // Cell group III:
         //                 within r^2 = 2.0
         // cumulative sample coverage = 100%
-        let outer:IntV2 = (far.a  - quadrant.a, far.b  - quadrant.b)
+        let outer:Math.IntV2 = (far.a - quadrant.a, far.b - quadrant.b)
 
         // D points
         _inspect(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
@@ -185,11 +179,6 @@ public
 struct CellNoise3D:Noise
 {
     private
-    typealias IntV3    = (a:Int, b:Int, c:Int)
-    private
-    typealias DoubleV3 = (x:Double, y:Double, z:Double)
-
-    private
     let permutation_table:PermutationTable,
         amplitude:Double,
         frequency:Double
@@ -203,9 +192,9 @@ struct CellNoise3D:Noise
     }
 
     private
-    func distance(from sample_point:DoubleV3, generating_point:IntV3) -> Double
+    func distance(from sample_point:Math.DoubleV3, generating_point:Math.IntV3) -> Double
     {
-        let hash:Int = self.permutation_table.hash(generating_point.a, generating_point.b, generating_point.c)
+        let hash:Int = self.permutation_table.hash(generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
 
         // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
@@ -216,14 +205,12 @@ struct CellNoise3D:Noise
 
         //          0b XXX YYY ZZ
 
-        let dpx:Double = (Double(hash >> 5                                         ) - 7/2) * 1/8,
-            dpy:Double = (Double(hash >> 2 & 0b0111                                ) - 7/2) * 1/8,
-            dpz:Double = (Double(hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)) - 7/2) * 1/8
+        let dp:Math.DoubleV3 = ((Double(hash >> 5                                         ) - 7/2) * 1/8,
+                                (Double(hash >> 2 & 0b0111                                ) - 7/2) * 1/8,
+                                (Double(hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)) - 7/2) * 1/8)
 
-        let dx:Double = Double(generating_point.a) + dpx - sample_point.x,
-            dy:Double = Double(generating_point.b) + dpy - sample_point.y,
-            dz:Double = Double(generating_point.c) + dpz - sample_point.z
-        return dx*dx + dy*dy + dz*dz
+        let dv:Math.DoubleV3 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
+        return Math.dot(dv, dv)
     }
 
     public
@@ -235,9 +222,9 @@ struct CellNoise3D:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let sample:DoubleV3     = (x * self.frequency      , y * self.frequency      , z * self.frequency),
-            bin:IntV3           = (Math.ifloor(sample.x)   , Math.ifloor(sample.y)   , Math.ifloor(sample.z)),
-            sample_rel:DoubleV3 = (sample.x - Double(bin.a), sample.y - Double(bin.b), sample.z - Double(bin.c))
+        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+
+        let (bin, sample_rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
 
         // determine kernel
 
@@ -250,17 +237,21 @@ struct CellNoise3D:Noise
         //   near - quadrant.x ————— near            quadrant →
         //                                              ↓
 
-        let quadrant:IntV3 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1  , sample_rel.z > 0.5 ? 1 : -1)
-        let near:IntV3     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1, bin.c + (quadrant.c + 1) >> 1)
+        let quadrant:Math.IntV3  = (sample_rel.x > 0.5 ? 1 : -1,
+                                    sample_rel.y > 0.5 ? 1 : -1,
+                                    sample_rel.z > 0.5 ? 1 : -1)
+        let near:Math.IntV3      = (bin.a + (quadrant.a + 1) >> 1,
+                                    bin.b + (quadrant.b + 1) >> 1,
+                                    bin.c + (quadrant.c + 1) >> 1)
 
-        let nearpoint_disp:DoubleV3 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
-                                       abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
-                                       abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
+        let nearpoint_disp:Math.DoubleV3 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
+                                            abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
+                                            abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
 
         var r2:Double = self.distance(from: sample, generating_point: near)
 
         @inline(__always)
-        func _inspect_cell(offset:IntV3)
+        func _inspect_cell(offset:Math.IntV3)
         {
             // calculate distance from quadrant volume to kernel cell
             var cell_distance2:Double
@@ -292,9 +283,9 @@ struct CellNoise3D:Noise
                 return
             }
 
-            let generating_point:IntV3 = (near.a + quadrant.a*offset.a,
-                                          near.b + quadrant.b*offset.b,
-                                          near.c + quadrant.c*offset.c)
+            let generating_point:Math.IntV3  = (near.a + quadrant.a*offset.a,
+                                                near.b + quadrant.b*offset.b,
+                                                near.c + quadrant.c*offset.c)
             r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
         }
 

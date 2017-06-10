@@ -9,21 +9,21 @@ protocol GradientNoise2D:Noise
 {
     var permutation_table:PermutationTable { get }
 
-    static var gradient_table16:[(Double, Double)] { get }
+    static var gradient_table16:[Math.DoubleV2] { get }
     static var radius:Double { get }
 }
 
 fileprivate
 extension GradientNoise2D
 {
-    func gradient(u:Int, v:Int, dx:Double, dy:Double) -> Double
+    func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
     {
-        let dr:Double = Self.radius - dx*dx - dy*dy
+        let dr:Double = Self.radius - Math.dot(offset, offset)
         if dr > 0
         {
-            let gradient:(Double, Double) = Self.gradient_table16[self.permutation_table.hash(u, v) & 15],
+            let gradient:Math.DoubleV2 = Self.gradient_table16[self.permutation_table.hash(point) & 15],
                 drdr:Double = dr * dr
-            return drdr * drdr * (gradient.0 * dx + gradient.1 * dy)
+            return drdr * drdr * Math.dot(gradient, offset)
         }
         else
         {
@@ -36,7 +36,7 @@ public
 struct SimplexNoise2D:GradientNoise2D
 {
     fileprivate static
-    let gradient_table16:[(Double, Double)] =
+    let gradient_table16:[Math.DoubleV2] =
     [
         (-1, -1),   (1,  0),   (-1,  0),   (1,  1),
         (-1,  1),   (0, -1),    (0,  1),   (1, -1),
@@ -52,7 +52,7 @@ struct SimplexNoise2D:GradientNoise2D
     let permutation_table:PermutationTable
 
     private
-    let amplitude:Double, // this is not necessarily the same amplitude passed into the initializer
+    let amplitude:Double, // not the same amplitude passed into the initializer
         frequency:Double
 
     public
@@ -66,16 +66,15 @@ struct SimplexNoise2D:GradientNoise2D
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let x:Double = x * self.frequency,
-            y:Double = y * self.frequency
-        // transform our coordinate system so that the *simplex* (x, y) forms a rectangular grid (u, v)
-        let squish_offset:Double = (x + y) * SQUISH_2D,
-            u:Double = x + squish_offset,
-            v:Double = y + squish_offset
+        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
+        // transform our coordinate system so that the *simplex* (x, y) forms a
+        // rectangular grid (u, v)
+        let squish_offset:Double    = (sample.x + sample.y) * SQUISH_2D,
+            sample_uv:Math.DoubleV2 = (sample.x + squish_offset, sample.y + squish_offset)
 
-        // get integral (u, v) coordinates of the rhombus
-        let ub:Int = Math.ifloor(u),
-            vb:Int = Math.ifloor(v)
+        // get integral (u, v) coordinates of the rhombus and get position inside
+        // the rhombus relative to (floor(u), floor(v))
+        let (bin, sample_uv_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample_uv)
 
         //   (0, 0) ----- (1, 0)
         //       \    A    / \
@@ -87,7 +86,7 @@ struct SimplexNoise2D:GradientNoise2D
         //                    /   |
         //                  /  D  |
         //                /       |
-        // (ub, vb) = (0, 0) --- (1, 0) -- (2, 0)
+        //    bin = (0, 0) --- (1, 0) -- (2, 0)
         //          /   |      /  |       /
         //        /  E  | A  /  B |  C  /       ← (u, v) coordinates
         //      /       |  /      |   /
@@ -97,101 +96,71 @@ struct SimplexNoise2D:GradientNoise2D
         //              |   /
         //            (0, 2)
 
-        // get relative position inside the rhombus relative to (ub, vb)
-        let du0:Double = u - Double(ub),
-            dv0:Double = v - Double(vb)
-
         // do the same in the original (x, y) coordinate space
 
         // stretch back to get (x, y) coordinates of rhombus origin
-        let stretch_offset:Double = Double(ub + vb) * STRETCH_2D,
-            xb:Double = Double(ub) + stretch_offset,
-            yb:Double = Double(vb) + stretch_offset
+        let stretch_offset:Double = Double(bin.a + bin.b) * STRETCH_2D,
+            origin:Math.DoubleV2 = (Double(bin.a) + stretch_offset, Double(bin.b) + stretch_offset)
 
         // get relative position inside the rhombus relative to (xb, xb)
-        let dx0:Double = x - xb,
-            dy0:Double = y - yb
+        let sample_rel:Math.DoubleV2 = Math.sub(sample, origin)
 
         var Σ:Double = 0 // the value of the noise function, which we will sum up
 
+        @inline(__always)
+        func _inspect(point_offset:Math.IntV2, sample_offset:Math.DoubleV2)
+        {
+            Σ += gradient(from: Math.add(bin, point_offset), at: Math.sub(sample_rel, sample_offset))
+        }
+
         // contribution from (1, 0)
-        Σ += gradient(u : ub + 1,
-                      v : vb,
-                      dx: dx0 - 1 - STRETCH_2D,
-                      dy: dy0     - STRETCH_2D)
+        _inspect(point_offset: (1, 0), sample_offset: (1 + STRETCH_2D, STRETCH_2D))
 
         // contribution from (0, 1)
-        Σ += gradient(u : ub,
-                      v : vb + 1,
-                      dx: dx0     - STRETCH_2D,
-                      dy: dy0 - 1 - STRETCH_2D)
+        _inspect(point_offset: (0, 1), sample_offset: (STRETCH_2D, 1 + STRETCH_2D))
 
         // decide which triangle we are in
-        let uv_sum:Double = du0 + dv0
+        let uv_sum:Double = sample_uv_rel.x + sample_uv_rel.y
         if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
         {
-            Σ += gradient(u : ub  + 1,
-                          v : vb  + 1,
-                          dx: dx0 - 1 - 2*STRETCH_2D,
-                          dy: dy0 - 1 - 2*STRETCH_2D)
+            _inspect(point_offset: (1, 1), sample_offset: (1 + 2*STRETCH_2D, 1 + 2*STRETCH_2D))
 
             let center_dist:Double = 2 - uv_sum
-            if center_dist < du0 || center_dist < dv0
+            if center_dist < sample_uv_rel.x || center_dist < sample_uv_rel.y
             {
-                if du0 > dv0
+                if sample_uv_rel.x > sample_uv_rel.y
                 {
-                    Σ += gradient(u : ub  + 2,
-                                  v : vb     ,
-                                  dx: dx0 - 2 - 2*STRETCH_2D,
-                                  dy: dy0     - 2*STRETCH_2D)
+                    _inspect(point_offset: (2, 0), sample_offset: (2 + 2*STRETCH_2D, 2*STRETCH_2D))
                 }
                 else
                 {
-                    Σ += gradient(u : ub     ,
-                                  v : vb  + 2,
-                                  dx: dx0     - 2*STRETCH_2D,
-                                  dy: dy0 - 2 - 2*STRETCH_2D)
+                    _inspect(point_offset: (0, 2), sample_offset: (2*STRETCH_2D, 2 + 2*STRETCH_2D))
                 }
             }
             else
             {
-                Σ += gradient(u : ub,
-                              v : vb,
-                              dx: dx0,
-                              dy: dy0)
+                Σ += gradient(from: bin, at: sample_rel)
             }
         }
         else
         {
-            Σ += gradient(u : ub,
-                          v : vb,
-                          dx: dx0,
-                          dy: dy0)
+            Σ += gradient(from: bin, at: sample_rel)
 
             let center_dist:Double = 1 - uv_sum
-            if center_dist > du0 || center_dist > dv0
+            if center_dist > sample_uv_rel.x || center_dist > sample_uv_rel.y
             {
-                if du0 > dv0
+                if sample_uv_rel.x > sample_uv_rel.y
                 {
-                    Σ += gradient(u : ub  + 1,
-                                  v : vb  - 1,
-                                  dx: dx0 + 1,
-                                  dy: dy0 - 1)
+                    _inspect(point_offset: (1, -1), sample_offset: (-1, 1))
                 }
                 else
                 {
-                    Σ += gradient(u : ub  - 1,
-                                  v : vb  + 1,
-                                  dx: dx0 - 1,
-                                  dy: dy0 + 1)
+                    _inspect(point_offset: (-1, 1), sample_offset: (1, -1))
                 }
             }
             else
             {
-                Σ += gradient(u : ub  + 1,
-                              v : vb  + 1,
-                              dx: dx0 - 1 - 2*STRETCH_2D,
-                              dy: dy0 - 1 - 2*STRETCH_2D)
+                _inspect(point_offset: (1, 1), sample_offset: (1 + 2*STRETCH_2D, 1 + 2*STRETCH_2D))
             }
         }
 
@@ -214,29 +183,18 @@ struct SimplexNoise2D:GradientNoise2D
 public
 struct SuperSimplexNoise2D:GradientNoise2D
 {
-    private
-    struct LatticePoint
-    {
-        let u:Int,
-            v:Int,
-            dx:Double,
-            dy:Double
-
-        init(u:Int, v:Int)
-        {
-            let stretch_offset:Double = Double(u + v) * SQUISH_2D
-            self.u = u
-            self.v = v
-            self.dx = Double(u) + stretch_offset
-            self.dy = Double(v) + stretch_offset
-        }
-    }
-
     private static
-    let points:[LatticePoint] =
+    let points:[(Math.IntV2, Math.DoubleV2)] =
     {
-        var points:[LatticePoint] = []
+        var points:[(Math.IntV2, Math.DoubleV2)] = []
             points.reserveCapacity(32)
+
+        @inline(__always)
+        func _lattice_point(at point:Math.IntV2) -> (Math.IntV2, Math.DoubleV2)
+        {
+            let stretch_offset:Double = Double(point.a + point.b) * SQUISH_2D
+            return (point, (Double(point.a) + stretch_offset, Double(point.b) + stretch_offset))
+        }
 
         for (i1, j1, i2, j2):(Int, Int, Int, Int) in
         [
@@ -244,19 +202,19 @@ struct SuperSimplexNoise2D:GradientNoise2D
             (-1, 0, 0,  1), (0, 1, 1, 2), (1, 0, 0,  1), (2, 1, 1, 2)
         ]
         {
-            points.append(LatticePoint(u:  0, v:  0))
-            points.append(LatticePoint(u:  1, v:  1))
-            points.append(LatticePoint(u: i1, v: j1))
-            points.append(LatticePoint(u: i2, v: j2))
+            points.append(_lattice_point(at: ( 0,  0)))
+            points.append(_lattice_point(at: ( 1,  1)))
+            points.append(_lattice_point(at: (i1, j1)))
+            points.append(_lattice_point(at: (i2, j2)))
         }
 
         return points
     }()
 
     static
-    let gradient_table16:[(Double, Double)] =
+    let gradient_table16:[Math.DoubleV2] =
     {
-        var gradients:[(Double, Double)] = []
+        var gradients:[Math.DoubleV2] = []
             gradients.reserveCapacity(16)
 
         let dθ:Double = 2 * Double.pi / Double(16)
@@ -289,12 +247,10 @@ struct SuperSimplexNoise2D:GradientNoise2D
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let x:Double = x * self.frequency,
-            y:Double = y * self.frequency
+        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
         // transform our (x, y) coordinate to (u, v) space
-        let stretch_offset:Double = (x + y) * STRETCH_2D,
-            u:Double = x + stretch_offset,
-            v:Double = y + stretch_offset
+        let stretch_offset:Double = (sample.x + sample.y) * STRETCH_2D,
+            sample_uv:Math.DoubleV2 = (sample.x + stretch_offset, sample.y + stretch_offset)
 
         //         (0, 0) ----- (1, 0)
         //           / \    A    /
@@ -316,18 +272,14 @@ struct SuperSimplexNoise2D:GradientNoise2D
         //                        \ |
         //                       (1, 2)
 
-        // use the (u, v) coordinates to bin the triangle
-        let ub:Int = Math.ifloor(u),
-            vb:Int = Math.ifloor(v)
+        // use the (u, v) coordinates to bin the triangle and get relative offsets
+        // from the top-left corner of the square (in (u, v) space)
+        let (bin, sample_uv_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample_uv)
 
-        // get relative offsets from the top-left corner of the square (in (u, v) space)
-        let du0:Double = u - Double(ub),
-            dv0:Double = v - Double(vb)
-
-        let a:Int = du0 + dv0 > 1 ? 1 : 0
+        let a:Int = sample_uv_rel.x + sample_uv_rel.y > 1 ? 1 : 0
         let base_vertex_index:Int = a << 2 |
-            Int((2*du0 - dv0 - Double(a))*0.5 + 1) << 3 |
-            Int((2*dv0 - du0 - Double(a))*0.5 + 1) << 4
+            Int((2*sample_uv_rel.x - sample_uv_rel.y - Double(a))*0.5 + 1) << 3 |
+            Int((2*sample_uv_rel.y - sample_uv_rel.x - Double(a))*0.5 + 1) << 4
         /*
             This bit of code deserves some explanation. OpenSimplex/SuperSimplex
             always samples four vertices. Which four depends on what part of the A–B
@@ -406,17 +358,13 @@ struct SuperSimplexNoise2D:GradientNoise2D
         */
 
         // get the relative offset from (0, 0)
-        let squish_offset:Double = (du0 + dv0) * SQUISH_2D,
-            dx0:Double = du0 + squish_offset,
-            dy0:Double = dv0 + squish_offset
+        let squish_offset:Double = (sample_uv_rel.x + sample_uv_rel.y) * SQUISH_2D,
+            sample_rel:Math.DoubleV2 = (sample_uv_rel.x + squish_offset, sample_uv_rel.y + squish_offset)
 
         var Σ:Double = 0
-        for point in SuperSimplexNoise2D.points[base_vertex_index ..< base_vertex_index + 4]
+        for (point, point_offset) in SuperSimplexNoise2D.points[base_vertex_index ..< base_vertex_index + 4]
         {
-            // get the relative offset from *that* particular point
-            let dx:Double = dx0 - point.dx,
-                dy:Double = dy0 - point.dy
-            Σ += self.gradient(u: ub + point.u, v: vb + point.v, dx: dx, dy: dy)
+            Σ += self.gradient(from: Math.add(bin, point), at: Math.sub(sample_rel, point_offset))
         }
         return self.amplitude * Σ
     }
@@ -437,92 +385,35 @@ struct SuperSimplexNoise2D:GradientNoise2D
 public
 struct SuperSimplexNoise3D:Noise
 {
-    private
-    struct LatticePoint
-    {
-        let u:Int,
-            v:Int,
-            w:Int
-        let du:Double,
-            dv:Double,
-            dw:Double
-
-        init(_ u:Int, _ v:Int, _ w:Int)
-        {
-            self.u = u
-            self.v = v
-            self.w = w
-            self.du = Double(u)
-            self.dv = Double(v)
-            self.dw = Double(w)
-        }
-    }
-
     private static
-    let points:[LatticePoint] =
+    let points:[(Math.IntV3, Math.DoubleV3)] =
     {
-        var points:[LatticePoint] = []
+        var points:[(Math.IntV3, Math.DoubleV3)] = []
             points.reserveCapacity(64)
 
         for n in 0 ..< 16
         {
-            let i1:Int, j1:Int, k1:Int,
-                i2:Int, j2:Int, k2:Int,
-                i3:Int, j3:Int, k3:Int,
-                i4:Int, j4:Int, k4:Int
+            let p1:Math.IntV3 = (    n      & 1,     n      & 1,     n      & 1),
+                p2:Math.IntV3 = (1 - n >> 1 & 1,     n >> 1 & 1,     n >> 1 & 1),
+                p3:Math.IntV3 = (    n >> 2 & 1, 1 - n >> 2 & 1,     n >> 2 & 1),
+                p4:Math.IntV3 = (    n >> 3 & 1,     n >> 3 & 1, 1 - n >> 3 & 1)
 
-            if n & 1 != 0
-            {
-                i1 = 1; j1 = 1; k1 = 1
-            }
-            else
-            {
-                i1 = 0; j1 = 0; k1 = 0
-            }
-
-            if n & 2 != 0
-            {
-                i2 = 0; j2 = 1; k2 = 1
-            }
-            else
-            {
-                i2 = 1; j2 = 0; k2 = 0
-            }
-
-            if n & 4 != 0
-            {
-                i3 = 1; j3 = 0; k3 = 1
-            }
-            else
-            {
-                i3 = 0; j3 = 1; k3 = 0
-            }
-
-            if n & 8 != 0
-            {
-                i4 = 1; j4 = 1; k4 = 0
-            }
-            else
-            {
-                i4 = 0; j4 = 0; k4 = 1
-            }
-
-            points.append(LatticePoint(i1, j1, k1))
-            points.append(LatticePoint(i2, j2, k2))
-            points.append(LatticePoint(i3, j3, k3))
-            points.append(LatticePoint(i4, j4, k4))
+            points.append((p1, Math.cast_double(p1)))
+            points.append((p2, Math.cast_double(p2)))
+            points.append((p3, Math.cast_double(p3)))
+            points.append((p4, Math.cast_double(p4)))
         }
 
         return points
     }()
 
     private static
-    let gradient_table16:[(Double, Double, Double)] =
+    let gradient_table16:[Math.DoubleV3] =
     [
-        (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0),
-        (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
-        (0, 1, 1), (0, -1, 1), (0, 1, -1), (0, -1, -1),
-        (1, 1, 0), (-1, 1, 0), (0, -1, 1), (0, -1, -1)
+        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
+        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
+        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
+        (1, 1, 0), (-1,  1, 0), (0, -1,  1), ( 0, -1, -1)
     ]
 
     private
@@ -541,14 +432,14 @@ struct SuperSimplexNoise3D:Noise
     }
 
     private
-    func gradient(u:Int, v:Int, w:Int, dx:Double, dy:Double, dz:Double) -> Double
+    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
     {
-        let dr:Double = 0.75 - dx*dx - dy*dy - dz*dz
+        let dr:Double = 0.75 - Math.dot(offset, offset)
         if dr > 0
         {
-            let gradient:(Double, Double, Double) = SuperSimplexNoise3D.gradient_table16[self.permutation_table.hash(u, v, w) & 15],
+            let gradient:Math.DoubleV3 = SuperSimplexNoise3D.gradient_table16[self.permutation_table.hash(point) & 15],
                 drdr:Double = dr * dr
-            return drdr * drdr * (gradient.0 * dx + gradient.1 * dy + gradient.2 * dz)
+            return drdr * drdr * Math.dot(gradient, offset)
         }
         else
         {
@@ -565,68 +456,42 @@ struct SuperSimplexNoise3D:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let x:Double = x * self.frequency,
-            y:Double = y * self.frequency,
-            z:Double = z * self.frequency
+        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
 
         // transform our coordinate system so that out rotated lattice (x, y, z)
         // forms an axis-aligned rectangular grid again (u, v, w)
-        let rotation_offset:Double = 2/3 * (x + y + z),
-            u1:Double = rotation_offset - x,
-            v1:Double = rotation_offset - y,
-            w1:Double = rotation_offset - z,
+        let rot_offset:Double = 2/3 * (sample.x + sample.y + sample.z),
+            U1:Math.DoubleV3 = (rot_offset - sample.x, rot_offset - sample.y, rot_offset - sample.z),
         // do the same for an offset cube lattice
-            u2:Double = u1 + 512.5,
-            v2:Double = v1 + 512.5,
-            w2:Double = w1 + 512.5
+            U2:Math.DoubleV3 = (U1.x + 512.5, U1.y + 512.5, U1.z + 512.5)
 
-        // get integral (u, v, w) cube coordinates (can Swift vectorize this??)
-        let ub1:Int = Math.ifloor(u1),
-            vb1:Int = Math.ifloor(v1),
-            wb1:Int = Math.ifloor(w1),
-            ub2:Int = Math.ifloor(u2),
-            vb2:Int = Math.ifloor(v2),
-            wb2:Int = Math.ifloor(w2)
-
-        // get offsets inside the cubes from the cube origins
-        let du1:Double = u1 - Double(ub1),
-            dv1:Double = v1 - Double(vb1),
-            dw1:Double = w1 - Double(wb1),
-            du2:Double = u2 - Double(ub2),
-            dv2:Double = v2 - Double(vb2),
-            dw2:Double = w2 - Double(wb2)
+        // get integral (u, v, w) cube coordinates as well as fractional offsets
+        let (bin1, sample_rel1):(Math.IntV3, Math.DoubleV3) = Math.fraction(U1),
+            (bin2, sample_rel2):(Math.IntV3, Math.DoubleV3) = Math.fraction(U2)
 
         // get nearest points
         let base_vertex_index1:Int =
-            ( du1 + dv1 + dw1 >= 1.5 ?  4 : 0) |
-            (-du1 + dv1 + dw1 >= 0.5 ?  8 : 0) |
-            ( du1 - dv1 + dw1 >= 0.5 ? 16 : 0) |
-            ( du1 + dv1 - dw1 >= 0.5 ? 32 : 0)
+            ( sample_rel1.x + sample_rel1.y + sample_rel1.z >= 1.5 ?  4 : 0) |
+            (-sample_rel1.x + sample_rel1.y + sample_rel1.z >= 0.5 ?  8 : 0) |
+            ( sample_rel1.x - sample_rel1.y + sample_rel1.z >= 0.5 ? 16 : 0) |
+            ( sample_rel1.x + sample_rel1.y - sample_rel1.z >= 0.5 ? 32 : 0)
 
         let base_vertex_index2:Int =
-            ( du2 + dv2 + dw2 >= 1.5 ?  4 : 0) |
-            (-du2 + dv2 + dw2 >= 0.5 ?  8 : 0) |
-            ( du2 - dv2 + dw2 >= 0.5 ? 16 : 0) |
-            ( du2 + dv2 - dw2 >= 0.5 ? 32 : 0)
+            ( sample_rel2.x + sample_rel2.y + sample_rel2.z >= 1.5 ?  4 : 0) |
+            (-sample_rel2.x + sample_rel2.y + sample_rel2.z >= 0.5 ?  8 : 0) |
+            ( sample_rel2.x - sample_rel2.y + sample_rel2.z >= 0.5 ? 16 : 0) |
+            ( sample_rel2.x + sample_rel2.y - sample_rel2.z >= 0.5 ? 32 : 0)
 
         // sum up the contributions from the two lattices
         var Σ:Double = 0
-        for point in SuperSimplexNoise3D.points[base_vertex_index1 ..< base_vertex_index1 + 4]
+        for (point, point_offset) in SuperSimplexNoise3D.points[base_vertex_index1 ..< base_vertex_index1 + 4]
         {
-            // get the relative offset from *that* particular point
-            let dx:Double = du1 - point.du,
-                dy:Double = dv1 - point.dv,
-                dz:Double = dw1 - point.dw
-            Σ += self.gradient(u: ub1 + point.u, v: vb1 + point.v, w: wb1 + point.w, dx: dx, dy: dy, dz: dz)
+            Σ += self.gradient(from: Math.add(bin1, point), at: Math.sub(sample_rel1, point_offset))
         }
 
-        for point in SuperSimplexNoise3D.points[base_vertex_index2 ..< base_vertex_index2 + 4]
+        for (point, point_offset) in SuperSimplexNoise3D.points[base_vertex_index2 ..< base_vertex_index2 + 4]
         {
-            // get the relative offset from *that* particular point
-            let dx:Double = du2 - point.du,
-                dy:Double = dv2 - point.dv,
-                dz:Double = dw2 - point.dw
-            Σ += self.gradient(u: ub2 + point.u, v: vb2 + point.v, w: wb2 + point.w, dx: dx, dy: dy, dz: dz)
+            Σ += self.gradient(from: Math.add(bin2, point), at: Math.sub(sample_rel2, point_offset))
         }
 
         return self.amplitude * Σ
