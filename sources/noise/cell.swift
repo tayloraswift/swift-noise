@@ -34,7 +34,7 @@ struct CellNoise2D:Noise
     }
 
     public
-    func evaluate(_ x:Double, _ y:Double) -> Double
+    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {
         let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
 
@@ -80,14 +80,20 @@ struct CellNoise2D:Noise
         let nearpoint_disp:Math.DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
                                             abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
 
-        var r2:Double = self.distance2(from: sample, generating_point: near)
+        var r2:Double = self.distance2(from: sample, generating_point: near),
+            closest_point:Math.IntV2 = near
 
         @inline(__always)
         func _inspect(generating_point:Math.IntV2, dx:Double = 0, dy:Double = 0)
         {
             if dx*dx + dy*dy < r2
             {
-                r2 = min(r2, self.distance2(from: sample, generating_point: generating_point))
+                let dr2:Double = self.distance2(from: sample, generating_point: generating_point)
+                if dr2 < r2
+                {
+                    r2            = dr2
+                    closest_point = generating_point
+                }
             }
         }
 
@@ -105,7 +111,7 @@ struct CellNoise2D:Noise
         guard r2 > 0.25
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
 
         // This is the part where shit hits the fan. (`inner` and `outer` are never
@@ -143,7 +149,7 @@ struct CellNoise2D:Noise
         guard r2 > 1.0
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
 
         // Cell group III:
@@ -159,6 +165,13 @@ struct CellNoise2D:Noise
         _inspect(generating_point: (far.a, outer.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
         _inspect(generating_point: (outer.a, far.b), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
 
+        return (closest_point, r2)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
         return self.amplitude * r2
     }
 
@@ -214,13 +227,7 @@ struct CellNoise3D:Noise
     }
 
     public
-    func evaluate(_ x:Double, _ y:Double) -> Double
-    {
-        return self.evaluate(x, y, 0)
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
     {
         let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
 
@@ -248,7 +255,8 @@ struct CellNoise3D:Noise
                                             abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
                                             abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
 
-        var r2:Double = self.distance2(from: sample, generating_point: near)
+        var r2:Double = self.distance2(from: sample, generating_point: near),
+            closest_point:Math.IntV3 = near
 
         @inline(__always)
         func _inspect_cell(offset:Math.IntV3)
@@ -286,7 +294,12 @@ struct CellNoise3D:Noise
             let generating_point:Math.IntV3  = (near.a + quadrant.a*offset.a,
                                                 near.b + quadrant.b*offset.b,
                                                 near.c + quadrant.c*offset.c)
-            r2 = min(r2, self.distance2(from: sample, generating_point: generating_point))
+            let dr2:Double = self.distance2(from: sample, generating_point: generating_point)
+            if dr2 < r2
+            {
+                r2            = dr2
+                closest_point = generating_point
+            }
         }
 
         // check each cell group, exiting early if we are guaranteed to have found
@@ -311,7 +324,7 @@ struct CellNoise3D:Noise
         guard r2 > 0.25
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in  [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
                         (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
@@ -326,7 +339,7 @@ struct CellNoise3D:Noise
         guard r2 > 0.5
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
         {
@@ -343,7 +356,7 @@ struct CellNoise3D:Noise
         guard r2 > 1.0
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in  [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
                         ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
@@ -358,7 +371,7 @@ struct CellNoise3D:Noise
         guard r2 > 1.25
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in  [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
                         (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
@@ -376,7 +389,7 @@ struct CellNoise3D:Noise
         guard r2 > 2.0
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
         {
@@ -389,7 +402,7 @@ struct CellNoise3D:Noise
         guard r2 > 2.25
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in  [(2,  0,  0), (0,  2,  0), ( 0,  0, 2),
                         (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
@@ -404,7 +417,7 @@ struct CellNoise3D:Noise
         guard r2 > 2.5
         else
         {
-            return self.amplitude * r2
+            return (closest_point, r2)
         }
         for offset in  [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
                         (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
@@ -417,6 +430,19 @@ struct CellNoise3D:Noise
         // cumulative sample coverage = 100%
 
         // stop           outside r^2 = 3.0
+        return (closest_point, r2)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        let (_, r2):((Int, Int, Int), Double) = self.closest_point(x, y, z)
         return self.amplitude * r2
     }
 
