@@ -67,7 +67,7 @@ struct fBm<Generator:Noise>:Noise
     }
 
     public
-    init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, seed:Int = 0)
+    init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)
     {
         var generators:[Generator] = []
             generators.reserveCapacity(octaves)
@@ -77,7 +77,7 @@ struct fBm<Generator:Noise>:Noise
         {
             generators.append(Generator(amplitude: a, frequency: f, seed: s))
             a *= persistence
-            f *= 2
+            f *= lacunarity
         }
 
         self.generators  = generators
