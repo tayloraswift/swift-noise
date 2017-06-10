@@ -66,11 +66,12 @@ struct CellNoise2D:Noise
         // as “near” and “far” points. We call these points the *generating points*.
         // The sample point (example) has been marked with an ‘*’.
 
-        //          A ------ far
+        //          A —————— far
         //          |    |    |
         //          |----+----|
         //          |  * |    |
-        //        near ------ A
+        //        near —————— A                ← quadrant
+        //                                          ↓
 
         // The actual feature points never spawn outside of the unit square surrounding
         // their generating points. Therefore, the boundaries of the generating
@@ -79,48 +80,36 @@ struct CellNoise2D:Noise
         // square since it cannot produce a feature point closer than we have already
         // found.
 
-        let quadrant:(x:Bool, y:Bool) = (offset.x > 0.5, offset.y > 0.5),
-            near:IntV2        = (bin.a + (quadrant.x ? 1 : 0), bin.b + (quadrant.y ? 1 : 0)),
-            far:IntV2         = (bin.a + (quadrant.x ? 0 : 1), bin.b + (quadrant.y ? 0 : 1))
+        let quadrant:IntV2 = (offset.x > 0.5 ? 1 : -1, offset.y > 0.5 ? 1 : -1),
+            near:IntV2     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1),
+            far:IntV2      = (near.a - quadrant.a, near.b - quadrant.b)
 
-        let nearpoint_disp:DoubleV2 = (abs(offset.x - (quadrant.x ? 1 : 0)),
-                                                   abs(offset.y - (quadrant.y ? 1 : 0)))
+        let nearpoint_disp:DoubleV2 = (abs(offset.x - Double((quadrant.a + 1) >> 1)),
+                                       abs(offset.y - Double((quadrant.b + 1) >> 1)))
 
-        var r2_min:Double = self.distance(from: sample, generating_point: near)
+        var r2:Double = self.distance(from: sample, generating_point: near)
 
         @inline(__always)
-        func test(generating_point:IntV2)
+        func test(generating_point:IntV2, dx:Double = 0, dy:Double = 0)
         {
-            let r2:Double = self.distance(from: sample, generating_point: generating_point)
-
-            if r2 < r2_min
+            if dx*dx + dy*dy < r2
             {
-                r2_min = r2
+                r2 = min(r2, self.distance(from: sample, generating_point: generating_point))
             }
         }
 
         // A points
-        if (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
-        {
-            test(generating_point: (near.a, far.b))
-        }
-
-        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) < r2_min
-        {
-            test(generating_point: (far.a, near.b))
-        }
+        test(generating_point: (near.a, far.b), dy: nearpoint_disp.y - 0.5)
+        test(generating_point: (far.a, near.b), dx: nearpoint_disp.x - 0.5)
 
         // far point
-        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) + (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
-        {
-            test(generating_point: far)
-        }
+        test(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
 
         // EARLY EXIT: if we have a point within 0.5 units, we don’t have to check
         // the outer kernel
-        if r2_min < 0.5*0.5
+        if r2 < 0.25
         {
-            return self.amplitude * r2_min
+            return self.amplitude * r2
         }
 
         // This is the part where shit hits the fan. (`inner` and `outer` are never
@@ -139,59 +128,37 @@ struct CellNoise2D:Noise
         //          |    |    |    |    |    |    |
         //          |----+----|----+----|----+----|
         //          |    |    |    |    |    |    |
-        //        inner ----- B ------- C --------+
+        //        inner ----- B ------- C --------+               ← quadrant
+        //                                                             ↓
 
-        let inner:IntV2 = (bin.a + (quadrant.x ?  2 : -1), bin.b + (quadrant.y ?  2 : -1)),
-            outer:IntV2 = (bin.a + (quadrant.x ? -1 :  2), bin.b + (quadrant.y ? -1 :  2))
+        let inner:IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
 
         // B points
-        if (nearpoint_disp.x + 0.5) * (nearpoint_disp.x + 0.5) < r2_min
-        {
-            test(generating_point: (inner.a, near.b))
-        }
-        if (nearpoint_disp.y + 0.5) * (nearpoint_disp.y + 0.5) < r2_min
-        {
-            test(generating_point: (near.a, inner.b))
-        }
+        test(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
+        test(generating_point: (near.a, inner.b), dy: nearpoint_disp.y + 0.5)
 
         // C points
-        if (nearpoint_disp.x + 0.5) * (nearpoint_disp.x + 0.5) + (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) < r2_min
-        {
-            test(generating_point: (inner.a, far.b))
-        }
-        if (nearpoint_disp.y + 0.5) * (nearpoint_disp.y + 0.5) + (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) < r2_min
-        {
-            test(generating_point: (far.a, inner.b))
-        }
+        test(generating_point: (inner.a, far.b), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
+        test(generating_point: (far.a, inner.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
 
         // EARLY EXIT: if we have a point within 1 unit, we don’t have to check
         // the D points or the E points
-        if r2_min < 1*1
+        if r2 < 1
         {
-            return self.amplitude * r2_min
+            return self.amplitude * r2
         }
+
+        let outer:IntV2 = (far.a  - quadrant.a, far.b  - quadrant.b)
 
         // D points
-        if (1.5 - nearpoint_disp.y) * (1.5 - nearpoint_disp.y) < r2_min
-        {
-            test(generating_point: (near.a, outer.b))
-        }
-        if (1.5 - nearpoint_disp.x) * (1.5 - nearpoint_disp.x) < r2_min
-        {
-            test(generating_point: (outer.a, near.b))
-        }
+        test(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
+        test(generating_point: (outer.a, near.b), dx: nearpoint_disp.x - 1.5)
 
         // E points
-        if (0.5 - nearpoint_disp.x) * (0.5 - nearpoint_disp.x) + (1.5 - nearpoint_disp.y) * (1.5 - nearpoint_disp.y) < r2_min
-        {
-            test(generating_point: (far.a, outer.b))
-        }
-        if (0.5 - nearpoint_disp.y) * (0.5 - nearpoint_disp.y) + (1.5 - nearpoint_disp.x) * (1.5 - nearpoint_disp.x) < r2_min
-        {
-            test(generating_point: (outer.a, far.b))
-        }
+        test(generating_point: (far.a, outer.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
+        test(generating_point: (outer.a, far.b), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
 
-        return self.amplitude * r2_min
+        return self.amplitude * r2
     }
 
     public
@@ -323,20 +290,20 @@ struct CellNoise3D:Noise
                     cell_distance2 = 0
                 }
                 else
-                {                                             // move by 0.5 towards zero
-                    let dx:Double = Double(cell_offset.a) + (cell_offset.a > 0 ? -0.5 : 0.5) + nearpoint_disp.x
+                {                                                                // move by 0.5 towards zero
+                    let dx:Double = nearpoint_disp.x + Double(cell_offset.a) + (cell_offset.a > 0 ? -0.5 : 0.5)
                     cell_distance2 = dx*dx
                 }
 
                 if cell_offset.b != 0
-                {                                             // move by 0.5 towards zero
-                    let dy:Double = Double(cell_offset.b) + (cell_offset.b > 0 ? -0.5 : 0.5) + nearpoint_disp.y
+                {                                                                // move by 0.5 towards zero
+                    let dy:Double = nearpoint_disp.y + Double(cell_offset.b) + (cell_offset.b > 0 ? -0.5 : 0.5)
                     cell_distance2 += dy*dy
                 }
 
                 if cell_offset.c != 0
-                {                                             // move by 0.5 towards zero
-                    let dz:Double = Double(cell_offset.c) + (cell_offset.c > 0 ? -0.5 : 0.5) + nearpoint_disp.z
+                {                                                                // move by 0.5 towards zero
+                    let dz:Double = nearpoint_disp.z + Double(cell_offset.c) + (cell_offset.c > 0 ? -0.5 : 0.5)
                     cell_distance2 += dz*dz
                 }
 
