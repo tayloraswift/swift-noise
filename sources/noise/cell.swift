@@ -293,7 +293,7 @@ struct CellNoise3D:Noise
         // the closest point
 
         // Cell group I:
-        //                 within r^2 = 0.25
+        //                outside r^2 = 0
         // cumulative sample coverage = 47.85%
         _inspect_cell(offset: (-1,  0,  0))
         _inspect_cell(offset: ( 0, -1,  0))
@@ -304,140 +304,119 @@ struct CellNoise3D:Noise
         _inspect_cell(offset: (-1, -1,  0))
 
         _inspect_cell(offset: (-1, -1, -1))
+
+        // Cell group II:
+        //                outside r^2 = 0.25
+        // cumulative sample coverage = 88.60%
         guard r2 > 0.25
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group II:
-        //                 within r^2 = 0.5
-        // cumulative sample coverage = 88.60%
         for offset in  [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
                         (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
                         (1, -1, -1), (-1, 1, -1), (-1, -1,  1)]
         {
             _inspect_cell(offset: offset)
         }
+
+        // Cell group III:
+        //                outside r^2 = 0.5
+        // cumulative sample coverage = 98.26%
         guard r2 > 0.5
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group III:
-        //                 within r^2 = 0.75
-        // cumulative sample coverage = 98.26%
         for offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
         {
             _inspect_cell(offset: offset)
         }
-        guard r2 > 0.75
-        else
-        {
-            return self.amplitude * r2
-        }
 
-        // Cell group IV:
-        //                 within r^2 = 1.0
+        // Cell group IV: [(1, 1, 1)] [ occluded ]
+        //                outside r^2 = 0.75
         // cumulative sample coverage = 99.94%
-        _inspect_cell(offset: (1, 1, 1))
+
+        // Cell group V:
+        //                outside r^2 = 1.0
+        // cumulative sample coverage > 99.99%
         guard r2 > 1.0
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group V:
-        //                 within r^2 = 1.25
-        // cumulative sample coverage > 99.99%
         for offset in  [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
                         ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
                         (-2, -1, -1), (-1, -2, -1), (-1, -1, -2)]
         {
             _inspect_cell(offset: offset)
         }
+
+        // Cell group VI:
+        //                outside r^2 = 1.25
+        // cumulative sample coverage > 99.99%
         guard r2 > 1.25
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group VI:
-        //                 within r^2 = 1.5
-        // cumulative sample coverage > 99.99%
         for offset in  [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
                         (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
         {
             _inspect_cell(offset: offset)
         }
-        guard r2 > 1.5
-        else
-        {
-            return self.amplitude * r2
-        }
 
-        // Cell group VII:
-        //                 within r^2 = 2.0
+        // Cell group VII: [(-2, 1, 1), (1, -2, 1), (1, 1, -2)] [ occluded ]
+        //                outside r^2 = 1.5
         // cumulative sample coverage > 99.99%
-        _inspect_cell(offset: (-2,  1,  1))
-        _inspect_cell(offset: ( 1, -2,  1))
-        _inspect_cell(offset: ( 1,  1, -2))
+
+        // Cell group VIII:
+        //                    outside = 2.0
+        // cumulative sample coverage > 99.99%
         guard r2 > 2.0
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group VIII:
-        //                 within r^2 = 2.25
-        // cumulative sample coverage > 99.99%
         for offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
         {
             _inspect_cell(offset: offset)
         }
+
+        // Cell group IX: [(1, -2, -2), (-2, -2, 1), (-2, 1, -2)] [ occluded ]
+        //                outside r^2 = 2.25
+        // cumulative sample coverage > 99.99%
         guard r2 > 2.25
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group IX:
-        //                 within r^2 = 2.5
-        // cumulative sample coverage > 99.99%
-        for offset in  [(2, 0, 0), (0, 2, 0), (0, 0, 2),
+        for offset in  [(2,  0,  0), (0,  2,  0), ( 0,  0, 2),
                         (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
-                        (1, -2, -2), (2, -1, -1), (-2, -2, 1), (-1, -1,  2), (-2, 1, -2), (-1,  2, -1)]
+                                     (2, -1, -1),              (-1, -1,  2),              (-1,  2, -1)]
         {
             _inspect_cell(offset: offset)
         }
+
+        // Cell group X:
+        //                outside r^2 = 2.5
+        // cumulative sample coverage > 99.99%
         guard r2 > 2.5
         else
         {
             return self.amplitude * r2
         }
-
-        // Cell group X:
-        //                 within r^2 = 2.75
-        // cumulative sample coverage > 99.99%
         for offset in  [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
                         (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
         {
             _inspect_cell(offset: offset)
         }
-        guard r2 > 2.75
-        else
-        {
-            return self.amplitude * r2
-        }
 
-        // Cell group XI:
-        //                 within r^2 = 3.0
+        // Cell group XI: [(2, 1, 1), (1, 2, 1), (1, 1, 2)] [ occluded ]
+        //                outside r^2 = 2.75
         // cumulative sample coverage = 100%
-        for offset in [(2, 1, 1), (1, 2, 1), (1, 1, 2)]
-        {
-            _inspect_cell(offset: offset)
-        }
+
+        // stop           outside r^2 = 3.0
         return self.amplitude * r2
     }
 

@@ -1,20 +1,6 @@
 public
 struct PoissonSampler
 {
-    public
-    struct Point
-    {
-        public
-        let x:Double,
-            y:Double
-
-        init(_ x:Double, _ y:Double)
-        {
-            self.x = x
-            self.y = y
-        }
-    }
-
     private
     let candidate_ring:[Math.DoubleV2]
 
