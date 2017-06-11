@@ -15,11 +15,10 @@ let package = Package(
     targets: [
         .target(
             name: "Noise",
-            dependencies: ["MaxPNG"],
             path: "sources/noise"),
         .testTarget(
             name: "NoiseTests",
-            dependencies: ["Noise"],
+            dependencies: ["Noise", "MaxPNG"],
             path: "tests/noise"),
     ]
 )
