@@ -104,20 +104,20 @@ try {
     try png_encode(path: "cells3D.png", raw_data: pixbuf_color, properties: png_color)
 }()
 
-let S:fBm<SimplexNoise2D> = FBM<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
+let S:FBM<SimplexNoise2D> = FBM<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
 pixbuf = S.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
 print(clock() - t0)
 try png_encode(path: "simplex.png", raw_data: pixbuf, properties: png_properties)
 
 
-let SS:fBm<SuperSimplexNoise2D> = FBM<SuperSimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
+let SS:FBM<SuperSimplexNoise2D> = FBM<SuperSimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
 pixbuf = SS.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
 print(clock() - t0)
 try png_encode(path: "super_simplex.png", raw_data: pixbuf, properties: png_properties)
 
-let SS3D:fBm<SuperSimplexNoise3D> = FBM<SuperSimplexNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
+let SS3D:FBM<SuperSimplexNoise3D> = FBM<SuperSimplexNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
 pixbuf = SS3D.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
 print(clock() - t0)
