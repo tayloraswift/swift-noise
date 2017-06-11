@@ -49,7 +49,7 @@ func banner_simplex2d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: 0.65*255,
-                    path: "banner_simplex2d.png")
+                    path: "tests/banner_simplex2d.png")
 }
 
 func banner_supersimplex2d(width:Int, height:Int, seed:Int)
@@ -60,7 +60,7 @@ func banner_supersimplex2d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: 0.65*255,
-                    path: "banner_supersimplex2d.png")
+                    path: "tests/banner_supersimplex2d.png")
 }
 
 func banner_supersimplex3d(width:Int, height:Int, seed:Int)
@@ -71,7 +71,7 @@ func banner_supersimplex3d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: 0.65*255,
-                    path: "banner_supersimplex3d.png")
+                    path: "tests/banner_supersimplex3d.png")
 }
 
 func banner_cell2d(width:Int, height:Int, seed:Int)
@@ -83,7 +83,7 @@ func banner_cell2d(width:Int, height:Int, seed:Int)
                     height: height,
                     value_offset: 0,
                     invert: true,
-                    path: "banner_cell2d.png")
+                    path: "tests/banner_cell2d.png")
 }
 
 func banner_cell3d(width:Int, height:Int, seed:Int)
@@ -95,7 +95,7 @@ func banner_cell3d(width:Int, height:Int, seed:Int)
                     height: height,
                     value_offset: 0,
                     invert: true,
-                    path: "banner_cell3d.png")
+                    path: "tests/banner_cell3d.png")
 }
 
 public
