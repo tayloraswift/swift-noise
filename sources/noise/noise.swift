@@ -19,8 +19,8 @@ extension Noise
         {
             for j in 0 ..< width
             {
-                let x:Double = Double(i) + 0.5,
-                    y:Double = Double(j) + 0.5
+                let x:Double = Double(j) + 0.5,
+                    y:Double = Double(i) + 0.5
                 samples.append((x, y, self.evaluate(x, y)))
             }
         }
@@ -32,11 +32,55 @@ extension Noise
     {
         var samples:[UInt8] = []
             samples.reserveCapacity(width * height)
-        for y in 0 ..< height
+        for i in 0 ..< height
         {
-            for x in 0 ..< width
+            for j in 0 ..< width
             {
-                samples.append(UInt8(max(0, min(255, self.evaluate(Double(x), Double(y)) + offset))))
+                let x:Double = Double(j) + 0.5,
+                    y:Double = Double(i) + 0.5
+                samples.append(UInt8(max(0, min(255, self.evaluate(x, y) + offset))))
+            }
+        }
+        return samples
+    }
+
+    public
+    func sample_volume(width:Int, height:Int, depth:Int) -> [(Double, Double, Double, Double)]
+    {
+        var samples:[(Double, Double, Double, Double)] = []
+            samples.reserveCapacity(width * height * depth)
+        for i in 0 ..< depth
+        {
+            for j in 0 ..< height
+            {
+                for k in 0 ..< width
+                {
+                    let x:Double = Double(k) + 0.5,
+                        y:Double = Double(j) + 0.5,
+                        z:Double = Double(i) + 0.5
+                    samples.append((x, y, z, self.evaluate(x, y, z)))
+                }
+            }
+        }
+        return samples
+    }
+
+    public
+    func sample_volume_saturated_to_u8(width:Int, height:Int, depth:Int, offset:Double = 0.5) -> [UInt8]
+    {
+        var samples:[UInt8] = []
+            samples.reserveCapacity(width * height * depth)
+        for i in 0 ..< depth
+        {
+            for j in 0 ..< height
+            {
+                for k in 0 ..< width
+                {
+                    let x:Double = Double(k) + 0.5,
+                        y:Double = Double(j) + 0.5,
+                        z:Double = Double(i) + 0.5
+                    samples.append(UInt8(max(0, min(255, self.evaluate(x, y, z) + offset))))
+                }
             }
         }
         return samples
