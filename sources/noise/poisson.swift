@@ -1,11 +1,11 @@
 public
-struct PoissonSampler
+struct DiskSampler2D
 {
     private
     let candidate_ring:[Math.DoubleV2]
 
     private
-    var rng:RandomXORShift,
+    var rng:RandomXorshift,
         candidate_index:Int = 0
 
     private
@@ -20,14 +20,14 @@ struct PoissonSampler
     public
     init(seed:Int = 0)
     {
-        self.rng = RandomXORShift(seed: seed)
+        self.rng = RandomXorshift(seed: seed)
         let rand_scale:Double = 4 / Double(self.rng.max)
 
         var candidates_generated:Int = 0
         var candidate_ring:[Math.DoubleV2] = []
-            candidate_ring.reserveCapacity(PoissonSampler.candidate_table_bitmask + 1)
+            candidate_ring.reserveCapacity(DiskSampler2D.candidate_table_bitmask + 1)
 
-        while candidates_generated <= PoissonSampler.candidate_table_bitmask
+        while candidates_generated <= DiskSampler2D.candidate_table_bitmask
         {
             let x:Double  = Double(self.rng.generate()) * rand_scale - 1,
                 y:Double  = Double(self.rng.generate()) * rand_scale - 1,
@@ -72,7 +72,7 @@ struct PoissonSampler
             for _ in 0 ..< k
             {
                 let candidate:Math.DoubleV2 = Math.add(front, self.candidate_offset)
-                self.candidate_index = (self.candidate_index + 1) & PoissonSampler.candidate_table_bitmask
+                self.candidate_index = (self.candidate_index + 1) & DiskSampler2D.candidate_table_bitmask
 
                 guard 0 ..< normalized_width ~= candidate.x && 0 ..< normalized_height ~= candidate.y
                 else
@@ -80,7 +80,7 @@ struct PoissonSampler
                     continue
                 }
 
-                if PoissonSampler.attempt_insert(candidate: candidate, into_grid: &grid, grid_stride: grid_stride)
+                if DiskSampler2D.attempt_insert(candidate: candidate, into_grid: &grid, grid_stride: grid_stride)
                 {
                     points.append((candidate.x * radius, candidate.y * radius))
                     queue.append(candidate)
