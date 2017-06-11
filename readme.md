@@ -6,38 +6,12 @@
 [![License](https://img.shields.io/badge/license-GPL3-ff3079.svg)](https://github.com/kelvin13/noise/blob/master/LICENSE.gpl3)
 [![Queen](https://img.shields.io/badge/taylor-swift-e030ff.svg)](https://www.google.com/search?q=where+is+ts6&oq=where+is+ts6)
 
-*Noise-swift* will eventually be a free, native Swift procedural noise generation library. It will be free of Foundation or any other Apple framework. Currently supported:
+![](tests/banner_FBM.png)
 
-* Simplex noise (2D)
+**Noise** is a free, pure Swift procedural noise generation library. It is free of Foundation or any other Apple framework, and has no dependencies. All popular types of procedural noise are supported, including three [gradient noises](https://en.wikipedia.org/wiki/Perlin_noise) (often called Perlin or simplex noises), and two [cellular noises](https://en.wikipedia.org/wiki/Worley_noise) (sometimes called Worley or Voronoi noises). *Noise* includes a fractal brownian motion (FBM) noise composition framework, and a [disk point sampler](https://en.wikipedia.org/wiki/Supersampling#Poisson_disc) (often called a Poisson sampler), for generating visually even point distributions in the plane. *Noise* also includes pseudo-random number generation and hashing tools.
 
-    Simplex noise is an improved version of the classical [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) algorithm. Noise-swift uses the OpenSimplex procedural noise generation algorithm, which solves many of the quality issues apparent in the 3D version of the proprietary Simplex noise algorithm, as well as sidestepping potential patent threats.
+***Noise*’s entire public API is [documented](wiki).**
 
-* SuperSimplex noise (2D)
+## Building
 
-    SuperSimplex noise is yet another improvement on Simplex noise that results in even noise with fewer artifacts. SuperSimplex noise also runs slightly (~5%) faster than Simplex noise. Many thanks to the Java and [Rust OpenSimplex communities](https://github.com/brendanzab/noise-rs) for their assistance, which was essential for bringing SuperSimplex procedural noise to Swift.
-
-* SuperSimplex noise (3D)
-
-    3D SuperSimplex volumetric noise, suitable for texturing any 3D object without seams or texture unwrapping.
-
-* Voronoi noise (2D)
-
-    Also known as Worley noise, produces a cellular, bulby texture.
-
-* Voronoi noise (3D)
-
-    3 dimensional cell/worley noise.
-
-* Poisson sample noise (2D)
-
-    Two dimensional point noise with a visually uniform distribution, and no clumping.
-
-
-![](super_simplex3D.png)
-![](voronoi3D.png)
-![](cells3D.png)
-![](poisson.png)
-
-### A note on building
-
-Noise-swift does not actually depend on [maxpng](https://github.com/kelvin13/maxpng), my free Swift PNG library; it is only being used to view the output of the noise generator as a PNG. For similar reasons, this repository currently contains a small Cairo interface library, which will probably be spun-off into a library of its own right once Noise-swift matures.
+Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests depend on [MaxPNG](https://github.com/kelvin13/maxpng), my free Swift PNG library, to view the generated noise.
