@@ -10,7 +10,7 @@ import NoiseTests
 
 banners(width: 700, ratio: 5)
 
-
+/*
 var pixbuf:[UInt8]
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
 
@@ -112,3 +112,4 @@ t0 = clock()
 pixbuf = SS3D.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
 print(clock() - t0)
 try png_encode(path: "super_simplex3D.png", raw_data: pixbuf, properties: png_properties)
+*/

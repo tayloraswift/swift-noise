@@ -66,7 +66,8 @@ struct DiskSampler2D
             queue = [(0.5 * normalized_width, 0.5 * normalized_height)]
         }
 
-        var points:[(Double, Double)] = queue
+        _ = DiskSampler2D.attempt_insert(candidate: queue[0], into_grid: &grid, grid_stride: grid_stride)
+        var points:[(Double, Double)] = [(queue[0].x * radius, queue[0].y * radius)]
         outer: while let front:Math.DoubleV2 = queue.last
         {
             for _ in 0 ..< k
