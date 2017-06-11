@@ -6,6 +6,10 @@ let viewer_size:Int = 1024
 
 import func Glibc.clock
 
+import NoiseTests
+
+banners(width: 700, ratio: 5)
+
 
 var pixbuf:[UInt8]
 let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
