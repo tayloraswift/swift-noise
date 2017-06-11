@@ -2,7 +2,6 @@ public
 protocol Noise
 {
     init(amplitude:Double, frequency:Double, seed:Int)
-
     func evaluate(_ x:Double, _ y:Double)                         -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double)             -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
@@ -12,9 +11,9 @@ public
 extension Noise
 {
     public
-    func sample_area(width:Int, height:Int) -> [(x:Double, y:Double, z:Double)]
+    func sample_area(width:Int, height:Int) -> [(Double, Double, Double)]
     {
-        var samples:[(x:Double, y:Double, z:Double)] = []
+        var samples:[(Double, Double, Double)] = []
             samples.reserveCapacity(width * height)
         for i in 0 ..< height
         {
@@ -22,7 +21,7 @@ extension Noise
             {
                 let x:Double = Double(i) + 0.5,
                     y:Double = Double(j) + 0.5
-                samples.append((x: x, y: y, z: self.evaluate(x, y)))
+                samples.append((x, y, self.evaluate(x, y)))
             }
         }
         return samples
@@ -150,7 +149,7 @@ enum Math
 }
 
 public
-struct fBm<Generator:Noise>:Noise
+struct FBM<Generator:Noise>:Noise
 {
     private
     let generators:[Generator]
@@ -212,7 +211,8 @@ struct fBm<Generator:Noise>:Noise
     }
 }
 
-struct RandomXORShift
+public
+struct RandomXorshift
 {
     private
     var state128:(UInt32, UInt32, UInt32, UInt32)
@@ -266,7 +266,7 @@ struct PermutationTable
     init(seed:Int)
     {
         var permutations:[UInt8] = [UInt8](0 ... 255),
-            rng:RandomXORShift = RandomXORShift(seed: seed)
+            rng:RandomXorshift = RandomXorshift(seed: seed)
         for i in 0 ..< 255 - 1
         {
             permutations.swapAt(i, Int(rng.generate()) & 255)
