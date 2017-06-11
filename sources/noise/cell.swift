@@ -9,7 +9,7 @@ struct CellNoise2D:Noise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude * 1/2.squareRoot()
+        self.amplitude = amplitude * 1/2
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
     }
@@ -199,7 +199,7 @@ struct CellNoise3D:Noise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude * 1/3.squareRoot()
+        self.amplitude = amplitude * 1/3
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
     }
