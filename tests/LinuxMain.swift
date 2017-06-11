@@ -55,4 +55,4 @@ let SS3D:FBM<SuperSimplexNoise3D> = FBM<SuperSimplexNoise3D>(amplitude: 0.5*127.
 t0 = clock()
 pixbuf = SS3D.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
 print(clock() - t0)
-try png_encode(path: "tests/super_simplex3D.png", raw_data: pixbuf, properties: png_properties)
+try png_encode(path: "tests/super_simplex3d.png", raw_data: pixbuf, properties: png_properties)
