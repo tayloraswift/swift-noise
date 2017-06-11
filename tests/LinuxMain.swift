@@ -4,20 +4,6 @@ import MaxPNG
 
 let viewer_size:Int = 1024
 
-func rgba_from_argb32(_ argb32:[UInt32]) -> [UInt8]
-{
-    var rgba:[UInt8] = []
-    rgba.reserveCapacity(argb32.count * 4)
-    for argb in argb32
-    {
-        rgba.append(UInt8(extendingOrTruncating: argb >> 16))
-        rgba.append(UInt8(extendingOrTruncating: argb >> 8 ))
-        rgba.append(UInt8(extendingOrTruncating: argb      ))
-        rgba.append(UInt8(extendingOrTruncating: argb >> 24))
-    }
-    return rgba
-}
-
 import func Glibc.clock
 
 
