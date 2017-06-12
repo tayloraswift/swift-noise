@@ -222,12 +222,12 @@ func banners(width:Int, ratio:Double)
     let height:Int = Int(Double(width) / ratio)
     banner_simplex2d     (width: width, height: height, seed: 6)
     banner_supersimplex2d(width: width, height: height, seed: 8)
-    banner_supersimplex3d(width: width, height: height, seed: 0)
+    banner_supersimplex3d(width: width, height: height, seed: 2)
     banner_cell2d        (width: width, height: height, seed: 0)
     banner_cell3d        (width: width, height: height, seed: 0)
     banner_voronoi2d     (width: width, height: height, seed: 3)
 
-    banner_FBM           (width: width, height: height, seed: 0)
+    banner_FBM           (width: width, height: height, seed: 2)
 
     banner_disk2d        (width: width, height: height, seed: 0)
 }
