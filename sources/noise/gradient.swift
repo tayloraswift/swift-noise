@@ -1,6 +1,3 @@
-import func Glibc.sin
-import func Glibc.cos
-
 fileprivate
 enum Const
 {
