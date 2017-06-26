@@ -3,8 +3,6 @@ import MaxPNG
 
 import func Glibc.clock
 
-import NoiseTests
-
 banners(width: 700, ratio: 5)
 
 let viewer_size:Int = 1024

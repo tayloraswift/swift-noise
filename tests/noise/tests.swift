@@ -1,5 +1,4 @@
 import Noise
-
 import MaxPNG
 
 func write_rgb_png(path:String, width:Int, height:Int, pixbuf:[UInt8])

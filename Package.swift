@@ -5,9 +5,8 @@ import PackageDescription
 let package = Package(
     name: "Noise",
     products: [
-        .library(
-            name: "Noise",
-            targets: ["Noise"]),
+        .library(name: "Noise", targets: ["Noise"]),
+        .executable(name: "tests", targets: ["NoiseTests"]),
     ],
     dependencies: [
         .package(url: "https://github.com/kelvin13/maxpng", from: "2.0.0")
@@ -16,7 +15,7 @@ let package = Package(
         .target(
             name: "Noise",
             path: "sources/noise"),
-        .testTarget(
+        .target(
             name: "NoiseTests",
             dependencies: ["Noise", "MaxPNG"],
             path: "tests/noise"),
