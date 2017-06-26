@@ -1,11 +1,11 @@
 # noise
 
-[![Platforms](https://img.shields.io/badge/platform-linux-lightgrey.svg)](https://swift.org/)
+[![Platforms](https://img.shields.io/badge/platform-any-lightgrey.svg)](https://swift.org/)
 [![Release tag](https://img.shields.io/github/release/kelvin13/noise.svg)](https://github.com/kelvin13/noise/releases)
 [![Build](https://travis-ci.org/kelvin13/noise.svg?branch=master)](https://travis-ci.org/kelvin13/noise)
 [![Issues](https://img.shields.io/github/issues/kelvin13/noise.svg)](https://github.com/kelvin13/noise/issues?state=open)
 [![Language](https://img.shields.io/badge/version-swift_4-ffa020.svg)](https://swift.org/)
-[![License](https://img.shields.io/badge/license-GPL3-ff3079.svg)](https://github.com/kelvin13/noise/blob/master/LICENSE.gpl3)
+[![License](https://img.shields.io/badge/license-GPL3-ff3079.svg)](https://github.com/kelvin13/noise/blob/master/COPYING)
 [![Queen](https://img.shields.io/badge/taylor-swift-e030ff.svg)](https://www.google.com/search?q=where+is+ts6&oq=where+is+ts6)
 
 ![](tests/banner_FBM.png)
