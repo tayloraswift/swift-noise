@@ -24,10 +24,12 @@ func color_noise_png(r_noise:Noise, g_noise:Noise, b_noise:Noise,
 {
     var pixbuf:[UInt8] = []
         pixbuf.reserveCapacity(3 * width * height)
-    for (r, (g, b)) in zip(r_noise.sample_area_saturated_to_u8(width: width, height: height, offset: value_offset.r),
-                       zip(g_noise.sample_area_saturated_to_u8(width: width, height: height, offset: value_offset.g),
-                           b_noise.sample_area_saturated_to_u8(width: width, height: height, offset: value_offset.b)))
+
+    for (x, y):(Double, Double) in Domain2D(samples_x: width, samples_y: height)
     {
+        let r:UInt8 = UInt8(max(0, min(255, r_noise.evaluate(x, y) + value_offset.r))),
+            g:UInt8 = UInt8(max(0, min(255, g_noise.evaluate(x, y) + value_offset.g))),
+            b:UInt8 = UInt8(max(0, min(255, b_noise.evaluate(x, y) + value_offset.b)))
         if invert
         {
             pixbuf.append(UInt8.max - r)

@@ -7,6 +7,99 @@ protocol Noise
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
 }
 
+/// UNDOCUMENTED
+public
+struct Domain2D:Sequence
+{
+    private
+    let samples_x:Double,
+        samples_y:Double,
+
+        dx:Double,
+        dy:Double,
+        j0:Double,
+        i0:Double
+
+    public
+    struct Iterator:IteratorProtocol
+    {
+        private
+        var j:Double = -0.5,
+            i:Double =  0.5
+
+        private
+        let j0:Double,
+            j_max:Double,
+            i_max:Double,
+
+            dx:Double,
+            dy:Double
+
+        init(_ domain:Domain2D)
+        {
+            self.j = domain.j0 - 0.5
+            self.i = domain.i0 + 0.5
+
+            self.j0     = domain.j0
+            self.j_max  = domain.j0 + domain.samples_x
+            self.i_max  = domain.i0 + domain.samples_y
+            self.dx     = domain.dx
+            self.dy     = domain.dy
+        }
+
+        public mutating
+        func next() -> (Double, Double)?
+        {
+            self.j += 1
+            guard self.j < self.j_max
+            else
+            {
+                self.j = self.j0 + 0.5
+                self.i += 1
+                guard self.i < self.i_max
+                else
+                {
+                    return nil
+                }
+
+                return (self.dx * 0.5, self.dy * self.i)
+            }
+
+            return (self.dx * self.j, self.dy * self.i)
+        }
+    }
+
+    public
+    init(samples_x:Int, samples_y:Int)
+    {
+        self.samples_x = Double(samples_x)
+        self.samples_y = Double(samples_y)
+
+        self.dx = 1
+        self.dy = 1
+        self.j0 = 0
+        self.i0 = 0
+    }
+
+    public
+    init(_ x_range:Range<Double>, _ y_range:Range<Double>, samples_x:Int, samples_y:Int)
+    {
+        self.samples_x = Double(samples_x)
+        self.samples_y = Double(samples_y)
+
+        self.dx     = (x_range.upperBound - x_range.lowerBound) / self.samples_x
+        self.dy     = (y_range.upperBound - y_range.lowerBound) / self.samples_y
+        self.j0     = x_range.lowerBound * self.samples_x / (x_range.upperBound - x_range.lowerBound)
+        self.i0     = y_range.lowerBound * self.samples_y / (y_range.upperBound - y_range.lowerBound)
+    }
+
+    public
+    func makeIterator() -> Iterator
+    {
+        return Iterator(self)
+    }
+}
+
 public
 extension Noise
 {
@@ -193,7 +286,7 @@ enum Math
 }
 
 public
-struct FBM<Generator:Noise>:Noise
+struct FBM<Generator>:Noise where Generator:Noise
 {
     private
     let generators:[Generator]
