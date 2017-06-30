@@ -7,99 +7,6 @@ protocol Noise
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
 }
 
-/// UNDOCUMENTED
-public
-struct Domain2D:Sequence
-{
-    private
-    let samples_x:Double,
-        samples_y:Double,
-
-        dx:Double,
-        dy:Double,
-        j0:Double,
-        i0:Double
-
-    public
-    struct Iterator:IteratorProtocol
-    {
-        private
-        var j:Double = -0.5,
-            i:Double =  0.5
-
-        private
-        let j0:Double,
-            j_max:Double,
-            i_max:Double,
-
-            dx:Double,
-            dy:Double
-
-        init(_ domain:Domain2D)
-        {
-            self.j = domain.j0 - 0.5
-            self.i = domain.i0 + 0.5
-
-            self.j0     = domain.j0
-            self.j_max  = domain.j0 + domain.samples_x
-            self.i_max  = domain.i0 + domain.samples_y
-            self.dx     = domain.dx
-            self.dy     = domain.dy
-        }
-
-        public mutating
-        func next() -> (Double, Double)?
-        {
-            self.j += 1
-            guard self.j < self.j_max
-            else
-            {
-                self.j = self.j0 + 0.5
-                self.i += 1
-                guard self.i < self.i_max
-                else
-                {
-                    return nil
-                }
-
-                return (self.dx * 0.5, self.dy * self.i)
-            }
-
-            return (self.dx * self.j, self.dy * self.i)
-        }
-    }
-
-    public
-    init(samples_x:Int, samples_y:Int)
-    {
-        self.samples_x = Double(samples_x)
-        self.samples_y = Double(samples_y)
-
-        self.dx = 1
-        self.dy = 1
-        self.j0 = 0
-        self.i0 = 0
-    }
-
-    public
-    init(_ x_range:Range<Double>, _ y_range:Range<Double>, samples_x:Int, samples_y:Int)
-    {
-        self.samples_x = Double(samples_x)
-        self.samples_y = Double(samples_y)
-
-        self.dx     = (x_range.upperBound - x_range.lowerBound) / self.samples_x
-        self.dy     = (y_range.upperBound - y_range.lowerBound) / self.samples_y
-        self.j0     = x_range.lowerBound * self.samples_x / (x_range.upperBound - x_range.lowerBound)
-        self.i0     = y_range.lowerBound * self.samples_y / (y_range.upperBound - y_range.lowerBound)
-    }
-
-    public
-    func makeIterator() -> Iterator
-    {
-        return Iterator(self)
-    }
-}
-
 public
 extension Noise
 {
@@ -177,6 +84,183 @@ extension Noise
             }
         }
         return samples
+    }
+}
+
+/// UNDOCUMENTED
+public
+struct Domain2D:Sequence
+{
+    private
+    let i_max:Double,
+        j_max:Double,
+
+        dx:Double,
+        dy:Double,
+        i0:Double,
+        j0:Double
+
+    public
+    struct Iterator:IteratorProtocol
+    {
+        private
+        var i:Double = -0.5,
+            j:Double =  0.5
+
+        private
+        let domain:Domain2D
+
+        init(_ domain:Domain2D)
+        {
+            self.i = domain.i0 - 0.5
+            self.j = domain.j0 + 0.5
+
+            self.domain = domain
+        }
+
+        public mutating
+        func next() -> (Double, Double)?
+        {
+            self.i += 1
+            if self.i >= self.domain.i_max
+            {
+                self.i = self.domain.i0 + 0.5
+                self.j += 1
+                if self.j >= self.domain.j_max
+                {
+                    return nil
+                }
+            }
+
+            return (self.domain.dx * self.i, self.domain.dy * self.j)
+        }
+    }
+
+    public
+    init(samples_x:Int, samples_y:Int)
+    {
+        self.dx = 1
+        self.dy = 1
+        self.i0 = 0
+        self.j0 = 0
+
+        self.i_max = Double(samples_x)
+        self.j_max = Double(samples_y)
+    }
+
+    public
+    init(_ x_range:Range<Double>, _ y_range:Range<Double>, samples_x:Int, samples_y:Int)
+    {
+        self.dx     = (x_range.upperBound - x_range.lowerBound) / Double(samples_x)
+        self.dy     = (y_range.upperBound - y_range.lowerBound) / Double(samples_y)
+        self.i0     = x_range.lowerBound * Double(samples_x) / (x_range.upperBound - x_range.lowerBound)
+        self.j0     = y_range.lowerBound * Double(samples_y) / (y_range.upperBound - y_range.lowerBound)
+
+        self.i_max = self.i0 + Double(samples_x)
+        self.j_max = self.j0 + Double(samples_y)
+    }
+
+    public
+    func makeIterator() -> Iterator
+    {
+        return Iterator(self)
+    }
+}
+
+/// UNDOCUMENTED
+public
+struct Domain3D:Sequence
+{
+    private
+    let i_max:Double,
+        j_max:Double,
+        k_max:Double,
+
+        dx:Double,
+        dy:Double,
+        dz:Double,
+        i0:Double,
+        j0:Double,
+        k0:Double
+
+    public
+    struct Iterator:IteratorProtocol
+    {
+        private
+        var i:Double = -0.5,
+            j:Double =  0.5,
+            k:Double =  0.5
+
+        private
+        let domain:Domain3D
+
+        init(_ domain:Domain3D)
+        {
+            self.i = domain.i0 - 0.5
+            self.j = domain.j0 + 0.5
+            self.k = domain.k0 + 0.5
+
+            self.domain = domain
+        }
+
+        public mutating
+        func next() -> (Double, Double, Double)?
+        {
+            self.i += 1
+            if self.i >= self.domain.i_max
+            {
+                self.i = self.domain.i0 + 0.5
+                self.j += 1
+                if self.j >= self.domain.j_max
+                {
+                    self.j = self.domain.j0 + 0.5
+                    self.k += 1
+                    if self.k >= self.domain.k_max
+                    {
+                        return nil
+                    }
+                }
+            }
+
+            return (self.domain.dx * self.i, self.domain.dy * self.j, self.domain.dz * self.k)
+        }
+    }
+
+    public
+    init(samples_x:Int, samples_y:Int, samples_z:Int)
+    {
+        self.dx = 1
+        self.dy = 1
+        self.dz = 1
+        self.i0 = 0
+        self.j0 = 0
+        self.k0 = 0
+
+        self.i_max = Double(samples_x)
+        self.j_max = Double(samples_y)
+        self.k_max = Double(samples_z)
+    }
+
+    public
+    init(_ x_range:Range<Double>, _ y_range:Range<Double>, _ z_range:Range<Double>,
+        samples_x:Int, samples_y:Int, samples_z:Int)
+    {
+        self.dx     = (x_range.upperBound - x_range.lowerBound) / Double(samples_x)
+        self.dy     = (y_range.upperBound - y_range.lowerBound) / Double(samples_y)
+        self.dz     = (z_range.upperBound - z_range.lowerBound) / Double(samples_z)
+        self.i0     = x_range.lowerBound * Double(samples_x) / (x_range.upperBound - x_range.lowerBound)
+        self.j0     = y_range.lowerBound * Double(samples_y) / (y_range.upperBound - y_range.lowerBound)
+        self.k0     = z_range.lowerBound * Double(samples_z) / (z_range.upperBound - z_range.lowerBound)
+
+        self.i_max = self.i0 + Double(samples_x)
+        self.j_max = self.j0 + Double(samples_y)
+        self.k_max = self.k0 + Double(samples_z)
+    }
+
+    public
+    func makeIterator() -> Iterator
+    {
+        return Iterator(self)
     }
 }
 

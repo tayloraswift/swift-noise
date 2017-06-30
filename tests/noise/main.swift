@@ -24,7 +24,7 @@ try png_encode(path: "tests/disk2d.png", raw_data: pixbuf, properties: png_prope
 
 let V:CellNoise2D = CellNoise2D(amplitude: 255, frequency: 0.01)
 t0 = clock()
-for (i, (x, y)):(offset:Int, element:(Double, Double)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
 {
     pixbuf[i] = UInt8(max(0, min(255, V.evaluate(x, y))))
 }
@@ -33,14 +33,17 @@ try png_encode(path: "tests/cell2d.png", raw_data: pixbuf, properties: png_prope
 
 let V3:CellNoise3D = CellNoise3D(amplitude: 255, frequency: 0.01)
 t0 = clock()
-pixbuf = V3.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 0)
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+{
+    pixbuf[i] = UInt8(max(0, min(255, V3.evaluate(x, y))))
+}
 print(clock() - t0)
 try png_encode(path: "tests/cell3d.png", raw_data: pixbuf, properties: png_properties)
 
 
 let S:FBM<SimplexNoise2D> = FBM<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
-for (i, (x, y)):(offset:Int, element:(Double, Double)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
 {
     pixbuf[i] = UInt8(max(0, min(255, S.evaluate(x, y) + 127.5)))
 }
@@ -50,7 +53,7 @@ try png_encode(path: "tests/simplex2d.png", raw_data: pixbuf, properties: png_pr
 
 let SS:FBM<SuperSimplexNoise2D> = FBM<SuperSimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
-for (i, (x, y)):(offset:Int, element:(Double, Double)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
 {
     pixbuf[i] = UInt8(max(0, min(255, SS.evaluate(x, y) + 127.5)))
 }
@@ -59,6 +62,9 @@ try png_encode(path: "tests/super_simplex2d.png", raw_data: pixbuf, properties: 
 
 let SS3D:FBM<SuperSimplexNoise3D> = FBM<SuperSimplexNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
 t0 = clock()
-pixbuf = SS3D.sample_area_saturated_to_u8(width: viewer_size, height: viewer_size, offset: 127.5)
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+{
+    pixbuf[i] = UInt8(max(0, min(255, SS3D.evaluate(x, y) + 127.5)))
+}
 print(clock() - t0)
 try png_encode(path: "tests/super_simplex3d.png", raw_data: pixbuf, properties: png_properties)
