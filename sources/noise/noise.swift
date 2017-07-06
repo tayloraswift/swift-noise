@@ -153,7 +153,7 @@ struct Domain2D:Sequence
     }
 
     public
-    init(_ x_range:Range<Double>, _ y_range:Range<Double>, samples_x:Int, samples_y:Int)
+    init(_ x_range:ClosedRange<Double>, _ y_range:ClosedRange<Double>, samples_x:Int, samples_y:Int)
     {
         self.dx     = (x_range.upperBound - x_range.lowerBound) / Double(samples_x)
         self.dy     = (y_range.upperBound - y_range.lowerBound) / Double(samples_y)
@@ -246,7 +246,7 @@ struct Domain3D:Sequence
     }
 
     public
-    init(_ x_range:Range<Double>, _ y_range:Range<Double>, _ z_range:Range<Double>,
+    init(_ x_range:ClosedRange<Double>, _ y_range:ClosedRange<Double>, _ z_range:ClosedRange<Double>,
         samples_x:Int, samples_y:Int, samples_z:Int)
     {
         self.dx     = (x_range.upperBound - x_range.lowerBound) / Double(samples_x)
