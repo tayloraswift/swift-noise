@@ -1,9 +1,9 @@
 import Noise
 import MaxPNG
 
-func write_rgb_png(path:String, width:Int, height:Int, pixbuf:[UInt8])
+func write_png(path:String, width:Int, height:Int, pixbytes:UnsafeBufferPointer<UInt8>, color:PNGProperties.ColorFormat)
 {
-    guard let properties = PNGProperties(width: width, height: height, bit_depth: 8, color: .rgb, interlaced: false)
+    guard let properties = PNGProperties(width: width, height: height, bit_depth: 8, color: color, interlaced: false)
     else
     {
         fatalError("failed to set png properties")
@@ -11,7 +11,9 @@ func write_rgb_png(path:String, width:Int, height:Int, pixbuf:[UInt8])
 
     do
     {
-        try png_encode(path: path, raw_data: pixbuf, properties: properties)
+        try png_encode( path: path,
+                        raw_data: pixbytes,
+                        properties: properties)
     }
     catch
     {
@@ -19,32 +21,51 @@ func write_rgb_png(path:String, width:Int, height:Int, pixbuf:[UInt8])
     }
 }
 
+extension UInt8
+{
+    init<T>(clamping value:T) where T:FloatingPoint
+    {
+        self.init(Swift.max(0, Swift.min(255, value)))
+    }
+}
+
 func color_noise_png(r_noise:Noise, g_noise:Noise, b_noise:Noise,
     width:Int, height:Int, value_offset:(r:Double, g:Double, b:Double), invert:Bool = false, path:String)
 {
-    var pixbuf:[UInt8] = []
-        pixbuf.reserveCapacity(3 * width * height)
+    let byte_count:Int = 3 * width * height
+    let pixbytes = UnsafeMutableBufferPointer<UInt8>(start: UnsafeMutablePointer<UInt8>.allocate(capacity: byte_count), count: byte_count)
+    defer
+    {
+        pixbytes.baseAddress?.deallocate(capacity: pixbytes.count)
+    }
 
+    var i:Int = 0
     for (x, y):(Double, Double) in Domain2D(samples_x: width, samples_y: height)
     {
-        let r:UInt8 = UInt8(max(0, min(255, r_noise.evaluate(x, y) + value_offset.r))),
-            g:UInt8 = UInt8(max(0, min(255, g_noise.evaluate(x, y) + value_offset.g))),
-            b:UInt8 = UInt8(max(0, min(255, b_noise.evaluate(x, y) + value_offset.b)))
+        let r:UInt8 = UInt8(clamping: r_noise.evaluate(x, y) + value_offset.r),
+            g:UInt8 = UInt8(clamping: g_noise.evaluate(x, y) + value_offset.g),
+            b:UInt8 = UInt8(clamping: b_noise.evaluate(x, y) + value_offset.b)
         if invert
         {
-            pixbuf.append(UInt8.max - r)
-            pixbuf.append(UInt8.max - g)
-            pixbuf.append(UInt8.max - b)
+            pixbytes[i    ] = UInt8.max - r
+            pixbytes[i + 1] = UInt8.max - g
+            pixbytes[i + 2] = UInt8.max - b
         }
         else
         {
-            pixbuf.append(r)
-            pixbuf.append(g)
-            pixbuf.append(b)
+            pixbytes[i    ] = r
+            pixbytes[i + 1] = g
+            pixbytes[i + 2] = b
         }
+
+        i += 3
     }
 
-    write_rgb_png(path: path, width: width, height: height, pixbuf: pixbuf)
+    write_png(  path: path,
+                width: width,
+                height: height,
+                pixbytes: UnsafeBufferPointer<UInt8>(start: pixbytes.baseAddress, count: pixbytes.count),
+                color: .rgb)
 }
 
 func banner_simplex2d(width:Int, height:Int, seed:Int)
@@ -139,8 +160,8 @@ func circle_at(cx:Double, cy:Double, r:Double, width:Int, height:Int, _ f:(Int, 
 
 func banner_disk2d(width:Int, height:Int, seed:Int)
 {
-    var poisson        = DiskSampler2D(seed: seed)
-    var pixbuf:[UInt8] = [UInt8](repeating: 255, count: 3 * width * height)
+    var poisson          = DiskSampler2D(seed: seed)
+    var pixbytes:[UInt8] = [UInt8](repeating: 255, count: 3 * width * height)
 
     let points = poisson.generate(radius: 20, width: width, height: height, k: 80)
 
@@ -154,9 +175,9 @@ func banner_disk2d(width:Int, height:Int, seed:Int)
                 (x:Int, y:Int, v:Double) in
 
                 let base_addr:Int = 3 * (y * width + x)
-                pixbuf[base_addr    ] = UInt8(clamping: Int(pixbuf[base_addr    ]) - Int(Double(color.r) * v))
-                pixbuf[base_addr + 1] = UInt8(clamping: Int(pixbuf[base_addr + 1]) - Int(Double(color.g) * v))
-                pixbuf[base_addr + 2] = UInt8(clamping: Int(pixbuf[base_addr + 2]) - Int(Double(color.b) * v))
+                pixbytes[base_addr    ] = UInt8(clamping: Int(pixbytes[base_addr    ]) - Int(Double(color.r) * v))
+                pixbytes[base_addr + 1] = UInt8(clamping: Int(pixbytes[base_addr + 1]) - Int(Double(color.g) * v))
+                pixbytes[base_addr + 2] = UInt8(clamping: Int(pixbytes[base_addr + 2]) - Int(Double(color.b) * v))
             })
         }
     }
@@ -165,13 +186,16 @@ func banner_disk2d(width:Int, height:Int, seed:Int)
     _dots(poisson.generate(radius: 25, width: width, height: height, k: 80, seed: (45, 15)), color: (0, 10, 235))
     _dots(poisson.generate(radius: 30, width: width, height: height, k: 80, seed: (15, 45)), color: (225, 20, 0))
 
-    write_rgb_png(path: "tests/banner_disk2d.png", width: width, height: height, pixbuf: pixbuf)
+    pixbytes.withUnsafeBufferPointer
+    {
+        write_png(path: "tests/banner_disk2d.png", width: width, height: height, pixbytes: $0, color: .rgb)
+    }
 }
 
 func banner_voronoi2d(width:Int, height:Int, seed:Int)
 {
-    let voronoi        = CellNoise2D(amplitude: 255, frequency: 0.025, seed: seed)
-    var pixbuf:[UInt8] = [UInt8](repeating: 0, count: 3 * width * height)
+    let voronoi          = CellNoise2D(amplitude: 255, frequency: 0.025, seed: seed)
+    var pixbytes:[UInt8] = [UInt8](repeating: 0, count: 3 * width * height)
 
     let r:PermutationTable   = PermutationTable(seed: seed),
         g:PermutationTable   = PermutationTable(seed: seed + 1),
@@ -206,15 +230,18 @@ func banner_voronoi2d(width:Int, height:Int, seed:Int)
                 g += Int(contribution.g)
                 b += Int(contribution.b)
             }
-            pixbuf[base_addr    ] = UInt8(r / supersamples.count)
-            pixbuf[base_addr + 1] = UInt8(g / supersamples.count)
-            pixbuf[base_addr + 2] = UInt8(b / supersamples.count)
+            pixbytes[base_addr    ] = UInt8(r / supersamples.count)
+            pixbytes[base_addr + 1] = UInt8(g / supersamples.count)
+            pixbytes[base_addr + 2] = UInt8(b / supersamples.count)
 
             base_addr += 3
         }
     }
 
-    write_rgb_png(path: "tests/banner_voronoi2d.png", width: width, height: height, pixbuf: pixbuf)
+    pixbytes.withUnsafeBufferPointer
+    {
+        write_png(path: "tests/banner_voronoi2d.png", width: width, height: height, pixbytes: $0, color: .rgb)
+    }
 }
 
 public
