@@ -5,6 +5,8 @@ import func Glibc.clock
 
 banners(width: 700, ratio: 5)
 
+calibrate_noise(width: 256, height: 256)
+
 do
 {
     var t0:Int
