@@ -516,3 +516,75 @@ struct SuperSimplexNoise3D:Noise
         return self.evaluate(x, y, z)
     }
 }
+
+public
+struct ClassicNoise3D:Noise
+{
+    private
+    let permutation_table:PermutationTable
+
+    private
+    let amplitude:Double,
+        frequency:Double
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = 0.982 * amplitude
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    private
+    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    {
+        // use vectors to the edge of a cube
+        let hash:Int  = self.permutation_table.hash(point) & 15,
+            u:Double  = hash < 8                 ? offset.x : offset.y,
+            vt:Double = hash == 12 || hash == 14 ? offset.x : offset.z,
+            v:Double  = hash < 4                 ? offset.y : vt
+        return (hash & 1 != 0 ? -u : u) + (hash & 2 != 0 ? -v : v)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+
+        // get integral cube coordinates as well as fractional offsets
+        let (bin, rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
+
+        // use smooth interpolation
+        let U:Math.DoubleV3 = Math.quintic_ease(rel)
+
+        let r:Double = Math.lerp(Math.lerp(Math.lerp(self.gradient(from:  bin                            , at:  rel),
+                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c   ), at: (rel.x - 1, rel.y    , rel.z)),
+                                                     factor: U.x),
+                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c   ), at: (rel.x    , rel.y - 1, rel.z)),
+                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c   ), at: (rel.x - 1, rel.y - 1, rel.z)),
+                                                     factor: U.x),
+                                           factor: U.y),
+                                 Math.lerp(Math.lerp(self.gradient(from: (bin.a    , bin.b    , bin.c + 1), at: (rel.x    , rel.y   , rel.z - 1)),
+                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c + 1), at: (rel.x - 1, rel.y   , rel.z - 1)),
+                                                     factor: U.x),
+                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c + 1), at: (rel.x    , rel.y - 1, rel.z - 1)),
+                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c + 1), at: (rel.x - 1, rel.y - 1, rel.z - 1)),
+                                                     factor: U.x),
+                                           factor: U.y),
+                                 factor: U.z)
+
+        return self.amplitude * r
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
+    }
+}
