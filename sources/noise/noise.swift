@@ -371,6 +371,35 @@ enum Math
     {
         return (Double(v.a), Double(v.b), Double(v.c))
     }
+
+    @inline(__always)
+    static
+    func lerp(_ a:Double, _ b:Double, factor:Double) -> Double
+    {
+        return (1 - factor) * a + factor * b
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ x:Double) -> Double
+    {
+        // 6x^5 - 15x^4 + 10x^3
+        return x * x * x * (10.addingProduct(x, (-15).addingProduct(x, 6)))
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ v:DoubleV2) -> DoubleV2
+    {
+        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y))
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ v:DoubleV3) -> DoubleV3
+    {
+        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y), Math.quintic_ease(v.z))
+    }
 }
 
 public

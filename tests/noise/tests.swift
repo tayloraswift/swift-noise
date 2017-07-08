@@ -68,6 +68,17 @@ func color_noise_png(r_noise:Noise, g_noise:Noise, b_noise:Noise,
                 color: .rgb)
 }
 
+func banner_classic3d(width:Int, height:Int, seed:Int)
+{
+    color_noise_png(r_noise: ClassicNoise3D(amplitude: 1.6 * 0.5*255, frequency: 0.01, seed: seed),
+                    g_noise: ClassicNoise3D(amplitude: 1.6 * 0.5*255, frequency: 0.005, seed: seed + 1),
+                    b_noise: ClassicNoise3D(amplitude: 1.6 * 0.5*255, frequency: 0.0025, seed: seed + 2),
+                    width: width,
+                    height: height,
+                    value_offset: (0.65*255, 0.65*255, 0.65*255),
+                    path: "tests/banner_classic3d.png")
+}
+
 func banner_simplex2d(width:Int, height:Int, seed:Int)
 {
     color_noise_png(r_noise: SimplexNoise2D(amplitude: 0.5*255, frequency: 0.015, seed: seed),
@@ -248,6 +259,7 @@ public
 func banners(width:Int, ratio:Double)
 {
     let height:Int = Int(Double(width) / ratio)
+    banner_classic3d     (width: width, height: height, seed: 6)
     banner_simplex2d     (width: width, height: height, seed: 6)
     banner_supersimplex2d(width: width, height: height, seed: 8)
     banner_supersimplex3d(width: width, height: height, seed: 2)
