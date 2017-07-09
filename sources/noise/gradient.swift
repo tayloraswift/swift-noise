@@ -4,71 +4,6 @@ enum Const
     fileprivate static
     let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1),
         STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
-
-    // each gradient appears four times to mitigate hashing biases
-    fileprivate static
-    let GRADIENTS_2D:[Math.DoubleV2] =
-    [
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
-
-        (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7),
-
-        (-0.7, -0.7), (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7),
-
-        (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7)
-    ]
-
-    fileprivate static
-    let GRADIENTS_3D:[Math.DoubleV3] =
-    [
-        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
-        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
-        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (0, -1,  1), ( 0, -1, -1),
-
-        (0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
-        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
-        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (0, -1,  1)
-    ]
-}
-
-fileprivate
-protocol _GradientNoise2D:Noise
-{
-    var permutation_table:PermutationTable { get }
-
-    static var gradient_table32:[Math.DoubleV2] { get }
-    static var radius:Double { get }
-
-
-}
-
-fileprivate
-extension _GradientNoise2D
-{
-    func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
-    {
-        let dr:Double = Self.radius - Math.dot(offset, offset)
-        if dr > 0
-        {
-            let gradient:Math.DoubleV2 = Self.gradient_table32[self.permutation_table.hash(point) & 31],
-                drdr:Double = dr * dr
-            return drdr * drdr * Math.dot(gradient, offset)
-        }
-        else
-        {
-            return 0
-        }
-    }
 }
 
 // UNDOCUMENTED
@@ -150,13 +85,26 @@ struct ClassicNoise3D:HashedNoise, BaseNoise
 
 @available(*, deprecated, message: "simplex noise nearly identical to and is an inferior implementation of super simplex noise")
 public
-struct SimplexNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
+struct SimplexNoise2D:HashedNoise, BaseNoise
 {
-    fileprivate static
-    let gradient_table32:[Math.DoubleV2] = Const.GRADIENTS_2D
+    private static
+    let gradient_table32:[Math.DoubleV2] =
+    [
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
 
-    fileprivate static
-    let radius:Double = 2
+        (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7),
+
+        (-0.7, -0.7), (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7),
+
+        (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7)
+    ]
 
     let permutation_table:PermutationTable,
         amplitude:Double, // not the same amplitude passed into the initializer
@@ -175,6 +123,21 @@ struct SimplexNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
         self.amplitude = 0.1322 * amplitude
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
+    {
+        let dr:Double = 2 - Math.dot(offset, offset)
+        if dr > 0
+        {
+            let gradient:Math.DoubleV2 = SimplexNoise2D.gradient_table32[self.permutation_table.hash(point) & 31],
+                drdr:Double = dr * dr
+            return drdr * drdr * Math.dot(gradient, offset)
+        }
+        else
+        {
+            return 0
+        }
     }
 
     public
@@ -298,7 +261,7 @@ struct SimplexNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
 public
 typealias SuperSimplexNoise2D = GradientNoise2D
 public
-struct GradientNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
+struct GradientNoise2D:HashedNoise, BaseNoise
 {
     private static
     let points:[(Math.IntV2, Math.DoubleV2)] =
@@ -328,11 +291,24 @@ struct GradientNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
         return points
     }()
 
-    fileprivate static
-    let gradient_table32:[Math.DoubleV2] = Const.GRADIENTS_2D
+    private static // each gradient appears four times to mitigate hashing biases
+    let gradient_table32:[Math.DoubleV2] =
+    [
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
 
-    fileprivate static
-    let radius:Double = 2/3
+        (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7),
+
+        (-0.7, -0.7), (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7), (-0.7, 0.7),
+
+        (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
+        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
+        (0.7, 0.7)
+    ]
 
     let permutation_table:PermutationTable,
         amplitude:Double,
@@ -351,6 +327,21 @@ struct GradientNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
         self.amplitude = 18.5 * amplitude
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
+    {
+        let dr:Double = 2/3 - Math.dot(offset, offset)
+        if dr > 0
+        {
+            let gradient:Math.DoubleV2 = GradientNoise2D.gradient_table32[self.permutation_table.hash(point) & 31],
+                drdr:Double = dr * dr
+            return drdr * drdr * Math.dot(gradient, offset)
+        }
+        else
+        {
+            return 0
+        }
     }
 
     public
@@ -519,8 +510,20 @@ struct GradientNoise3D:HashedNoise, BaseNoise
         return points
     }()
 
-    private static // this will be taken out of the Const enum, once SimplexNoise is removed
-    let gradient_table32:[Math.DoubleV3] = Const.GRADIENTS_3D
+    private static
+    let gradient_table32:[Math.DoubleV3] =
+    [
+        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
+        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
+        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
+        (1, 1, 0), (-1,  1, 0), (0, -1,  1), ( 0, -1, -1),
+
+        (0, -1, -1),
+        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
+        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
+        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
+        (1, 1, 0), (-1,  1, 0), (0, -1,  1)
+    ]
 
     let permutation_table:PermutationTable,
         amplitude:Double,
