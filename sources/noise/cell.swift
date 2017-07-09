@@ -1,10 +1,16 @@
 public
-struct CellNoise2D:Noise
+struct CellNoise2D:HashedNoise, BaseNoise
 {
-    private
     let permutation_table:PermutationTable,
         amplitude:Double,
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
@@ -189,12 +195,18 @@ struct CellNoise2D:Noise
 }
 
 public
-struct CellNoise3D:Noise
+struct CellNoise3D:HashedNoise, BaseNoise
 {
-    private
     let permutation_table:PermutationTable,
         amplitude:Double,
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
