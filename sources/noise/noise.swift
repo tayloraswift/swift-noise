@@ -448,11 +448,30 @@ struct FBM<Source>:Noise where Source:Noise
         self.generators = []
     }
 
-    // UNDOCUMENTED
+    // UNDOCUMENTED, default was changed from 0.75 to 0.5
     public
     init(source:Source, octaves:Int, persistence:Double = 0.5, lacunarity:Double = 2)
     {
-        var generators:[Source] = [source]
+        // calculate maximum range
+        let range_inverse:Double
+        if persistence == 0.5
+        {
+            range_inverse = Double(1 << (octaves - 1)) / Double(1 << octaves - 1)
+        }
+        else
+        {
+            var accumulation:Double = 1,
+                contribution:Double = persistence
+            for _ in (0 ..< octaves - 1)
+            {
+                accumulation += contribution
+                contribution *= persistence
+            }
+
+            range_inverse = 1 / accumulation
+        }
+
+        var generators:[Source] = [source.amplitude_scaled(by: range_inverse)]
             generators.reserveCapacity(octaves)
         for i in (0 ..< octaves - 1)
         {
