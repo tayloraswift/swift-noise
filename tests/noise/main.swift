@@ -44,7 +44,7 @@ do
     print(clock() - t0)
     try png_encode(path: "tests/cell3d.png", raw_data: pixbuf, properties: png_properties)
 
-    let P:FBM<ClassicNoise3D> = FBM<ClassicNoise3D>(amplitude: 127.5, frequency: 0.001, octaves: 1)
+    let P:FBM<ClassicNoise3D> = FBM<ClassicNoise3D>(amplitude: 127.5, frequency: 0.001, octaves: 10)
     t0 = clock()
     for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
     {
@@ -52,15 +52,6 @@ do
     }
     print(clock() - t0)
     try png_encode(path: "tests/classic3d.png", raw_data: pixbuf, properties: png_properties)
-
-    let S:FBM<SimplexNoise2D> = FBM<SimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
-    t0 = clock()
-    for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
-    {
-        pixbuf[i] = UInt8(max(0, min(255, S.evaluate(x, y) + 127.5)))
-    }
-    print(clock() - t0)
-    try png_encode(path: "tests/simplex2d.png", raw_data: pixbuf, properties: png_properties)
 
 
     let SS:FBM<GradientNoise2D> = FBM<GradientNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
@@ -70,7 +61,7 @@ do
         pixbuf[i] = UInt8(max(0, min(255, SS.evaluate(x, y) + 127.5)))
     }
     print(clock() - t0)
-    try png_encode(path: "tests/super_simplex2d.png", raw_data: pixbuf, properties: png_properties)
+    try png_encode(path: "tests/gradient2d.png", raw_data: pixbuf, properties: png_properties)
 
     let SS3D:FBM<GradientNoise3D> = FBM<GradientNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
     t0 = clock()
@@ -79,5 +70,5 @@ do
         pixbuf[i] = UInt8(max(0, min(255, SS3D.evaluate(x, y) + 127.5)))
     }
     print(clock() - t0)
-    try png_encode(path: "tests/super_simplex3d.png", raw_data: pixbuf, properties: png_properties)
+    try png_encode(path: "tests/gradient3d.png", raw_data: pixbuf, properties: png_properties)
 }

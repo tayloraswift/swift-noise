@@ -24,23 +24,17 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
 
 func calibrate_noise(width:Int, height:Int, seed:Int = 0)
 {
-    grayscale_noise_png(noise: SimplexNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
-                        width: width,
-                        height: height,
-                        value_offset: 0.5*255,
-                        path: "tests/calibrate_simplex2d.png")
-
     grayscale_noise_png(noise: GradientNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
-                        path: "tests/calibrate_supersimplex2d.png")
+                        path: "tests/calibrate_gradient2d.png")
 
     grayscale_noise_png(noise: GradientNoise3D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
-                        path: "tests/calibrate_supersimplex3d.png")
+                        path: "tests/calibrate_gradient3d.png")
 
     grayscale_noise_png(noise: CellNoise2D(amplitude: 255, frequency: 4, seed: seed),
                         width: width,
