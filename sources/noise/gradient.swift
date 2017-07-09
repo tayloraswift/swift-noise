@@ -72,30 +72,6 @@ extension _GradientNoise2D
 }
 
 // UNDOCUMENTED
-protocol HashedNoise:Noise
-{
-    var permutation_table:PermutationTable { get }
-    var amplitude:Double { get }
-    var frequency:Double { get }
-
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
-}
-
-extension HashedNoise
-{
-    public
-    func amplitude_scaled(by factor:Double) -> Self
-    {
-        return Self(amplitude: self.amplitude * factor, frequency: self.frequency, permutation_table: self.permutation_table)
-    }
-    public
-    func frequency_scaled(by factor:Double) -> Self
-    {
-        return Self(amplitude: self.amplitude, frequency: self.frequency * factor, permutation_table: self.permutation_table)
-    }
-}
-
-// UNDOCUMENTED
 public
 struct ClassicNoise3D:HashedNoise, BaseNoise
 {
