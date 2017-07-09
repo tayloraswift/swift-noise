@@ -22,6 +22,7 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
             color: .grayscale)
 }
 
+public 
 func calibrate_noise(width:Int, height:Int, seed:Int = 0)
 {
     grayscale_noise_png(noise: GradientNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
