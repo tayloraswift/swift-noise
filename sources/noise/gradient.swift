@@ -8,7 +8,7 @@ enum Const
 
 // UNDOCUMENTED
 public
-struct ClassicNoise3D:HashedNoise, BaseNoise
+struct ClassicNoise3D:HashedNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
@@ -85,7 +85,7 @@ struct ClassicNoise3D:HashedNoise, BaseNoise
 
 @available(*, deprecated, message: "simplex noise nearly identical to and is an inferior implementation of super simplex noise")
 public
-struct SimplexNoise2D:HashedNoise, BaseNoise
+struct SimplexNoise2D:HashedNoise
 {
     private static
     let gradient_table32:[Math.DoubleV2] =
@@ -261,7 +261,7 @@ struct SimplexNoise2D:HashedNoise, BaseNoise
 public
 typealias SuperSimplexNoise2D = GradientNoise2D
 public
-struct GradientNoise2D:HashedNoise, BaseNoise
+struct GradientNoise2D:HashedNoise
 {
     private static
     let points:[(Math.IntV2, Math.DoubleV2)] =
@@ -486,7 +486,7 @@ struct GradientNoise2D:HashedNoise, BaseNoise
 public
 typealias SuperSimplexNoise3D = GradientNoise3D
 public
-struct GradientNoise3D:HashedNoise, BaseNoise
+struct GradientNoise3D:HashedNoise
 {
     private static
     let points:[(Math.IntV3, Math.DoubleV3)] =
