@@ -7,6 +7,7 @@ protocol Noise
 
     func amplitude_scaled(by factor:Double) -> Self
     func frequency_scaled(by factor:Double) -> Self
+    func reseeded() -> Self
 }
 
 public
@@ -98,6 +99,140 @@ public
 protocol BaseNoise:Noise
 {
     init(amplitude:Double, frequency:Double, seed:Int)
+}
+
+enum Math
+{
+    typealias IntV2    = (a:Int, b:Int)
+    typealias IntV3    = (a:Int, b:Int, c:Int)
+    typealias DoubleV2 = (x:Double, y:Double)
+    typealias DoubleV3 = (x:Double, y:Double, z:Double)
+
+    @inline(__always)
+    private static
+    func fraction(_ x:Double) -> (Int, Double)
+    {
+        let integer:Int = x > 0 ? Int(x) : Int(x) - 1
+        return (integer, x - Double(integer))
+    }
+
+    @inline(__always)
+    static
+    func fraction(_ v:DoubleV2) -> (IntV2, DoubleV2)
+    {
+        let (i1, f1):(Int, Double) = Math.fraction(v.0),
+            (i2, f2):(Int, Double) = Math.fraction(v.1)
+        return ((i1, i2), (f1, f2))
+    }
+
+    @inline(__always)
+    static
+    func fraction(_ v:DoubleV3) -> (IntV3, DoubleV3)
+    {
+        let (i1, f1):(Int, Double) = Math.fraction(v.0),
+            (i2, f2):(Int, Double) = Math.fraction(v.1),
+            (i3, f3):(Int, Double) = Math.fraction(v.2)
+        return ((i1, i2, i3), (f1, f2, f3))
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:IntV2, _ v2:IntV2) -> IntV2
+    {
+        return (v1.a + v2.a, v1.b + v2.b)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:IntV3, _ v2:IntV3) -> IntV3
+    {
+        return (v1.a + v2.a, v1.b + v2.b, v1.c + v2.c)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
+    {
+        return (v1.x + v2.x, v1.y + v2.y)
+    }
+
+    @inline(__always)
+    static
+    func add(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
+    {
+        return (v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
+    }
+
+    @inline(__always)
+    static
+    func sub(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
+    {
+        return (v1.x - v2.x, v1.y - v2.y)
+    }
+
+    @inline(__always)
+    static
+    func sub(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
+    {
+        return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+    }
+
+    @inline(__always)
+    static
+    func dot(_ v1:DoubleV2, _ v2:DoubleV2) -> Double
+    {
+        return v1.x * v2.x + v1.y * v2.y
+    }
+
+    @inline(__always)
+    static
+    func dot(_ v1:DoubleV3, _ v2:DoubleV3) -> Double
+    {
+        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+    }
+
+    @inline(__always)
+    static
+    func cast_double(_ v:IntV2) -> DoubleV2
+    {
+        return (Double(v.a), Double(v.b))
+    }
+
+    @inline(__always)
+    static
+    func cast_double(_ v:IntV3) -> DoubleV3
+    {
+        return (Double(v.a), Double(v.b), Double(v.c))
+    }
+
+    @inline(__always)
+    static
+    func lerp(_ a:Double, _ b:Double, factor:Double) -> Double
+    {
+        return (1 - factor) * a + factor * b
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ x:Double) -> Double
+    {
+        // 6x^5 - 15x^4 + 10x^3
+        return x * x * x * (10.addingProduct(x, (-15).addingProduct(x, 6)))
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ v:DoubleV2) -> DoubleV2
+    {
+        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y))
+    }
+
+    @inline(__always)
+    static
+    func quintic_ease(_ v:DoubleV3) -> DoubleV3
+    {
+        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y), Math.quintic_ease(v.z))
+    }
 }
 
 /// UNDOCUMENTED
@@ -277,160 +412,31 @@ struct Domain3D:Sequence
     }
 }
 
-enum Math
-{
-    typealias IntV2    = (a:Int, b:Int)
-    typealias IntV3    = (a:Int, b:Int, c:Int)
-    typealias DoubleV2 = (x:Double, y:Double)
-    typealias DoubleV3 = (x:Double, y:Double, z:Double)
-
-    @inline(__always)
-    private static
-    func fraction(_ x:Double) -> (Int, Double)
-    {
-        let integer:Int = x > 0 ? Int(x) : Int(x) - 1
-        return (integer, x - Double(integer))
-    }
-
-    @inline(__always)
-    static
-    func fraction(_ v:DoubleV2) -> (IntV2, DoubleV2)
-    {
-        let (i1, f1):(Int, Double) = Math.fraction(v.0),
-            (i2, f2):(Int, Double) = Math.fraction(v.1)
-        return ((i1, i2), (f1, f2))
-    }
-
-    @inline(__always)
-    static
-    func fraction(_ v:DoubleV3) -> (IntV3, DoubleV3)
-    {
-        let (i1, f1):(Int, Double) = Math.fraction(v.0),
-            (i2, f2):(Int, Double) = Math.fraction(v.1),
-            (i3, f3):(Int, Double) = Math.fraction(v.2)
-        return ((i1, i2, i3), (f1, f2, f3))
-    }
-
-    @inline(__always)
-    static
-    func add(_ v1:IntV2, _ v2:IntV2) -> IntV2
-    {
-        return (v1.a + v2.a, v1.b + v2.b)
-    }
-
-    @inline(__always)
-    static
-    func add(_ v1:IntV3, _ v2:IntV3) -> IntV3
-    {
-        return (v1.a + v2.a, v1.b + v2.b, v1.c + v2.c)
-    }
-
-    @inline(__always)
-    static
-    func add(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
-    {
-        return (v1.x + v2.x, v1.y + v2.y)
-    }
-
-    @inline(__always)
-    static
-    func add(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
-    {
-        return (v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
-    }
-
-    @inline(__always)
-    static
-    func sub(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
-    {
-        return (v1.x - v2.x, v1.y - v2.y)
-    }
-
-    @inline(__always)
-    static
-    func sub(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
-    {
-        return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
-    }
-
-    @inline(__always)
-    static
-    func dot(_ v1:DoubleV2, _ v2:DoubleV2) -> Double
-    {
-        return v1.x * v2.x + v1.y * v2.y
-    }
-
-    @inline(__always)
-    static
-    func dot(_ v1:DoubleV3, _ v2:DoubleV3) -> Double
-    {
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
-    }
-
-    @inline(__always)
-    static
-    func cast_double(_ v:IntV2) -> DoubleV2
-    {
-        return (Double(v.a), Double(v.b))
-    }
-
-    @inline(__always)
-    static
-    func cast_double(_ v:IntV3) -> DoubleV3
-    {
-        return (Double(v.a), Double(v.b), Double(v.c))
-    }
-
-    @inline(__always)
-    static
-    func lerp(_ a:Double, _ b:Double, factor:Double) -> Double
-    {
-        return (1 - factor) * a + factor * b
-    }
-
-    @inline(__always)
-    static
-    func quintic_ease(_ x:Double) -> Double
-    {
-        // 6x^5 - 15x^4 + 10x^3
-        return x * x * x * (10.addingProduct(x, (-15).addingProduct(x, 6)))
-    }
-
-    @inline(__always)
-    static
-    func quintic_ease(_ v:DoubleV2) -> DoubleV2
-    {
-        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y))
-    }
-
-    @inline(__always)
-    static
-    func quintic_ease(_ v:DoubleV3) -> DoubleV3
-    {
-        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y), Math.quintic_ease(v.z))
-    }
-}
-
 public
-struct FBM<Generator>:Noise where Generator:Noise
+struct FBM<Source>:Noise where Source:Noise
 {
     private
-    let generators:[Generator]
+    let generators:[Source]
 
     // UNDOCUMENTED
     public
     func amplitude_scaled(by factor:Double) -> FBM
     {
-        return FBM<Generator>(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
+        return FBM<Source>(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
     }
     public
     func frequency_scaled(by factor:Double) -> FBM
     {
-        return FBM<Generator>(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
+        return FBM<Source>(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
+    }
+    public
+    func reseeded() -> FBM
+    {
+        return FBM<Source>(generators: self.generators.map{ $0.reseeded() })
     }
 
     private
-    init(generators:[Generator])
+    init(generators:[Source])
     {
         self.generators = generators
     }
@@ -440,6 +446,20 @@ struct FBM<Generator>:Noise where Generator:Noise
     init(amplitude:Double, frequency:Double, seed:Int)
     {
         self.generators = []
+    }
+
+    // UNDOCUMENTED
+    public
+    init(source:Source, octaves:Int, persistence:Double = 0.5, lacunarity:Double = 2)
+    {
+        var generators:[Source] = [source]
+            generators.reserveCapacity(octaves)
+        for i in (0 ..< octaves - 1)
+        {
+            generators.append(generators[i].amplitude_scaled(by: persistence).frequency_scaled(by: lacunarity).reseeded())
+        }
+
+        self.generators  = generators
     }
 
     public
@@ -477,18 +497,19 @@ struct FBM<Generator>:Noise where Generator:Noise
 }
 
 // UNDOCUMENTED
-extension FBM where Generator:BaseNoise
+extension FBM where Source:BaseNoise
 {
+    @available(*, deprecated, message: "use init(source:octaves:persistence:lacunarity:) instead")
     public
     init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)
     {
-        var generators:[Generator] = []
+        var generators:[Source] = []
             generators.reserveCapacity(octaves)
         var f:Double = frequency,
             a:Double = amplitude
         for s in (seed ..< seed + octaves)
         {
-            generators.append(Generator(amplitude: a, frequency: f, seed: s))
+            generators.append(Source(amplitude: a, frequency: f, seed: s))
             a *= persistence
             f *= lacunarity
         }

@@ -20,6 +20,11 @@ extension HashedNoise
     {
         return Self(amplitude: self.amplitude, frequency: self.frequency * factor, permutation_table: self.permutation_table)
     }
+    public
+    func reseeded() -> Self
+    {
+        return Self(amplitude: self.amplitude, frequency: self.frequency, permutation_table: PermutationTable(reseeding: self.permutation_table))
+    }
 }
 
 public
@@ -77,7 +82,20 @@ struct PermutationTable
     public
     init(seed:Int)
     {
-        var permutations:[UInt8] = [UInt8](0 ... 255),
+        self.init(old_permut: [UInt8](0 ... 255), seed: seed)
+    }
+
+    // UNDOCUMENTED
+    public
+    init(reseeding old_table:PermutationTable)
+    {
+        self.init(old_permut: old_table.permut, seed: 0)
+    }
+
+    private
+    init(old_permut:[UInt8], seed:Int)
+    {
+        var permutations:[UInt8] = old_permut,
             rng:RandomXorshift = RandomXorshift(seed: seed)
         for i in 0 ..< 255 - 1
         {
