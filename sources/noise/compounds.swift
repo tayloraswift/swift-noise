@@ -136,6 +136,7 @@ struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displaceme
                                                     with: self.displacement.reseeded())
     }
 
+    public 
     init(displacing source:Source, with displacement:Displacement)
     {
         self.source       = source
