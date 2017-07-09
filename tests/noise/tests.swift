@@ -138,9 +138,9 @@ func banner_cell3d(width:Int, height:Int, seed:Int)
 
 func banner_FBM(width:Int, height:Int, seed:Int)
 {
-    color_noise_png(r_noise: FBM<CellNoise3D>    (source: CellNoise3D(amplitude: 9*255, frequency: 0.01, seed: seed + 2), octaves: 7, persistence: 0.75),
-                    g_noise: FBM<GradientNoise3D>(source: GradientNoise3D(amplitude: 280, frequency: 0.005, seed: seed + 1), octaves: 7, persistence: 0.75),
-                    b_noise: FBM<GradientNoise2D>(source: GradientNoise2D(amplitude: 280, frequency: 0.005), octaves: 7, persistence: 0.75),
+    color_noise_png(r_noise: FBM<CellNoise3D>    (CellNoise3D(amplitude: 10*255, frequency: 0.01, seed: seed + 2), octaves: 7, persistence: 0.75),
+                    g_noise: FBM<GradientNoise3D>(GradientNoise3D(amplitude: 300, frequency: 0.005, seed: seed + 3), octaves: 7, persistence: 0.75),
+                    b_noise: FBM<GradientNoise2D>(GradientNoise2D(amplitude: 300, frequency: 0.005), octaves: 7, persistence: 0.75),
                     width: width,
                     height: height,
                     value_offset: (0, 150, 150),

@@ -1,7 +1,7 @@
 fileprivate
 enum Const
 {
-    fileprivate static
+    static
     let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1),
         STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 }
