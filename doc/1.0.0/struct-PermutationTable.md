@@ -1,20 +1,20 @@
-###### Structure 
+###### Structure
 
 # `PermutationTable`
-An 8-bit permutation table useful for generating pseudo-random hash values. 
+An 8-bit permutation table useful for generating pseudo-random hash values.
 
-![](https://github.com/kelvin13/noise/blob/master/tests/banner_voronoi2d.png)
-> *Permutation tables can be used, among other things, to hash [cell noise](struct-CellNoise2D#func-closest_point_-xdouble-_-ydouble---pointint-int-r2double) to produce a [Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram).*
+![](png/banner_voronoi2d.png)
+> *Permutation tables can be used, among other things, to hash [cell noise](struct-CellNoise2D.md#func-closest_point_-xdouble-_-ydouble---pointint-int-r2double) to produce a [Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram).*
 ***
 
-## Symbols 
+## Symbols
 
-### Initializers 
+### Initializers
 
-#### `init(seed:Int)` 
+#### `init(seed:Int)`
 > Creates an instance with the given random `seed` containing the values `0 ... 255` shuffled in a random order.
 
-### Instance methods 
+### Instance methods
 
 #### `func` `hash(_ h1:Int) -> UInt8`
 > Hash a single integer value.
