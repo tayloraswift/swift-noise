@@ -71,8 +71,33 @@ extension GradientNoise2D
     }
 }
 
+// UNDOCUMENTED
+protocol HashedNoise:Noise
+{
+    var permutation_table:PermutationTable { get }
+    var amplitude:Double { get }
+    var frequency:Double { get }
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+}
+
+extension HashedNoise
+{
+    public
+    func amplitude_scaled(by factor:Double) -> Self
+    {
+        return Self(amplitude: self.amplitude * factor, frequency: self.frequency, permutation_table: self.permutation_table)
+    }
+    public
+    func frequency_scaled(by factor:Double) -> Self
+    {
+        return Self(amplitude: self.amplitude, frequency: self.frequency * factor, permutation_table: self.permutation_table)
+    }
+}
+
+@available(*, deprecated, message: "simplex noise nearly identical to and is an inferior implementation of super simplex noise")
 public
-struct SimplexNoise2D:GradientNoise2D
+struct SimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
 {
     fileprivate static
     let gradient_table32:[Math.DoubleV2] = Const.GRADIENTS_2D
@@ -80,12 +105,16 @@ struct SimplexNoise2D:GradientNoise2D
     fileprivate static
     let radius:Double = 2
 
-    fileprivate
-    let permutation_table:PermutationTable
-
-    private
-    let amplitude:Double, // not the same amplitude passed into the initializer
+    let permutation_table:PermutationTable,
+        amplitude:Double, // not the same amplitude passed into the initializer
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
@@ -213,7 +242,7 @@ struct SimplexNoise2D:GradientNoise2D
 }
 
 public
-struct SuperSimplexNoise2D:GradientNoise2D
+struct SuperSimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
 {
     private static
     let points:[(Math.IntV2, Math.DoubleV2)] =
@@ -243,17 +272,22 @@ struct SuperSimplexNoise2D:GradientNoise2D
         return points
     }()
 
-    static
+    fileprivate static
     let gradient_table32:[Math.DoubleV2] = Const.GRADIENTS_2D
 
-    static
+    fileprivate static
     let radius:Double = 2/3
 
-    let permutation_table:PermutationTable
-
-    private
-    let amplitude:Double,
+    let permutation_table:PermutationTable,
+        amplitude:Double,
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
@@ -402,7 +436,7 @@ struct SuperSimplexNoise2D:GradientNoise2D
 }
 
 public
-struct SuperSimplexNoise3D:Noise
+struct SuperSimplexNoise3D:HashedNoise, BaseNoise
 {
     private static
     let points:[(Math.IntV3, Math.DoubleV3)] =
@@ -426,15 +460,19 @@ struct SuperSimplexNoise3D:Noise
         return points
     }()
 
-    private static
+    private static // this will be taken out of the Const enum, once SimplexNoise is removed
     let gradient_table32:[Math.DoubleV3] = Const.GRADIENTS_3D
 
-    private
-    let permutation_table:PermutationTable
-
-    private
-    let amplitude:Double,
+    let permutation_table:PermutationTable,
+        amplitude:Double,
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
@@ -517,15 +555,20 @@ struct SuperSimplexNoise3D:Noise
     }
 }
 
+// UNDOCUMENTED
 public
-struct ClassicNoise3D:Noise
+struct ClassicNoise3D:HashedNoise, BaseNoise
 {
-    private
-    let permutation_table:PermutationTable
-
-    private
-    let amplitude:Double,
+    let permutation_table:PermutationTable,
+        amplitude:Double,
         frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
 
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)

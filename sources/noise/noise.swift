@@ -1,10 +1,12 @@
 public
 protocol Noise
 {
-    init(amplitude:Double, frequency:Double, seed:Int)
     func evaluate(_ x:Double, _ y:Double)                         -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double)             -> Double
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
+
+    func amplitude_scaled(by factor:Double) -> Self
+    func frequency_scaled(by factor:Double) -> Self
 }
 
 public
@@ -89,6 +91,13 @@ extension Noise
         }
         return samples
     }
+}
+
+// UNDOCUMENTED
+public
+protocol BaseNoise:Noise
+{
+    init(amplitude:Double, frequency:Double, seed:Int)
 }
 
 /// UNDOCUMENTED
@@ -408,27 +417,29 @@ struct FBM<Generator>:Noise where Generator:Noise
     private
     let generators:[Generator]
 
+    // UNDOCUMENTED
+    public
+    func amplitude_scaled(by factor:Double) -> FBM
+    {
+        return FBM<Generator>(generators: self.generators.map{ $0.amplitude_scaled(by: factor) })
+    }
+    public
+    func frequency_scaled(by factor:Double) -> FBM
+    {
+        return FBM<Generator>(generators: self.generators.map{ $0.frequency_scaled(by: factor) })
+    }
+
+    private
+    init(generators:[Generator])
+    {
+        self.generators = generators
+    }
+
+    @available(*, unavailable, message: "init(amplitude:frequency:seed:) defaults to octaves = 1, which does not make sense for FBM modules")
     public
     init(amplitude:Double, frequency:Double, seed:Int)
     {
-        self.init(amplitude: amplitude, frequency: frequency, octaves: 1, seed: seed)
-    }
-
-    public
-    init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)
-    {
-        var generators:[Generator] = []
-            generators.reserveCapacity(octaves)
-        var f:Double = frequency,
-            a:Double = amplitude
-        for s in (seed ..< seed + octaves)
-        {
-            generators.append(Generator(amplitude: a, frequency: f, seed: s))
-            a *= persistence
-            f *= lacunarity
-        }
-
-        self.generators  = generators
+        self.generators = []
     }
 
     public
@@ -464,6 +475,70 @@ struct FBM<Generator>:Noise where Generator:Noise
         return u
     }
 }
+
+// UNDOCUMENTED
+extension FBM where Generator:BaseNoise
+{
+    public
+    init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)
+    {
+        var generators:[Generator] = []
+            generators.reserveCapacity(octaves)
+        var f:Double = frequency,
+            a:Double = amplitude
+        for s in (seed ..< seed + octaves)
+        {
+            generators.append(Generator(amplitude: a, frequency: f, seed: s))
+            a *= persistence
+            f *= lacunarity
+        }
+
+        self.generators  = generators
+    }
+}
+
+// UNDOCUMENTED
+/*
+struct DistortedNoise<Base, Distorter>:Noise where Base:Noise, Distorter:Noise
+{
+    private
+    let base:Base,
+        distorter:Distorter
+
+    init(base:Base, distorted_by distorter:Distorter)
+    {
+        self.base      = base
+        self.distorter = distorter
+    }
+
+    public
+    func evaluate(_ x: Double, _ y: Double) -> Double
+    {
+        let dx:Double = self.distorter.evaluate(x, y),
+            dy:Double = self.distorter.evaluate(y, x)
+        return self.base.evaluate(x + dx, y + dy)
+    }
+
+    public
+    func evaluate(_ x: Double, _ y: Double, _ z: Double) -> Double
+    {
+        let dx:Double = 1.0 + self.distorter.evaluate(x, y, z),
+            dy:Double = 1.0 + self.distorter.evaluate(y, z, x),
+            dz:Double = 1.0 + self.distorter.evaluate(z, x, y)
+        return self.base.evaluate(x + dx, y + dy, z + dz)
+    }
+
+    public
+    func evaluate(_ x: Double, _ y: Double, _ z: Double, _ w:Double) -> Double
+    {
+        let dx:Double = self.distorter.evaluate(x, y, z, w),
+            dy:Double = self.distorter.evaluate(y, z, w, x),
+            dz:Double = self.distorter.evaluate(z, w, x, y),
+            dw:Double = self.distorter.evaluate(w, x, y, z)
+        return self.base.evaluate(x + dx, y + dy, z + dz, w + dw)
+    }
+}
+*/
 
 public
 struct RandomXorshift
