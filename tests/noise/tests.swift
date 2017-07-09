@@ -92,9 +92,9 @@ func banner_simplex2d(width:Int, height:Int, seed:Int)
 
 func banner_supersimplex2d(width:Int, height:Int, seed:Int)
 {
-    color_noise_png(r_noise: SuperSimplexNoise2D(amplitude: 0.5*255, frequency: 0.01, seed: seed),
-                    g_noise: SuperSimplexNoise2D(amplitude: 0.5*255, frequency: 0.005, seed: seed + 1),
-                    b_noise: SuperSimplexNoise2D(amplitude: 0.5*255, frequency: 0.0025, seed: seed + 2),
+    color_noise_png(r_noise: GradientNoise2D(amplitude: 0.5*255, frequency: 0.01, seed: seed),
+                    g_noise: GradientNoise2D(amplitude: 0.5*255, frequency: 0.005, seed: seed + 1),
+                    b_noise: GradientNoise2D(amplitude: 0.5*255, frequency: 0.0025, seed: seed + 2),
                     width: width,
                     height: height,
                     value_offset: (0.65*255, 0.65*255, 0.65*255),
@@ -103,9 +103,9 @@ func banner_supersimplex2d(width:Int, height:Int, seed:Int)
 
 func banner_supersimplex3d(width:Int, height:Int, seed:Int)
 {
-    color_noise_png(r_noise: SuperSimplexNoise3D(amplitude: 0.5*255, frequency: 0.01, seed: seed),
-                    g_noise: SuperSimplexNoise3D(amplitude: 0.5*255, frequency: 0.005, seed: seed + 1),
-                    b_noise: SuperSimplexNoise3D(amplitude: 0.5*255, frequency: 0.0025, seed: seed + 2),
+    color_noise_png(r_noise: GradientNoise3D(amplitude: 0.5*255, frequency: 0.01, seed: seed),
+                    g_noise: GradientNoise3D(amplitude: 0.5*255, frequency: 0.005, seed: seed + 1),
+                    b_noise: GradientNoise3D(amplitude: 0.5*255, frequency: 0.0025, seed: seed + 2),
                     width: width,
                     height: height,
                     value_offset: (0.65*255, 0.65*255, 0.65*255),
@@ -139,7 +139,7 @@ func banner_cell3d(width:Int, height:Int, seed:Int)
 func banner_FBM(width:Int, height:Int, seed:Int)
 {
     color_noise_png(r_noise: FBM<CellNoise3D>     (amplitude: 2.7*255, frequency: 0.01, octaves: 7, seed: seed + 2),
-                    g_noise: FBM<SuperSimplexNoise3D>(amplitude: 255/3, frequency: 0.005, octaves: 7, seed: seed + 1),
+                    g_noise: FBM<GradientNoise3D>(amplitude: 255/3, frequency: 0.005, octaves: 7, seed: seed + 1),
                     b_noise: FBM<SimplexNoise2D>        (amplitude: 255/3, frequency: 0.03, octaves: 7, seed: seed),
                     width: width,
                     height: height,

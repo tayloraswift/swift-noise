@@ -42,7 +42,7 @@ enum Const
 }
 
 fileprivate
-protocol GradientNoise2D:Noise
+protocol _GradientNoise2D:Noise
 {
     var permutation_table:PermutationTable { get }
 
@@ -53,7 +53,7 @@ protocol GradientNoise2D:Noise
 }
 
 fileprivate
-extension GradientNoise2D
+extension _GradientNoise2D
 {
     func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
     {
@@ -95,9 +95,86 @@ extension HashedNoise
     }
 }
 
+// UNDOCUMENTED
+public
+struct ClassicNoise3D:HashedNoise, BaseNoise
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = 0.982 * amplitude
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    private
+    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    {
+        // use vectors to the edge of a cube
+        let hash:Int  = self.permutation_table.hash(point) & 15,
+            u:Double  = hash < 8                 ? offset.x : offset.y,
+            vt:Double = hash == 12 || hash == 14 ? offset.x : offset.z,
+            v:Double  = hash < 4                 ? offset.y : vt
+        return (hash & 1 != 0 ? -u : u) + (hash & 2 != 0 ? -v : v)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+
+        // get integral cube coordinates as well as fractional offsets
+        let (bin, rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
+
+        // use smooth interpolation
+        let U:Math.DoubleV3 = Math.quintic_ease(rel)
+
+        let r:Double = Math.lerp(Math.lerp(Math.lerp(self.gradient(from:  bin                            , at:  rel),
+                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c   ), at: (rel.x - 1, rel.y    , rel.z)),
+                                                     factor: U.x),
+                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c   ), at: (rel.x    , rel.y - 1, rel.z)),
+                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c   ), at: (rel.x - 1, rel.y - 1, rel.z)),
+                                                     factor: U.x),
+                                           factor: U.y),
+                                 Math.lerp(Math.lerp(self.gradient(from: (bin.a    , bin.b    , bin.c + 1), at: (rel.x    , rel.y   , rel.z - 1)),
+                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c + 1), at: (rel.x - 1, rel.y   , rel.z - 1)),
+                                                     factor: U.x),
+                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c + 1), at: (rel.x    , rel.y - 1, rel.z - 1)),
+                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c + 1), at: (rel.x - 1, rel.y - 1, rel.z - 1)),
+                                                     factor: U.x),
+                                           factor: U.y),
+                                 factor: U.z)
+
+        return self.amplitude * r
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
+    }
+}
+
 @available(*, deprecated, message: "simplex noise nearly identical to and is an inferior implementation of super simplex noise")
 public
-struct SimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
+struct SimplexNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
 {
     fileprivate static
     let gradient_table32:[Math.DoubleV2] = Const.GRADIENTS_2D
@@ -241,8 +318,11 @@ struct SimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
     }
 }
 
+@available(*, unavailable, renamed: "GradientNoise2D")
 public
-struct SuperSimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
+typealias SuperSimplexNoise2D = GradientNoise2D
+public
+struct GradientNoise2D:HashedNoise, BaseNoise, _GradientNoise2D
 {
     private static
     let points:[(Math.IntV2, Math.DoubleV2)] =
@@ -415,7 +495,7 @@ struct SuperSimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
             sample_rel:Math.DoubleV2 = (sample_uv_rel.x + squish_offset, sample_uv_rel.y + squish_offset)
 
         var Σ:Double = 0
-        for (point, point_offset) in SuperSimplexNoise2D.points[base_vertex_index ..< base_vertex_index + 4]
+        for (point, point_offset) in GradientNoise2D.points[base_vertex_index ..< base_vertex_index + 4]
         {
             Σ += self.gradient(from: Math.add(bin, point), at: Math.sub(sample_rel, point_offset))
         }
@@ -435,8 +515,11 @@ struct SuperSimplexNoise2D:HashedNoise, BaseNoise, GradientNoise2D
     }
 }
 
+@available(*, unavailable, renamed: "GradientNoise3D")
 public
-struct SuperSimplexNoise3D:HashedNoise, BaseNoise
+typealias SuperSimplexNoise3D = GradientNoise3D
+public
+struct GradientNoise3D:HashedNoise, BaseNoise
 {
     private static
     let points:[(Math.IntV3, Math.DoubleV3)] =
@@ -488,7 +571,7 @@ struct SuperSimplexNoise3D:HashedNoise, BaseNoise
         let dr:Double = 0.75 - Math.dot(offset, offset)
         if dr > 0
         {
-            let gradient:Math.DoubleV3 = SuperSimplexNoise3D.gradient_table32[self.permutation_table.hash(point) & 31],
+            let gradient:Math.DoubleV3 = GradientNoise3D.gradient_table32[self.permutation_table.hash(point) & 31],
                 drdr:Double = dr * dr
             return drdr * drdr * Math.dot(gradient, offset)
         }
@@ -535,94 +618,17 @@ struct SuperSimplexNoise3D:HashedNoise, BaseNoise
 
         // sum up the contributions from the two lattices
         var Σ:Double = 0
-        for (point, point_offset) in SuperSimplexNoise3D.points[base_vertex_index1 ..< base_vertex_index1 + 4]
+        for (point, point_offset) in GradientNoise3D.points[base_vertex_index1 ..< base_vertex_index1 + 4]
         {
             Σ += self.gradient(from: Math.add(bin1, point), at: Math.sub(sample_rel1, point_offset))
         }
 
-        for (point, point_offset) in SuperSimplexNoise3D.points[base_vertex_index2 ..< base_vertex_index2 + 4]
+        for (point, point_offset) in GradientNoise3D.points[base_vertex_index2 ..< base_vertex_index2 + 4]
         {
             Σ += self.gradient(from: Math.add(bin2, point), at: Math.sub(sample_rel2, point_offset))
         }
 
         return self.amplitude * Σ
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
-    {
-        return self.evaluate(x, y, z)
-    }
-}
-
-// UNDOCUMENTED
-public
-struct ClassicNoise3D:HashedNoise, BaseNoise
-{
-    let permutation_table:PermutationTable,
-        amplitude:Double,
-        frequency:Double
-
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
-    {
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.permutation_table = permutation_table
-    }
-
-    public
-    init(amplitude:Double, frequency:Double, seed:Int = 0)
-    {
-        self.amplitude = 0.982 * amplitude
-        self.frequency = frequency
-        self.permutation_table = PermutationTable(seed: seed)
-    }
-
-    private
-    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
-    {
-        // use vectors to the edge of a cube
-        let hash:Int  = self.permutation_table.hash(point) & 15,
-            u:Double  = hash < 8                 ? offset.x : offset.y,
-            vt:Double = hash == 12 || hash == 14 ? offset.x : offset.z,
-            v:Double  = hash < 4                 ? offset.y : vt
-        return (hash & 1 != 0 ? -u : u) + (hash & 2 != 0 ? -v : v)
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double) -> Double
-    {
-        return self.evaluate(x, y, 0)
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
-    {
-        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
-
-        // get integral cube coordinates as well as fractional offsets
-        let (bin, rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
-
-        // use smooth interpolation
-        let U:Math.DoubleV3 = Math.quintic_ease(rel)
-
-        let r:Double = Math.lerp(Math.lerp(Math.lerp(self.gradient(from:  bin                            , at:  rel),
-                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c   ), at: (rel.x - 1, rel.y    , rel.z)),
-                                                     factor: U.x),
-                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c   ), at: (rel.x    , rel.y - 1, rel.z)),
-                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c   ), at: (rel.x - 1, rel.y - 1, rel.z)),
-                                                     factor: U.x),
-                                           factor: U.y),
-                                 Math.lerp(Math.lerp(self.gradient(from: (bin.a    , bin.b    , bin.c + 1), at: (rel.x    , rel.y   , rel.z - 1)),
-                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c + 1), at: (rel.x - 1, rel.y   , rel.z - 1)),
-                                                     factor: U.x),
-                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c + 1), at: (rel.x    , rel.y - 1, rel.z - 1)),
-                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c + 1), at: (rel.x - 1, rel.y - 1, rel.z - 1)),
-                                                     factor: U.x),
-                                           factor: U.y),
-                                 factor: U.z)
-
-        return self.amplitude * r
     }
 
     public

@@ -30,13 +30,13 @@ func calibrate_noise(width:Int, height:Int, seed:Int = 0)
                         value_offset: 0.5*255,
                         path: "tests/calibrate_simplex2d.png")
 
-    grayscale_noise_png(noise: SuperSimplexNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
+    grayscale_noise_png(noise: GradientNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
                         path: "tests/calibrate_supersimplex2d.png")
 
-    grayscale_noise_png(noise: SuperSimplexNoise3D(amplitude: 0.5*255, frequency: 4, seed: seed),
+    grayscale_noise_png(noise: GradientNoise3D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
