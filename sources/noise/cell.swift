@@ -1,5 +1,5 @@
 public
-struct CellNoise2D:HashedNoise, BaseNoise
+struct CellNoise2D:HashedNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
@@ -195,7 +195,7 @@ struct CellNoise2D:HashedNoise, BaseNoise
 }
 
 public
-struct CellNoise3D:HashedNoise, BaseNoise
+struct CellNoise3D:HashedNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
