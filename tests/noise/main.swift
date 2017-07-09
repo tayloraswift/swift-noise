@@ -63,7 +63,7 @@ do
     try png_encode(path: "tests/simplex2d.png", raw_data: pixbuf, properties: png_properties)
 
 
-    let SS:FBM<SuperSimplexNoise2D> = FBM<SuperSimplexNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
+    let SS:FBM<GradientNoise2D> = FBM<GradientNoise2D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
     t0 = clock()
     for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
     {
@@ -72,7 +72,7 @@ do
     print(clock() - t0)
     try png_encode(path: "tests/super_simplex2d.png", raw_data: pixbuf, properties: png_properties)
 
-    let SS3D:FBM<SuperSimplexNoise3D> = FBM<SuperSimplexNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
+    let SS3D:FBM<GradientNoise3D> = FBM<GradientNoise3D>(amplitude: 0.5*127.5, frequency: 0.001, octaves: 10)
     t0 = clock()
     for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
     {
