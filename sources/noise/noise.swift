@@ -538,44 +538,70 @@ extension FBM where Source:BaseNoise
 }
 
 // UNDOCUMENTED
-/*
-struct DistortedNoise<Base, Distorter>:Noise where Base:Noise, Distorter:Noise
+struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displacement:Noise
 {
     private
-    let base:Base,
-        distorter:Distorter
+    let source:Source,
+        displacement:Displacement
 
-    init(base:Base, distorted_by distorter:Distorter)
+    public
+    func amplitude_scaled(by factor:Double) -> DistortedNoise<Source, Displacement>
     {
-        self.base      = base
-        self.distorter = distorter
+        return DistortedNoise<Source, Displacement>(source: self.source.amplitude_scaled(by: factor),
+                                                    displacement: self.displacement)
     }
+    public
+    func frequency_scaled(by factor:Double) -> DistortedNoise<Source, Displacement>
+    {
+        return DistortedNoise<Source, Displacement>(source: self.source.frequency_scaled(by: factor),
+                                                    displacement: self.displacement.frequency_scaled(by: factor)
+                                                                                   .amplitude_scaled(by: factor))
+    }
+    public
+    func reseeded() -> DistortedNoise<Source, Displacement>
+    {
+        return DistortedNoise<Source, Displacement>(source: self.source.reseeded(),
+                                                    displacement: self.displacement.reseeded())
+    }
+
+    init(source:Source, displacement:Displacement)
+    {
+        self.source       = source
+        self.displacement = displacement
+    }
+
+    /*
+    init(source:Source, strength:Double)
+    {
+        self.source       = source
+        self.displacement = source.amplitude_scaled(by: strength)
+    }
+    */
 
     public
     func evaluate(_ x: Double, _ y: Double) -> Double
     {
-        let dx:Double = self.distorter.evaluate(x, y),
-            dy:Double = self.distorter.evaluate(y, x)
-        return self.base.evaluate(x + dx, y + dy)
+        let dx:Double = self.displacement.evaluate(x, y),
+            dy:Double = self.displacement.evaluate(y, x)
+        return self.source.evaluate(x + dx, y + dy)
     }
 
     public
     func evaluate(_ x: Double, _ y: Double, _ z: Double) -> Double
     {
-        let dx:Double = 1.0 + self.distorter.evaluate(x, y, z),
-            dy:Double = 1.0 + self.distorter.evaluate(y, z, x),
-            dz:Double = 1.0 + self.distorter.evaluate(z, x, y)
-        return self.base.evaluate(x + dx, y + dy, z + dz)
+        let dx:Double = 1.0 + self.displacement.evaluate(x, y, z),
+            dy:Double = 1.0 + self.displacement.evaluate(y, z, x),
+            dz:Double = 1.0 + self.displacement.evaluate(z, x, y)
+        return self.source.evaluate(x + dx, y + dy, z + dz)
     }
 
     public
     func evaluate(_ x: Double, _ y: Double, _ z: Double, _ w:Double) -> Double
     {
-        let dx:Double = self.distorter.evaluate(x, y, z, w),
-            dy:Double = self.distorter.evaluate(y, z, w, x),
-            dz:Double = self.distorter.evaluate(z, w, x, y),
-            dw:Double = self.distorter.evaluate(w, x, y, z)
-        return self.base.evaluate(x + dx, y + dy, z + dz, w + dw)
+        let dx:Double = self.displacement.evaluate(x, y, z, w),
+            dy:Double = self.displacement.evaluate(y, z, w, x),
+            dz:Double = self.displacement.evaluate(z, w, x, y),
+            dw:Double = self.displacement.evaluate(w, x, y, z)
+        return self.source.evaluate(x + dx, y + dy, z + dz, w + dw)
     }
 }
-*/
