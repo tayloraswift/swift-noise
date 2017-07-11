@@ -2,11 +2,7 @@ public
 struct FBM<Source>:Noise where Source:Noise
 {
     private
-    let generators:[Source],
-        octaves:Int,
-        persistence:Double,
-        lacunarity:Double,
-        amplitude:Double
+    let generators:[Source]
 
     // UNDOCUMENTED
     public
@@ -29,11 +25,6 @@ struct FBM<Source>:Noise where Source:Noise
     init(generators:[Source])
     {
         self.generators = generators
-
-        self.octaves = 1
-        self.persistence = 0.5
-        self.lacunarity = 2
-        self.amplitude = 1
     }
 
     @available(*, unavailable, message: "init(amplitude:frequency:seed:) defaults to octaves = 1, which does not make sense for FBM modules")
@@ -41,11 +32,6 @@ struct FBM<Source>:Noise where Source:Noise
     init(amplitude:Double, frequency:Double, seed:Int)
     {
         self.generators = []
-
-        self.octaves = 1
-        self.persistence = 0.5
-        self.lacunarity = 2
-        self.amplitude = 1
     }
 
     @available(*, unavailable, message: "use init(_:octaves:persistence:lacunarity:) instead")
@@ -53,11 +39,6 @@ struct FBM<Source>:Noise where Source:Noise
     init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)
     {
         self.generators  = []
-
-        self.octaves = 1
-        self.persistence = 0.5
-        self.lacunarity = 2
-        self.amplitude = 1
     }
 
     // UNDOCUMENTED, default was changed from 0.75 to 0.5
@@ -65,9 +46,10 @@ struct FBM<Source>:Noise where Source:Noise
     init(_ source:Source, octaves:Int, persistence:Double = 0.5, lacunarity:Double = 2)
     {
         // calculate maximum range
+        let range_inverse:Double
         if persistence == 0.5
         {
-            self.amplitude = Double(1 << (octaves - 1)) / Double(1 << octaves - 1)
+            range_inverse = Double(1 << (octaves - 1)) / Double(1 << octaves - 1)
         }
         else
         {
@@ -79,33 +61,26 @@ struct FBM<Source>:Noise where Source:Noise
                 contribution *= persistence
             }
 
-            self.amplitude = 1 / accumulation
+            range_inverse = 1 / accumulation
         }
 
-        var generators:[Source] = [source]
+        var generators:[Source] = [source.amplitude_scaled(by: range_inverse)]
             generators.reserveCapacity(octaves)
         for i in (0 ..< octaves - 1)
         {
-            generators.append(generators[i].reseeded())
+            generators.append(generators[i].amplitude_scaled(by: persistence).frequency_scaled(by: lacunarity).reseeded())
         }
 
         self.generators  = generators
-        self.octaves = octaves
-        self.persistence = persistence
-        self.lacunarity = lacunarity
     }
 
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        var Σ:Double = 0,
-            a:Double = self.amplitude,
-            f:Double = 1
+        var Σ:Double = 0
         for generator in self.generators
         {
-            Σ += a * generator.evaluate(f * x, f * y)
-            a *= self.persistence
-            f *= self.lacunarity
+            Σ += generator.evaluate(x, y) // a .reduce(:{}) is much slower than a simple loop
         }
         return Σ
     }
@@ -113,14 +88,10 @@ struct FBM<Source>:Noise where Source:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        var Σ:Double = 0,
-            a:Double = self.amplitude,
-            f:Double = 1
+        var Σ:Double = 0
         for generator in self.generators
         {
-            Σ += a * generator.evaluate(f * x, f * y, f * z)
-            a *= self.persistence
-            f *= self.lacunarity
+            Σ += generator.evaluate(x, y, z)
         }
         return Σ
     }
@@ -128,14 +99,10 @@ struct FBM<Source>:Noise where Source:Noise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _ w:Double) -> Double
     {
-        var Σ:Double = 0,
-            a:Double = self.amplitude,
-            f:Double = 1
+        var Σ:Double = 0
         for generator in self.generators
         {
-            Σ += a * generator.evaluate(f * x, f * y, f * z, f * w)
-            a *= self.persistence
-            f *= self.lacunarity
+            Σ += generator.evaluate(x, y, z, w)
         }
         return Σ
     }
@@ -147,8 +114,7 @@ struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displaceme
 {
     private
     let source:Source,
-        displacement:Displacement,
-        strength:Double
+        displacement:Displacement
 
     public
     func amplitude_scaled(by factor:Double) -> DistortedNoise<Source, Displacement>
@@ -171,37 +137,36 @@ struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displaceme
     }
 
     public
-    init(displacing source:Source, with displacement:Displacement, strength:Double = 1)
+    init(displacing source:Source, with displacement:Displacement)
     {
         self.source       = source
         self.displacement = displacement
-        self.strength     = strength
     }
 
     public
     func evaluate(_ x: Double, _ y: Double) -> Double
     {
-        let dx:Double = self.strength * self.displacement.evaluate(x, y),
-            dy:Double = self.strength * self.displacement.evaluate(y, x)
+        let dx:Double = self.displacement.evaluate(x, y),
+            dy:Double = self.displacement.evaluate(y, x)
         return self.source.evaluate(x + dx, y + dy)
     }
 
     public
     func evaluate(_ x: Double, _ y: Double, _ z: Double) -> Double
     {
-        let dx:Double = self.strength * self.displacement.evaluate(x, y, z),
-            dy:Double = self.strength * self.displacement.evaluate(y, z, x),
-            dz:Double = self.strength * self.displacement.evaluate(z, x, y)
+        let dx:Double = self.displacement.evaluate(x, y, z),
+            dy:Double = self.displacement.evaluate(y, z, x),
+            dz:Double = self.displacement.evaluate(z, x, y)
         return self.source.evaluate(x + dx, y + dy, z + dz)
     }
 
     public
     func evaluate(_ x: Double, _ y: Double, _ z: Double, _ w:Double) -> Double
     {
-        let dx:Double = self.strength * self.displacement.evaluate(x, y, z, w),
-            dy:Double = self.strength * self.displacement.evaluate(y, z, w, x),
-            dz:Double = self.strength * self.displacement.evaluate(z, w, x, y),
-            dw:Double = self.strength * self.displacement.evaluate(w, x, y, z)
+        let dx:Double = self.displacement.evaluate(x, y, z, w),
+            dy:Double = self.displacement.evaluate(y, z, w, x),
+            dz:Double = self.displacement.evaluate(z, w, x, y),
+            dw:Double = self.displacement.evaluate(w, x, y, z)
         return self.source.evaluate(x + dx, y + dy, z + dz, w + dw)
     }
 }
@@ -209,10 +174,9 @@ struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displaceme
 extension DistortedNoise where Source == Displacement
 {
     public
-    init(_ source:Source, strength:Double = 1)
+    init(_ source:Source, strength:Double)
     {
         self.source       = source
-        self.displacement = source
-        self.strength     = strength
+        self.displacement = source.amplitude_scaled(by: strength)
     }
 }
