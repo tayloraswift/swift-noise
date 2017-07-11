@@ -29,9 +29,10 @@ extension _CellNoise2D
         return Math.dot(dv, dv)
     }
 
-    // still here to make tests run, because of a linker bug in the Swift compiler
-    public
-    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    // ugly hack to get around compiler linker bug
+    @inline(__always)
+    fileprivate
+    func _closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {
         let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
 
@@ -164,25 +165,6 @@ extension _CellNoise2D
 
         return (closest_point, r2)
     }
-
-    public
-    func evaluate(_ x:Double, _ y:Double) -> Double
-    {
-        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
-        return self.amplitude * r2
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
-    {
-        return self.evaluate(x, y)
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
-    {
-        return self.evaluate(x, y)
-    }
 }
 
 public
@@ -211,6 +193,31 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     func hash(point:Math.IntV2) -> Int
     {
         return self.permutation_table.hash(point)
+    }
+
+    public
+    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    {
+        return self._closest_point(x, y)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
+        return self.amplitude * r2
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
     }
 }
 

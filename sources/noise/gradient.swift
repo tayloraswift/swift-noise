@@ -29,14 +29,10 @@ extension _ClassicNoise3D
         return (h & 1 != 0 ? -u : u) + (h & 2 != 0 ? -v : v)
     }
 
-    public
-    func evaluate(_ x:Double, _ y:Double) -> Double
-    {
-        return self.evaluate(x, y, 0)
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    // ugly hack to get around compiler linker bug
+    @inline(__always)
+    fileprivate
+    func _evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
         let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
 
@@ -63,12 +59,6 @@ extension _ClassicNoise3D
                                  factor: U.z)
 
         return self.amplitude * r
-    }
-
-    public
-    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
-    {
-        return self.evaluate(x, y, z)
     }
 }
 
@@ -99,6 +89,24 @@ struct ClassicNoise3D:_ClassicNoise3D, HashedNoise
     func hash(point:Math.IntV3) -> Int
     {
         return self.permutation_table.hash(point)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        return self._evaluate(x, y, z)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
     }
 }
 
@@ -142,6 +150,24 @@ struct ClassicTilingNoise3D:_ClassicNoise3D, HashedTilingNoise
     func hash(point:Math.IntV3) -> Int
     {
         return self.permutation_table.hash(Math.mod(point, self.wavelengths))
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        return self._evaluate(x, y, z)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
     }
 }
 
