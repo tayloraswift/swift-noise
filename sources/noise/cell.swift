@@ -3,14 +3,17 @@ protocol _CellNoise2D
 {
     var frequency:Double { get }
     var amplitude:Double { get }
-    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+
+    func hash(point:Math.IntV2) -> Int
 }
 
 extension _CellNoise2D
 {
     @inline(__always)
-    func _distance2(hash:Int, sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+    private
+    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
     {
+        let hash:Int = self.hash(point: generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
 
         // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
@@ -24,35 +27,6 @@ extension _CellNoise2D
 
         let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
-    }
-}
-
-public
-struct CellNoise2D:_CellNoise2D, HashedNoise
-{
-    let permutation_table:PermutationTable,
-        amplitude:Double,
-        frequency:Double
-
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
-    {
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.permutation_table = permutation_table
-    }
-
-    public
-    init(amplitude:Double, frequency:Double, seed:Int = 0)
-    {
-        self.amplitude = amplitude * 1/2
-        self.frequency = frequency
-        self.permutation_table = PermutationTable(seed: seed)
-    }
-
-    fileprivate
-    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
-    {
-        return self._distance2(hash: self.permutation_table.hash(generating_point), sample_point: sample_point, generating_point: generating_point)
     }
 
     // still here to make tests run, because of a linker bug in the Swift compiler
@@ -208,6 +182,35 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
     {
         return self.evaluate(x, y)
+    }
+}
+
+public
+struct CellNoise2D:_CellNoise2D, HashedNoise
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = amplitude * 1/2
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    fileprivate
+    func hash(point:Math.IntV2) -> Int
+    {
+        return self.permutation_table.hash(point)
     }
 }
 
