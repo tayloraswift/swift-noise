@@ -23,7 +23,50 @@ extension HashedNoise
     public
     func reseeded() -> Self
     {
-        return Self(amplitude: self.amplitude, frequency: self.frequency, permutation_table: PermutationTable(reseeding: self.permutation_table))
+        let new_table:PermutationTable = PermutationTable(reseeding: self.permutation_table)
+        return Self(amplitude: self.amplitude, frequency: self.frequency, permutation_table: new_table)
+    }
+}
+
+protocol HashedTilingNoise:Noise
+{
+    var permutation_table:PermutationTable { get }
+    var amplitude:Double { get }
+    var frequency:Double { get }
+    var wavelengths:Math.IntV3 { get }
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:Math.IntV3)
+}
+
+extension HashedTilingNoise
+{
+    public
+    func amplitude_scaled(by factor:Double) -> Self
+    {
+        return Self(amplitude: self.amplitude * factor, frequency: self.frequency,
+                    permutation_table: self.permutation_table, wavelengths: self.wavelengths)
+    }
+    public
+    func frequency_scaled(by factor:Double) -> Self
+    {
+        return Self(amplitude: self.amplitude, frequency: self.frequency * factor,
+                    permutation_table: self.permutation_table, wavelengths: self.wavelengths)
+    }
+    public
+    func reseeded() -> Self
+    {
+        let new_table:PermutationTable = PermutationTable(reseeding: self.permutation_table)
+        return Self(amplitude: self.amplitude, frequency: self.frequency,
+                    permutation_table: new_table, wavelengths: self.wavelengths)
+    }
+
+    public
+    func transposed(octaves:Int) -> Self
+    {
+        let frequency_factor:Double = octaves >= 0 ? Double(1 << octaves) : 1 / Double(1 << -octaves)
+        return Self(amplitude: self.amplitude, frequency: self.frequency * frequency_factor,
+                    permutation_table: self.permutation_table,
+                    wavelengths: (self.wavelengths.a << octaves, self.wavelengths.b << octaves, self.wavelengths.c << octaves))
     }
 }
 

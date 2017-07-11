@@ -10,7 +10,7 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
         pixbytes.baseAddress?.deallocate(capacity: pixbytes.count)
     }
 
-    for (i, (x, y)) in Domain2D(-1 ... 1, -1 ... 1, samples_x: width, samples_y: height).enumerated()
+    for (i, (x, y)) in Domain2D(-2 ... 2, -2 ... 2, samples_x: width, samples_y: height).enumerated()
     {
         pixbytes[i] = UInt8(clamping: noise.evaluate(x, y) + value_offset)
     }
@@ -19,12 +19,18 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
                 width: width,
                 height: height,
                 pixbytes: UnsafeBufferPointer<UInt8>(start: pixbytes.baseAddress, count: pixbytes.count),
-            color: .grayscale)
+                color: .grayscale)
 }
 
-public 
+public
 func calibrate_noise(width:Int, height:Int, seed:Int = 0)
 {
+    grayscale_noise_png(noise: DistortedNoise(FBM(ClassicNoise3D(amplitude: 0.5*255, frequency: 2, seed: seed), octaves: 4), strength: 0.003),
+                        width: width,
+                        height: height,
+                        value_offset: 0.5*255,
+                        path: "tests/calibrate_classic-distortion.png")
+
     grayscale_noise_png(noise: GradientNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,

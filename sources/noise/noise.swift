@@ -171,6 +171,28 @@ enum Math
     }
 
     @inline(__always)
+    private static
+    func mod(_ x:Int, _ n:Int) -> Int
+    {
+        let remainder = x % n
+        return remainder >= 0 ? remainder : remainder + n
+    }
+
+    @inline(__always)
+    static
+    func mod(_ v1:IntV2, _ v2:IntV2) -> IntV2
+    {
+        return (Math.mod(v1.a, v2.a), Math.mod(v1.b, v2.b))
+    }
+
+    @inline(__always)
+    static
+    func mod(_ v1:IntV3, _ v2:IntV3) -> IntV3
+    {
+        return (Math.mod(v1.a, v2.a), Math.mod(v1.b, v2.b), Math.mod(v1.c, v2.c))
+    }
+
+    @inline(__always)
     static
     func dot(_ v1:DoubleV2, _ v2:DoubleV2) -> Double
     {

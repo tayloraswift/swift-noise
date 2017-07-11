@@ -6,38 +6,26 @@ enum Const
         STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 }
 
-// UNDOCUMENTED
-public
-struct ClassicNoise3D:HashedNoise
+fileprivate
+protocol _ClassicNoise3D
 {
-    let permutation_table:PermutationTable,
-        amplitude:Double,
-        frequency:Double
-
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
-    {
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.permutation_table = permutation_table
-    }
-
-    public
-    init(amplitude:Double, frequency:Double, seed:Int = 0)
-    {
-        self.amplitude = 0.982 * amplitude
-        self.frequency = frequency
-        self.permutation_table = PermutationTable(seed: seed)
-    }
-
-    private
+    var frequency:Double { get }
+    var amplitude:Double { get }
     func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+}
+
+extension _ClassicNoise3D
+{
+    @inline(__always)
+    fileprivate
+    func _gradient(hash:Int, offset:Math.DoubleV3) -> Double
     {
         // use vectors to the edge of a cube
-        let hash:Int  = self.permutation_table.hash(point) & 15,
-            u:Double  = hash < 8                 ? offset.x : offset.y,
-            vt:Double = hash == 12 || hash == 14 ? offset.x : offset.z,
-            v:Double  = hash < 4                 ? offset.y : vt
-        return (hash & 1 != 0 ? -u : u) + (hash & 2 != 0 ? -v : v)
+        let h:Int     = hash & 15,
+            u:Double  = h < 8              ? offset.x : offset.y,
+            vt:Double = h == 12 || h == 14 ? offset.x : offset.z,
+            v:Double  = h < 4              ? offset.y : vt
+        return (h & 1 != 0 ? -u : u) + (h & 2 != 0 ? -v : v)
     }
 
     public
@@ -80,6 +68,79 @@ struct ClassicNoise3D:HashedNoise
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
     {
         return self.evaluate(x, y, z)
+    }
+}
+
+// UNDOCUMENTED
+public
+struct ClassicNoise3D:HashedNoise, _ClassicNoise3D
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = 0.982 * amplitude
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    fileprivate
+    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    {
+        return self._gradient(hash: self.permutation_table.hash(point), offset: offset)
+    }
+}
+
+// UNDOCUMENTED
+public
+struct ClassicTilingNoise3D:HashedTilingNoise, _ClassicNoise3D
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double,
+        wavelengths:Math.IntV3
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:Math.IntV3)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+        self.wavelengths = wavelengths
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths:Int, seed:Int = 0)
+    {
+        self.init(  amplitude: amplitude, frequency: frequency,
+                    wavelengths_x: wavelengths,
+                    wavelengths_y: wavelengths,
+                    wavelengths_z: wavelengths,
+                    seed: seed)
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths_x:Int, wavelengths_y:Int, wavelengths_z:Int, seed:Int = 0)
+    {
+        self.amplitude = 0.982 * amplitude
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+        self.wavelengths = (wavelengths_x, wavelengths_y, wavelengths_z)
+    }
+
+    fileprivate
+    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    {
+        return self._gradient(hash: self.permutation_table.hash(Math.mod(point, self.wavelengths)), offset: offset)
     }
 }
 
