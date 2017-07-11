@@ -53,6 +53,14 @@ for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enum
 print(clock() - t0)
 try png_encode(path: "tests/classic3d.png", raw_data: pixbuf, properties: png_properties)
 
+let PT:Noise = ClassicTilingNoise3D(amplitude: 255, frequency: 16 / Double(viewer_size), wavelengths: 16)
+t0 = clock()
+for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+{
+    pixbuf[i] = UInt8(max(0, min(255, PT.evaluate(x, y) + 127.5)))
+}
+print(clock() - t0)
+try png_encode(path: "tests/classic_tiling3d.png", raw_data: pixbuf, properties: png_properties)
 
 let SS:FBM<GradientNoise2D> = FBM<GradientNoise2D>(GradientNoise2D(amplitude: 180, frequency: 0.001), octaves: 10, persistence: 0.62)
 t0 = clock()
