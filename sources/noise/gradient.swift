@@ -112,7 +112,7 @@ struct ClassicNoise3D:_ClassicNoise3D, HashedNoise
 
 // UNDOCUMENTED
 public
-struct ClassicTilingNoise3D:_ClassicNoise3D, HashedTilingNoise
+struct TilingClassicNoise3D:_ClassicNoise3D, HashedTilingNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
