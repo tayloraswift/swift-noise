@@ -11,16 +11,18 @@ protocol _ClassicNoise3D
 {
     var frequency:Double { get }
     var amplitude:Double { get }
-    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+
+    func hash(point:Math.IntV3) -> Int
 }
 
 extension _ClassicNoise3D
 {
     @inline(__always)
-    func _gradient(hash:Int, offset:Math.DoubleV3) -> Double
+    private
+    func gradient(from generating_point:Math.IntV3, at offset:Math.DoubleV3) -> Double
     {
         // use vectors to the edge of a cube
-        let h:Int     = hash & 15,
+        let h:Int     = self.hash(point: generating_point) & 15,
             u:Double  = h < 8              ? offset.x : offset.y,
             vt:Double = h == 12 || h == 14 ? offset.x : offset.z,
             v:Double  = h < 4              ? offset.y : vt
@@ -94,9 +96,9 @@ struct ClassicNoise3D:_ClassicNoise3D, HashedNoise
     }
 
     fileprivate
-    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    func hash(point:Math.IntV3) -> Int
     {
-        return self._gradient(hash: self.permutation_table.hash(point), offset: offset)
+        return self.permutation_table.hash(point)
     }
 }
 
@@ -137,9 +139,9 @@ struct ClassicTilingNoise3D:_ClassicNoise3D, HashedTilingNoise
     }
 
     fileprivate
-    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    func hash(point:Math.IntV3) -> Int
     {
-        return self._gradient(hash: self.permutation_table.hash(Math.mod(point, self.wavelengths)), offset: offset)
+        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
     }
 }
 
