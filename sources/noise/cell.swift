@@ -184,7 +184,7 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
-        self.amplitude = amplitude * 1/2
+        self.amplitude = amplitude / 2
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
     }
@@ -220,6 +220,74 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
         return self.evaluate(x, y)
     }
 }
+
+/*
+public
+struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double,
+        wavelengths:Math.IntV2
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:Math.IntV2)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+        self.wavelengths = wavelengths
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths:Int, seed:Int = 0)
+    {
+        self.init(  amplitude: amplitude, frequency: frequency,
+                    wavelengths_x: wavelengths,
+                    wavelengths_y: wavelengths,
+                    seed: seed)
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths_x:Int, wavelengths_y:Int, seed:Int = 0)
+    {
+        self.amplitude = amplitude / 2
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+        self.wavelengths = (wavelengths_x, wavelengths_y)
+    }
+
+    fileprivate
+    func hash(point:Math.IntV2) -> Int
+    {
+        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
+    }
+
+    public
+    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    {
+        return self._closest_point(x, y)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
+        return self.amplitude * r2
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y)
+    }
+}
+*/
 
 public
 struct CellNoise3D:HashedNoise
