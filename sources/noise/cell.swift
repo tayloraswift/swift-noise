@@ -1,5 +1,34 @@
+fileprivate
+protocol _CellNoise2D
+{
+    var frequency:Double { get }
+    var amplitude:Double { get }
+    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+}
+
+extension _CellNoise2D
+{
+    @inline(__always)
+    func _distance2(hash:Int, sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+    {
+        // hash is within 0 ... 255, take it to 0 ... 0.5
+
+        // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
+        // to be divided up between 2 axes. We can assign 4 bits to the x and y
+        // axes each (16 levels each)
+
+        //          0b XXXX YYYY
+
+        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15/2) * 1/16,
+                                (Double(hash      & 0b1111) - 15/2) * 1/16)
+
+        let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
+        return Math.dot(dv, dv)
+    }
+}
+
 public
-struct CellNoise2D:HashedNoise
+struct CellNoise2D:_CellNoise2D, HashedNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
@@ -20,25 +49,13 @@ struct CellNoise2D:HashedNoise
         self.permutation_table = PermutationTable(seed: seed)
     }
 
-    private
+    fileprivate
     func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
     {
-        let hash:Int = self.permutation_table.hash(generating_point)
-        // hash is within 0 ... 255, take it to 0 ... 0.5
-
-        // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
-        // to be divided up between 2 axes. We can assign 4 bits to the x and y
-        // axes each (16 levels each)
-
-        //          0b XXXX YYYY
-
-        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15/2) * 1/16,
-                                (Double(hash      & 0b1111) - 15/2) * 1/16)
-
-        let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
-        return Math.dot(dv, dv)
+        return self._distance2(hash: self.permutation_table.hash(generating_point), sample_point: sample_point, generating_point: generating_point)
     }
 
+    // still here to make tests run, because of a linker bug in the Swift compiler
     public
     func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {

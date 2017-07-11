@@ -17,7 +17,6 @@ protocol _ClassicNoise3D
 extension _ClassicNoise3D
 {
     @inline(__always)
-    fileprivate
     func _gradient(hash:Int, offset:Math.DoubleV3) -> Double
     {
         // use vectors to the edge of a cube
@@ -73,7 +72,7 @@ extension _ClassicNoise3D
 
 // UNDOCUMENTED
 public
-struct ClassicNoise3D:HashedNoise, _ClassicNoise3D
+struct ClassicNoise3D:_ClassicNoise3D, HashedNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,
@@ -103,7 +102,7 @@ struct ClassicNoise3D:HashedNoise, _ClassicNoise3D
 
 // UNDOCUMENTED
 public
-struct ClassicTilingNoise3D:HashedTilingNoise, _ClassicNoise3D
+struct ClassicTilingNoise3D:_ClassicNoise3D, HashedTilingNoise
 {
     let permutation_table:PermutationTable,
         amplitude:Double,

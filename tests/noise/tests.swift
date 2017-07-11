@@ -205,7 +205,7 @@ func banner_disk2d(width:Int, height:Int, seed:Int)
 
 func banner_voronoi2d(width:Int, height:Int, seed:Int)
 {
-    let voronoi          = CellNoise2D(amplitude: 255, frequency: 0.025, seed: seed)
+    let voronoi:CellNoise2D = CellNoise2D(amplitude: 255, frequency: 0.025, seed: seed)
     var pixbytes:[UInt8] = [UInt8](repeating: 0, count: 3 * width * height)
 
     let r:PermutationTable   = PermutationTable(seed: seed),
