@@ -1,12 +1,4 @@
 fileprivate
-enum Const
-{
-    static
-    let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1),
-        STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
-}
-
-fileprivate
 protocol _ClassicNoise3D
 {
     var frequency:Double { get }
@@ -176,6 +168,10 @@ public
 struct SimplexNoise2D:HashedNoise
 {
     private static
+    let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1),
+        STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
+
+    private static
     let gradient_table32:[Math.DoubleV2] =
     [
         (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
@@ -234,7 +230,7 @@ struct SimplexNoise2D:HashedNoise
         let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
         // transform our coordinate system so that the *simplex* (x, y) forms a
         // rectangular grid (u, v)
-        let squish_offset:Double    = (sample.x + sample.y) * Const.SQUISH_2D,
+        let squish_offset:Double    = (sample.x + sample.y) * SimplexNoise2D.SQUISH_2D,
             sample_uv:Math.DoubleV2 = (sample.x + squish_offset, sample.y + squish_offset)
 
         // get integral (u, v) coordinates of the rhombus and get position inside
@@ -264,7 +260,7 @@ struct SimplexNoise2D:HashedNoise
         // do the same in the original (x, y) coordinate space
 
         // stretch back to get (x, y) coordinates of rhombus origin
-        let stretch_offset:Double = Double(bin.a + bin.b) * Const.STRETCH_2D,
+        let stretch_offset:Double = Double(bin.a + bin.b) * SimplexNoise2D.STRETCH_2D,
             origin:Math.DoubleV2 = (Double(bin.a) + stretch_offset, Double(bin.b) + stretch_offset)
 
         // get relative position inside the rhombus relative to (xb, xb)
@@ -279,27 +275,27 @@ struct SimplexNoise2D:HashedNoise
         }
 
         // contribution from (1, 0)
-        _inspect(point_offset: (1, 0), sample_offset: (1 + Const.STRETCH_2D, Const.STRETCH_2D))
+        _inspect(point_offset: (1, 0), sample_offset: (1 + SimplexNoise2D.STRETCH_2D, SimplexNoise2D.STRETCH_2D))
 
         // contribution from (0, 1)
-        _inspect(point_offset: (0, 1), sample_offset: (Const.STRETCH_2D, 1 + Const.STRETCH_2D))
+        _inspect(point_offset: (0, 1), sample_offset: (SimplexNoise2D.STRETCH_2D, 1 + SimplexNoise2D.STRETCH_2D))
 
         // decide which triangle we are in
         let uv_sum:Double = sample_uv_rel.x + sample_uv_rel.y
         if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
         {
-            _inspect(point_offset: (1, 1), sample_offset: (1 + 2*Const.STRETCH_2D, 1 + 2*Const.STRETCH_2D))
+            _inspect(point_offset: (1, 1), sample_offset: (1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
 
             let center_dist:Double = 2 - uv_sum
             if center_dist < sample_uv_rel.x || center_dist < sample_uv_rel.y
             {
                 if sample_uv_rel.x > sample_uv_rel.y
                 {
-                    _inspect(point_offset: (2, 0), sample_offset: (2 + 2*Const.STRETCH_2D, 2*Const.STRETCH_2D))
+                    _inspect(point_offset: (2, 0), sample_offset: (2 + 2*SimplexNoise2D.STRETCH_2D, 2*SimplexNoise2D.STRETCH_2D))
                 }
                 else
                 {
-                    _inspect(point_offset: (0, 2), sample_offset: (2*Const.STRETCH_2D, 2 + 2*Const.STRETCH_2D))
+                    _inspect(point_offset: (0, 2), sample_offset: (2*SimplexNoise2D.STRETCH_2D, 2 + 2*SimplexNoise2D.STRETCH_2D))
                 }
             }
             else
@@ -325,7 +321,7 @@ struct SimplexNoise2D:HashedNoise
             }
             else
             {
-                _inspect(point_offset: (1, 1), sample_offset: (1 + 2*Const.STRETCH_2D, 1 + 2*Const.STRETCH_2D))
+                _inspect(point_offset: (1, 1), sample_offset: (1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
             }
         }
 
@@ -352,6 +348,10 @@ public
 struct GradientNoise2D:HashedNoise
 {
     private static
+    let SQUISH_2D :Double = 0.5 * (1 / 3.squareRoot() - 1),
+        STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
+
+    private static
     let points:[(Math.IntV2, Math.DoubleV2)] =
     {
         var points:[(Math.IntV2, Math.DoubleV2)] = []
@@ -360,7 +360,7 @@ struct GradientNoise2D:HashedNoise
         @inline(__always)
         func _lattice_point(at point:Math.IntV2) -> (Math.IntV2, Math.DoubleV2)
         {
-            let stretch_offset:Double = Double(point.a + point.b) * Const.SQUISH_2D
+            let stretch_offset:Double = Double(point.a + point.b) * GradientNoise2D.SQUISH_2D
             return (point, (Double(point.a) + stretch_offset, Double(point.b) + stretch_offset))
         }
 
@@ -437,7 +437,7 @@ struct GradientNoise2D:HashedNoise
     {
         let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
         // transform our (x, y) coordinate to (u, v) space
-        let stretch_offset:Double = (sample.x + sample.y) * Const.STRETCH_2D,
+        let stretch_offset:Double = (sample.x + sample.y) * GradientNoise2D.STRETCH_2D,
             sample_uv:Math.DoubleV2 = (sample.x + stretch_offset, sample.y + stretch_offset)
 
         //         (0, 0) ----- (1, 0)
@@ -546,7 +546,7 @@ struct GradientNoise2D:HashedNoise
         */
 
         // get the relative offset from (0, 0)
-        let squish_offset:Double = (sample_uv_rel.x + sample_uv_rel.y) * Const.SQUISH_2D,
+        let squish_offset:Double = (sample_uv_rel.x + sample_uv_rel.y) * GradientNoise2D.SQUISH_2D,
             sample_rel:Math.DoubleV2 = (sample_uv_rel.x + squish_offset, sample_uv_rel.y + squish_offset)
 
         var Σ:Double = 0
