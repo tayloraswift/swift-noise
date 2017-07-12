@@ -31,7 +31,6 @@ extension _CellNoise2D
 
     // ugly hack to get around compiler linker bug
     @inline(__always)
-    fileprivate
     func _closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {
         let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
@@ -72,7 +71,7 @@ extension _CellNoise2D
         // found.
 
         let quadrant:Math.IntV2 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1),
-            near:Math.IntV2     = (bin.a + (quadrant.a + 1) >> 1, bin.b + (quadrant.b + 1) >> 1),
+            near:Math.IntV2     = Math.add(bin, ((quadrant.a + 1) >> 1, (quadrant.b + 1) >> 1)),
             far:Math.IntV2      = (near.a - quadrant.a          , near.b - quadrant.b)
 
         let nearpoint_disp:Math.DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
@@ -189,12 +188,6 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
         self.permutation_table = PermutationTable(seed: seed)
     }
 
-    fileprivate
-    func hash(point:Math.IntV2) -> Int
-    {
-        return self.permutation_table.hash(point)
-    }
-
     public
     func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {
@@ -221,7 +214,6 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     }
 }
 
-/*
 public
 struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
 {
@@ -256,12 +248,6 @@ struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
         self.wavelengths = (wavelengths_x, wavelengths_y)
     }
 
-    fileprivate
-    func hash(point:Math.IntV2) -> Int
-    {
-        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
-    }
-
     public
     func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
     {
@@ -287,34 +273,24 @@ struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
         return self.evaluate(x, y)
     }
 }
-*/
 
-public
-struct CellNoise3D:HashedNoise
+
+fileprivate
+protocol _CellNoise3D
 {
-    let permutation_table:PermutationTable,
-        amplitude:Double,
-        frequency:Double
+    var frequency:Double { get }
+    var amplitude:Double { get }
 
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
-    {
-        self.amplitude = amplitude
-        self.frequency = frequency
-        self.permutation_table = permutation_table
-    }
+    func hash(point:Math.IntV3) -> Int
+}
 
-    public
-    init(amplitude:Double, frequency:Double, seed:Int = 0)
-    {
-        self.amplitude = amplitude * 1/3
-        self.frequency = frequency
-        self.permutation_table = PermutationTable(seed: seed)
-    }
-
+extension _CellNoise3D
+{
+    @inline(__always)
     private
     func distance2(from sample_point:Math.DoubleV3, generating_point:Math.IntV3) -> Double
     {
-        let hash:Int = self.permutation_table.hash(generating_point)
+        let hash:Int = self.hash(point: generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
 
         // Notice that we have 256 possible hashes, and therefore 8 bits of entropy,
@@ -333,8 +309,8 @@ struct CellNoise3D:HashedNoise
         return Math.dot(dv, dv)
     }
 
-    public
-    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    @inline(__always)
+    func _closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
     {
         let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
 
@@ -354,9 +330,9 @@ struct CellNoise3D:HashedNoise
         let quadrant:Math.IntV3  = (sample_rel.x > 0.5 ? 1 : -1,
                                     sample_rel.y > 0.5 ? 1 : -1,
                                     sample_rel.z > 0.5 ? 1 : -1)
-        let near:Math.IntV3      = (bin.a + (quadrant.a + 1) >> 1,
-                                    bin.b + (quadrant.b + 1) >> 1,
-                                    bin.c + (quadrant.c + 1) >> 1)
+        let near:Math.IntV3      = Math.add(bin, ((quadrant.a + 1) >> 1,
+                                                  (quadrant.b + 1) >> 1,
+                                                  (quadrant.c + 1) >> 1))
 
         let nearpoint_disp:Math.DoubleV3 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
                                             abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
@@ -538,6 +514,96 @@ struct CellNoise3D:HashedNoise
 
         // stop           outside r^2 = 3.0
         return (closest_point, r2)
+    }
+}
+
+public
+struct CellNoise3D:_CellNoise3D, HashedNoise
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, seed:Int = 0)
+    {
+        self.amplitude = amplitude * 1/3
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+    }
+
+    public
+    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    {
+        return self._closest_point(x, y, z)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double) -> Double
+    {
+        return self.evaluate(x, y, 0)
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
+    {
+        let (_, r2):((Int, Int, Int), Double) = self.closest_point(x, y, z)
+        return self.amplitude * r2
+    }
+
+    public
+    func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
+    {
+        return self.evaluate(x, y, z)
+    }
+}
+
+public
+struct TilingCellNoise3D:_CellNoise3D, HashedTilingNoise
+{
+    let permutation_table:PermutationTable,
+        amplitude:Double,
+        frequency:Double,
+        wavelengths:Math.IntV3
+
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:Math.IntV3)
+    {
+        self.amplitude = amplitude
+        self.frequency = frequency
+        self.permutation_table = permutation_table
+        self.wavelengths = wavelengths
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths:Int, seed:Int = 0)
+    {
+        self.init(  amplitude: amplitude, frequency: frequency,
+                    wavelengths_x: wavelengths,
+                    wavelengths_y: wavelengths,
+                    wavelengths_z: wavelengths,
+                    seed: seed)
+    }
+
+    public
+    init(amplitude:Double, frequency:Double, wavelengths_x:Int, wavelengths_y:Int, wavelengths_z:Int, seed:Int = 0)
+    {
+        self.amplitude = 1 / 3 * amplitude
+        self.frequency = frequency
+        self.permutation_table = PermutationTable(seed: seed)
+        self.wavelengths = (wavelengths_x, wavelengths_y, wavelengths_z)
+    }
+
+    public
+    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    {
+        return self._closest_point(x, y, z)
     }
 
     public

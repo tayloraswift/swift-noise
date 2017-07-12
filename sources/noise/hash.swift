@@ -26,6 +26,16 @@ extension HashedNoise
         let new_table:PermutationTable = PermutationTable(reseeding: self.permutation_table)
         return Self(amplitude: self.amplitude, frequency: self.frequency, permutation_table: new_table)
     }
+
+    func hash(point:Math.IntV2) -> Int
+    {
+        return self.permutation_table.hash(point)
+    }
+
+    func hash(point:Math.IntV3) -> Int
+    {
+        return self.permutation_table.hash(point)
+    }
 }
 
 protocol HashedTilingNoise:Noise
@@ -38,6 +48,8 @@ protocol HashedTilingNoise:Noise
     var wavelengths:IntV { get }
 
     init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:IntV)
+
+    func _transpose_wavelengths(_ wavelengths:IntV, octaves:Int) -> IntV
 }
 
 extension HashedTilingNoise
@@ -61,20 +73,42 @@ extension HashedTilingNoise
         return Self(amplitude: self.amplitude, frequency: self.frequency,
                     permutation_table: new_table, wavelengths: self.wavelengths)
     }
-}
-/*
-extension HashedTilingNoise where IntV == Math.IntV3
-{
+
     public
     func transposed(octaves:Int) -> Self
     {
         let frequency_factor:Double = octaves >= 0 ? Double(1 << octaves) : 1 / Double(1 << -octaves)
         return Self(amplitude: self.amplitude, frequency: self.frequency * frequency_factor,
                     permutation_table: self.permutation_table,
-                    wavelengths: (self.wavelengths.a << octaves, self.wavelengths.b << octaves, self.wavelengths.c << octaves))
+                    wavelengths: self._transpose_wavelengths(self.wavelengths, octaves: octaves))
     }
 }
-*/
+
+extension HashedTilingNoise where IntV == Math.IntV2
+{
+    func _transpose_wavelengths(_ wavelengths:Math.IntV2, octaves:Int) -> Math.IntV2
+    {
+        return (wavelengths.a << octaves, wavelengths.b << octaves)
+    }
+
+    func hash(point:Math.IntV2) -> Int
+    {
+        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
+    }
+}
+
+extension HashedTilingNoise where IntV == Math.IntV3
+{
+    func _transpose_wavelengths(_ wavelengths:Math.IntV3, octaves:Int) -> Math.IntV3
+    {
+        return (wavelengths.a << octaves, wavelengths.b << octaves, wavelengths.c << octaves)
+    }
+
+    func hash(point:Math.IntV3) -> Int
+    {
+        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
+    }
+}
 
 public
 struct RandomXorshift
