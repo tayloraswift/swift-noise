@@ -23,7 +23,6 @@ extension _ClassicNoise3D
 
     // ugly hack to get around compiler linker bug
     @inline(__always)
-    fileprivate
     func _evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
         let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
@@ -75,12 +74,6 @@ struct ClassicNoise3D:_ClassicNoise3D, HashedNoise
         self.amplitude = 0.982 * amplitude
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
-    }
-
-    fileprivate
-    func hash(point:Math.IntV3) -> Int
-    {
-        return self.permutation_table.hash(point)
     }
 
     public
@@ -136,12 +129,6 @@ struct TilingClassicNoise3D:_ClassicNoise3D, HashedTilingNoise
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
         self.wavelengths = (wavelengths_x, wavelengths_y, wavelengths_z)
-    }
-
-    fileprivate
-    func hash(point:Math.IntV3) -> Int
-    {
-        return self.permutation_table.hash(Math.mod(point, self.wavelengths))
     }
 
     public

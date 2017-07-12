@@ -35,6 +35,7 @@ try png_encode(path: "tests/disk2d.png", raw_data: pixbuf, properties: png_prope
 
 benchmark(noise: CellNoise2D(amplitude: 255, frequency: 0.01), name: "cell2d")
 benchmark(noise: CellNoise3D(amplitude: 255, frequency: 0.01), name: "cell3d")
+benchmark(noise: TilingCellNoise3D(amplitude: 255, frequency: 16 / Double(viewer_size), wavelengths: 16), name: "cell_tiling3d")
 benchmark(noise: FBM<ClassicNoise3D>(ClassicNoise3D(amplitude: 255, frequency: 0.001), octaves: 10, persistence: 0.62), name: "classic3d", offset: 127.5)
 benchmark(noise: TilingClassicNoise3D(amplitude: 255, frequency: 16 / Double(viewer_size), wavelengths: 16), name: "classic_tiling3d", offset: 127.5)
 benchmark(noise: FBM<GradientNoise2D>(GradientNoise2D(amplitude: 180, frequency: 0.001), octaves: 10, persistence: 0.62), name: "gradient2d", offset: 127.5)
