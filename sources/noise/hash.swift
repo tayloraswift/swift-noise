@@ -30,12 +30,14 @@ extension HashedNoise
 
 protocol HashedTilingNoise:Noise
 {
+    associatedtype IntV
+
     var permutation_table:PermutationTable { get }
     var amplitude:Double { get }
     var frequency:Double { get }
-    var wavelengths:Math.IntV3 { get }
+    var wavelengths:IntV { get }
 
-    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:Math.IntV3)
+    init(amplitude:Double, frequency:Double, permutation_table:PermutationTable, wavelengths:IntV)
 }
 
 extension HashedTilingNoise
@@ -59,7 +61,10 @@ extension HashedTilingNoise
         return Self(amplitude: self.amplitude, frequency: self.frequency,
                     permutation_table: new_table, wavelengths: self.wavelengths)
     }
-
+}
+/*
+extension HashedTilingNoise where IntV == Math.IntV3
+{
     public
     func transposed(octaves:Int) -> Self
     {
@@ -69,6 +74,7 @@ extension HashedTilingNoise
                     wavelengths: (self.wavelengths.a << octaves, self.wavelengths.b << octaves, self.wavelengths.c << octaves))
     }
 }
+*/
 
 public
 struct RandomXorshift
