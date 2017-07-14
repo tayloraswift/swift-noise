@@ -38,7 +38,13 @@ extension HashedNoise
     }
 }
 
-protocol HashedTilingNoise:Noise
+public
+protocol TilingNoise:Noise
+{
+    func transposed(octaves:Int) -> Self
+}
+
+protocol HashedTilingNoise:TilingNoise
 {
     associatedtype IntV
 
@@ -75,10 +81,9 @@ extension HashedTilingNoise
     }
 
     public
-    func transposed(octaves:Int) -> Self
+    func transposed(octaves:Int = 1) -> Self
     {
-        let frequency_factor:Double = octaves >= 0 ? Double(1 << octaves) : 1 / Double(1 << -octaves)
-        return Self(amplitude: self.amplitude, frequency: self.frequency * frequency_factor,
+        return Self(amplitude: self.amplitude, frequency: self.frequency,
                     permutation_table: self.permutation_table,
                     wavelengths: self._transpose_wavelengths(self.wavelengths, octaves: octaves))
     }
