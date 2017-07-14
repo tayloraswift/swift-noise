@@ -108,6 +108,45 @@ struct FBM<Source>:Noise where Source:Noise
     }
 }
 
+extension FBM where Source:TilingNoise
+{
+    public
+    init(tiling source:Source, octaves:Int, persistence:Double = 0.5)
+    {
+        print("tiling fbm")
+        // calculate maximum range
+        let range_inverse:Double
+        if persistence == 0.5
+        {
+            range_inverse = Double(1 << (octaves - 1)) / Double(1 << octaves - 1)
+        }
+        else
+        {
+            var accumulation:Double = 1,
+                contribution:Double = persistence
+            for _ in (0 ..< octaves - 1)
+            {
+                accumulation += contribution
+                contribution *= persistence
+            }
+
+            range_inverse = 1 / accumulation
+        }
+
+        var generators:[Source] = [source.amplitude_scaled(by: range_inverse)]
+            generators.reserveCapacity(octaves)
+        for i in (0 ..< octaves - 1)
+        {
+            generators.append( generators[i].amplitude_scaled(by: persistence)
+                                            .frequency_scaled(by: 2)
+                                            .transposed(octaves: 1)
+                                            .reseeded())
+        }
+
+        self.generators  = generators
+    }
+}
+
 // UNDOCUMENTED
 public
 struct DistortedNoise<Source, Displacement>:Noise where Source:Noise, Displacement:Noise
