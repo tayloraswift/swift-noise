@@ -113,7 +113,6 @@ extension FBM where Source:TilingNoise
     public
     init(tiling source:Source, octaves:Int, persistence:Double = 0.5)
     {
-        print("tiling fbm")
         // calculate maximum range
         let range_inverse:Double
         if persistence == 0.5

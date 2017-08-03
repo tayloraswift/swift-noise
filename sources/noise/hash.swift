@@ -129,7 +129,7 @@ struct RandomXorshift
 
     init(seed:Int)
     {
-        self.state128 = (1, 0, UInt32(extendingOrTruncating: seed >> UInt32.bitWidth), UInt32(extendingOrTruncating: seed))
+        self.state128 = (1, 0, UInt32(truncatingIfNeeded: seed >> UInt32.bitWidth), UInt32(truncatingIfNeeded: seed))
     }
 
     mutating

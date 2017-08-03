@@ -301,9 +301,12 @@ extension _CellNoise3D
 
         //          0b XXX YYY ZZ
 
-        let dp:Math.DoubleV3 = ((Double(hash >> 5                                         ) - 7/2) * 1/8,
-                                (Double(hash >> 2 & 0b0111                                ) - 7/2) * 1/8,
-                                (Double(hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)) - 7/2) * 1/8)
+        let axes:Math.DoubleV3 = Math.cast_double(( hash >> 5,
+                                                    hash >> 2 & 0b0111,
+                                                    hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)))
+        let dp:Math.DoubleV3 = ((axes.x - 7.0/2.0) * 1.0/8.0,
+                                (axes.y - 7.0/2.0) * 1.0/8.0,
+                                (axes.z - 7.0/2.0) * 1.0/8.0)
 
         let dv:Math.DoubleV3 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
