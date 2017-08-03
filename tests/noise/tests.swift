@@ -23,7 +23,7 @@ func write_png(path:String, width:Int, height:Int, pixbytes:UnsafeBufferPointer<
 
 extension UInt8
 {
-    init<T>(clamping value:T) where T:FloatingPoint
+    init<T>(clamping value:T) where T:BinaryFloatingPoint
     {
         self.init(Swift.max(0, Swift.min(255, value)))
     }
