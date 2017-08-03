@@ -22,8 +22,8 @@ extension _CellNoise2D
 
         //          0b XXXX YYYY
 
-        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15/2) * 1/16,
-                                (Double(hash      & 0b1111) - 15/2) * 1/16)
+        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15 / 2) * 1 / 16,
+                                (Double(hash      & 0b1111) - 15 / 2) * 1 / 16)
 
         let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
@@ -133,7 +133,7 @@ extension _CellNoise2D
         // Cell group II:
         //                 within r^2 = 1.0
         // cumulative sample coverage = 99.96%
-        let inner:Math.IntV2 = (near.a + quadrant.a, near.b + quadrant.b)
+        let inner:Math.IntV2 = Math.add(near, quadrant)
 
         // B points
         _inspect(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
@@ -152,7 +152,7 @@ extension _CellNoise2D
         // Cell group III:
         //                 within r^2 = 2.0
         // cumulative sample coverage = 100%
-        let outer:Math.IntV2 = (far.a - quadrant.a, far.b - quadrant.b)
+        let outer:Math.IntV2 = Math.sub(far, quadrant)
 
         // D points
         _inspect(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
@@ -304,9 +304,9 @@ extension _CellNoise3D
         let axes:Math.DoubleV3 = Math.cast_double(( hash >> 5,
                                                     hash >> 2 & 0b0111,
                                                     hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)))
-        let dp:Math.DoubleV3 = ((axes.x - 7.0/2.0) * 1.0/8.0,
-                                (axes.y - 7.0/2.0) * 1.0/8.0,
-                                (axes.z - 7.0/2.0) * 1.0/8.0)
+        let dp:Math.DoubleV3 = ((axes.x - 7 / 2) * 1.0 / 8,
+                                (axes.y - 7 / 2) * 1.0 / 8,
+                                (axes.z - 7 / 2) * 1.0 / 8)
 
         let dv:Math.DoubleV3 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
@@ -377,9 +377,7 @@ extension _CellNoise3D
                 return
             }
 
-            let generating_point:Math.IntV3  = (near.a + quadrant.a*offset.a,
-                                                near.b + quadrant.b*offset.b,
-                                                near.c + quadrant.c*offset.c)
+            let generating_point:Math.IntV3 = Math.add(near, Math.mult(quadrant, offset))
             let dr2:Double = self.distance2(from: sample, generating_point: generating_point)
             if dr2 < r2
             {
