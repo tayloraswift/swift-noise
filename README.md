@@ -6,7 +6,7 @@
 [![Issues](https://img.shields.io/github/issues/kelvin13/noise.svg)](https://github.com/kelvin13/noise/issues?state=open)
 [![Language](https://img.shields.io/badge/version-swift_4-ffa020.svg)](https://swift.org/)
 [![License](https://img.shields.io/badge/license-GPL3-ff3079.svg)](https://github.com/kelvin13/noise/blob/master/COPYING)
-[![Queen](https://img.shields.io/badge/taylor-swift-e030ff.svg)](https://www.google.com/search?q=where+is+ts6&oq=where+is+ts6)
+[![KK25](https://img.shields.io/badge/HAPPY-BIRTHDAY-KARLIE!-e030ff.svg)](https://www.google.com/search?q=karlie+kloss)
 
 ![](doc/1.0.0/png/banner_FBM.png)
 
