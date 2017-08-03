@@ -117,7 +117,6 @@ enum Math
             (i2, f2):(Int, Double) = Math.fraction(v.1)
         return ((i1, i2), (f1, f2))
     }
-
     @inline(__always)
     static
     func fraction(_ v:DoubleV3) -> (IntV3, DoubleV3)
@@ -134,7 +133,6 @@ enum Math
     {
         return (v1.a + v2.a, v1.b + v2.b)
     }
-
     @inline(__always)
     static
     func add(_ v1:IntV3, _ v2:IntV3) -> IntV3
@@ -148,7 +146,6 @@ enum Math
     {
         return (v1.x + v2.x, v1.y + v2.y)
     }
-
     @inline(__always)
     static
     func add(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
@@ -158,11 +155,23 @@ enum Math
 
     @inline(__always)
     static
+    func sub(_ v1:IntV2, _ v2:IntV2) -> IntV2
+    {
+        return (v1.a - v2.a, v1.b - v2.b)
+    }
+    @inline(__always)
+    static
+    func sub(_ v1:IntV3, _ v2:IntV3) -> IntV3
+    {
+        return (v1.a - v2.a, v1.b - v2.b, v1.c - v2.c)
+    }
+
+    @inline(__always)
+    static
     func sub(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
         return (v1.x - v2.x, v1.y - v2.y)
     }
-
     @inline(__always)
     static
     func sub(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
@@ -172,11 +181,23 @@ enum Math
 
     @inline(__always)
     static
+    func mult(_ v1:IntV2, _ v2:IntV2) -> IntV2
+    {
+        return (v1.a * v2.a, v1.b * v2.b)
+    }
+    @inline(__always)
+    static
+    func mult(_ v1:IntV3, _ v2:IntV3) -> IntV3
+    {
+        return (v1.a * v2.a, v1.b * v2.b, v1.c * v2.c)
+    }
+
+    @inline(__always)
+    static
     func mult(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
         return (v1.x * v2.x, v1.y * v2.y)
     }
-
     @inline(__always)
     static
     func mult(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
@@ -190,7 +211,6 @@ enum Math
     {
         return (v1.x / v2.x, v1.y / v2.y)
     }
-
     @inline(__always)
     static
     func div(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
@@ -212,7 +232,6 @@ enum Math
     {
         return (Math.mod(v1.a, v2.a), Math.mod(v1.b, v2.b))
     }
-
     @inline(__always)
     static
     func mod(_ v1:IntV3, _ v2:IntV3) -> IntV3
@@ -226,7 +245,6 @@ enum Math
     {
         return v1.x * v2.x + v1.y * v2.y
     }
-
     @inline(__always)
     static
     func dot(_ v1:DoubleV3, _ v2:DoubleV3) -> Double
@@ -240,7 +258,6 @@ enum Math
     {
         return (Double(v.a), Double(v.b))
     }
-
     @inline(__always)
     static
     func cast_double(_ v:IntV3) -> DoubleV3
@@ -269,7 +286,6 @@ enum Math
     {
         return (Math.quintic_ease(v.x), Math.quintic_ease(v.y))
     }
-
     @inline(__always)
     static
     func quintic_ease(_ v:DoubleV3) -> DoubleV3
