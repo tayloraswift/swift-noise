@@ -127,12 +127,13 @@ struct RandomXorshift
         return UInt32.max
     }
 
+    public
     init(seed:Int)
     {
         self.state128 = (1, 0, UInt32(truncatingIfNeeded: seed >> UInt32.bitWidth), UInt32(truncatingIfNeeded: seed))
     }
 
-    mutating
+    public mutating
     func generate() -> UInt32
     {
         var t:UInt32 = self.state128.3
@@ -147,7 +148,7 @@ struct RandomXorshift
         return t
     }
 
-    mutating
+    public mutating
     func generate(less_than maximum:UInt32) -> UInt32
     {
         let upper_bound:UInt32 = self.max - self.max % maximum

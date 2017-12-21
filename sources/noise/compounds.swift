@@ -107,7 +107,6 @@ struct FBM<Source>:Noise where Source:Noise
         return Σ
     }
 }
-
 extension FBM where Source:TilingNoise
 {
     public
