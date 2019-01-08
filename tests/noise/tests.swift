@@ -1,25 +1,5 @@
 import Noise
-import MaxPNG
-
-func write_png(path:String, width:Int, height:Int, pixbytes:UnsafeBufferPointer<UInt8>, color:PNGProperties.ColorFormat)
-{
-    guard let properties = PNGProperties(width: width, height: height, bit_depth: 8, color: color, interlaced: false)
-    else
-    {
-        fatalError("failed to set png properties")
-    }
-
-    do
-    {
-        try png_encode( path: path,
-                        raw_data: pixbytes,
-                        properties: properties)
-    }
-    catch
-    {
-        print(error)
-    }
-}
+import PNG
 
 extension UInt8
 {
@@ -32,40 +12,32 @@ extension UInt8
 func color_noise_png(r_noise:Noise, g_noise:Noise, b_noise:Noise,
     width:Int, height:Int, value_offset:(r:Double, g:Double, b:Double), invert:Bool = false, path:String)
 {
-    let byte_count:Int = 3 * width * height
-    let pixbytes = UnsafeMutableBufferPointer<UInt8>(start: UnsafeMutablePointer<UInt8>.allocate(capacity: byte_count), count: byte_count)
-    defer
+    let domain:Domain2D         = .init(samples_x: width, samples_y: height)
+    let rgba:[PNG.RGBA<UInt8>]  = domain.map 
     {
-        pixbytes.baseAddress?.deallocate(capacity: pixbytes.count)
-    }
-
-    var i:Int = 0
-    for (x, y):(Double, Double) in Domain2D(samples_x: width, samples_y: height)
-    {
-        let r:UInt8 = UInt8(clamping: r_noise.evaluate(x, y) + value_offset.r),
-            g:UInt8 = UInt8(clamping: g_noise.evaluate(x, y) + value_offset.g),
-            b:UInt8 = UInt8(clamping: b_noise.evaluate(x, y) + value_offset.b)
+        (p:(x:Double, y:Double)) in 
+        
+        let r:UInt8 = .init(clamping: r_noise.evaluate(p.x, p.y) + value_offset.r),
+            g:UInt8 = .init(clamping: g_noise.evaluate(p.x, p.y) + value_offset.g),
+            b:UInt8 = .init(clamping: b_noise.evaluate(p.x, p.y) + value_offset.b)
         if invert
         {
-            pixbytes[i    ] = UInt8.max - r
-            pixbytes[i + 1] = UInt8.max - g
-            pixbytes[i + 2] = UInt8.max - b
+            return .init(.max - r, .max - g, .max - b)
         }
         else
         {
-            pixbytes[i    ] = r
-            pixbytes[i + 1] = g
-            pixbytes[i + 2] = b
+            return .init(r, g, b)
         }
-
-        i += 3
     }
-
-    write_png(  path: path,
-                width: width,
-                height: height,
-                pixbytes: UnsafeBufferPointer<UInt8>(start: pixbytes.baseAddress, count: pixbytes.count),
-                color: .rgb)
+    
+    do
+    {
+        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: path)
+    }
+    catch
+    {
+        print(error)
+    }
 }
 
 func banner_classic3d(width:Int, height:Int, seed:Int)
@@ -173,87 +145,92 @@ func circle_at(cx:Double, cy:Double, r:Double, width:Int, height:Int, _ f:(Int, 
 
 func banner_disk2d(width:Int, height:Int, seed:Int)
 {
-    var poisson          = DiskSampler2D(seed: seed)
-    var pixbytes:[UInt8] = [UInt8](repeating: 255, count: 3 * width * height)
+    var poisson:DiskSampler2D       = .init(seed: seed)
+    var rgba:[PNG.RGBA<UInt8>]    = .init(repeating: .init(.max), count: width * height)
 
-    let points = poisson.generate(radius: 20, width: width, height: height, k: 80)
+    //let points = poisson.generate(radius: 20, width: width, height: height, k: 80)
 
     @inline(__always)
     func _dots(_ points:[(x:Double, y:Double)], color: (r:UInt8, g:UInt8, b:UInt8))
     {
         for point:(x:Double, y:Double) in points
         {
-            circle_at(cx: point.x, cy: point.y, r: 10, width: width, height: height,
+            circle_at(cx: point.x, cy: point.y, r: 10, width: width, height: height)
             {
                 (x:Int, y:Int, v:Double) in
 
-                let base_addr:Int = 3 * (y * width + x)
-                pixbytes[base_addr    ] = UInt8(clamping: Int(pixbytes[base_addr    ]) - Int(Double(color.r) * v))
-                pixbytes[base_addr + 1] = UInt8(clamping: Int(pixbytes[base_addr + 1]) - Int(Double(color.g) * v))
-                pixbytes[base_addr + 2] = UInt8(clamping: Int(pixbytes[base_addr + 2]) - Int(Double(color.b) * v))
-            })
+                let i:Int = y * width + x
+                rgba[i].r = .init(clamping: Int(rgba[i].r) - Int(Double(color.r) * v))
+                rgba[i].g = .init(clamping: Int(rgba[i].g) - Int(Double(color.g) * v))
+                rgba[i].b = .init(clamping: Int(rgba[i].b) - Int(Double(color.b) * v))
+            }
         }
     }
 
     _dots(poisson.generate(radius: 35, width: width, height: height, k: 80, seed: (10, 10)), color: (0, 210, 70))
     _dots(poisson.generate(radius: 25, width: width, height: height, k: 80, seed: (45, 15)), color: (0, 10, 235))
     _dots(poisson.generate(radius: 30, width: width, height: height, k: 80, seed: (15, 45)), color: (225, 20, 0))
-
-    pixbytes.withUnsafeBufferPointer
+    
+    do
     {
-        write_png(path: "tests/banner_disk2d.png", width: width, height: height, pixbytes: $0, color: .rgb)
+        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: "tests/banner_disk2d.png")
+    }
+    catch
+    {
+        print(error)
     }
 }
 
 func banner_voronoi2d(width:Int, height:Int, seed:Int)
 {
     let voronoi:CellNoise2D = CellNoise2D(amplitude: 255, frequency: 0.025, seed: seed)
-    var pixbytes:[UInt8] = [UInt8](repeating: 0, count: 3 * width * height)
 
     let r:PermutationTable   = PermutationTable(seed: seed),
         g:PermutationTable   = PermutationTable(seed: seed + 1),
         b:PermutationTable   = PermutationTable(seed: seed + 2)
 
-    var base_addr:Int = 0
-    for y in 0 ..< height
+    let domain:Domain2D         = .init(samples_x: width, samples_y: height)
+    let rgba:[PNG.RGBA<UInt8>]  = domain.map 
     {
-        for x in 0 ..< width
+        (p:(x:Double, y:Double)) in 
+        
+        @inline(__always)
+        func _supersample(_ x:Double, _ y:Double) -> (r:UInt8, g:UInt8, b:UInt8)
         {
-            @inline(__always)
-            func _supersample(_ x:Double, _ y:Double) -> (r:UInt8, g:UInt8, b:UInt8)
-            {
-                let (point, _):((Int, Int), Double) = voronoi.closest_point(Double(x), Double(y))
-                let r:UInt8 = r.hash(point.0, point.1),
-                    g:UInt8 = g.hash(point.0, point.1),
-                    b:UInt8 = b.hash(point.0, point.1),
-                    peak:UInt8 = max(r, max(g, b)),
-                    saturate:Double = Double(UInt8.max) / Double(peak)
-                return (UInt8(Double(r) * saturate), UInt8(Double(g) * saturate), UInt8(Double(b) * saturate))
-            }
-
-            var r:Int = 0,
-                g:Int = 0,
-                b:Int = 0
-            let supersamples:[(Double, Double)] = [(0, 0), (0, 0.4), (0.4, 0), (-0.4, 0), (0, -0.4),
-                                                   (-0.25, -0.25), (0.25, 0.25), (-0.25, 0.25), (0.25, -0.25)]
-            for (dx, dy) in supersamples
-            {
-                let contribution:(r:UInt8, g:UInt8, b:UInt8) = _supersample(Double(x) + dx, Double(y) + dy)
-                r += Int(contribution.r)
-                g += Int(contribution.g)
-                b += Int(contribution.b)
-            }
-            pixbytes[base_addr    ] = UInt8(r / supersamples.count)
-            pixbytes[base_addr + 1] = UInt8(g / supersamples.count)
-            pixbytes[base_addr + 2] = UInt8(b / supersamples.count)
-
-            base_addr += 3
+            let (point, _):((Int, Int), Double) = voronoi.closest_point(Double(x), Double(y))
+            let r:UInt8 = r.hash(point.0, point.1),
+                g:UInt8 = g.hash(point.0, point.1),
+                b:UInt8 = b.hash(point.0, point.1),
+                peak:UInt8 = max(r, max(g, b)),
+                saturate:Double = .init(UInt8.max) / .init(peak)
+            return (.init(.init(r) * saturate), .init(.init(g) * saturate), .init(.init(b) * saturate))
         }
-    }
 
-    pixbytes.withUnsafeBufferPointer
+        var r:Int = 0,
+            g:Int = 0,
+            b:Int = 0
+        let supersamples:[(Double, Double)] = [(0, 0), (0, 0.4), (0.4, 0), (-0.4, 0), (0, -0.4),
+                                               (-0.25, -0.25), (0.25, 0.25), (-0.25, 0.25), (0.25, -0.25)]
+        for (dx, dy):(Double, Double) in supersamples
+        {
+            let contribution:(r:UInt8, g:UInt8, b:UInt8) = _supersample(p.x + dx, p.y + dy)
+            r += .init(contribution.r)
+            g += .init(contribution.g)
+            b += .init(contribution.b)
+        }
+        
+        return .init(   .init(r / supersamples.count), 
+                        .init(g / supersamples.count), 
+                        .init(b / supersamples.count))
+    }
+    
+    do
     {
-        write_png(path: "tests/banner_voronoi2d.png", width: width, height: height, pixbytes: $0, color: .rgb)
+        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: "tests/banner_voronoi2d.png")
+    }
+    catch
+    {
+        print(error)
     }
 }
 

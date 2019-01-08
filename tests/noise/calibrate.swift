@@ -1,25 +1,24 @@
 import Noise
-import MaxPNG
+import PNG
 
 func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double, path:String)
 {
-    let byte_count:Int = width * height
-    let pixbytes = UnsafeMutableBufferPointer<UInt8>(start: UnsafeMutablePointer<UInt8>.allocate(capacity: byte_count), count: byte_count)
-    defer
+    let domain:Domain2D = .init(-2 ... 2, -2 ... 2, samples_x: width, samples_y: height)
+    let v:[UInt8]       = domain.enumerated().map 
     {
-        pixbytes.baseAddress?.deallocate(capacity: pixbytes.count)
+        (element:(Int, (x:Double, y:Double))) in
+        
+        return .init(clamping: noise.evaluate(element.1.x, element.1.y) + value_offset)
     }
 
-    for (i, (x, y)) in Domain2D(-2 ... 2, -2 ... 2, samples_x: width, samples_y: height).enumerated()
+    do
     {
-        pixbytes[i] = UInt8(clamping: noise.evaluate(x, y) + value_offset)
+        try PNG.encode(v: v, size: (width, height), as: .v8, path: path)
     }
-
-    write_png(  path: path,
-                width: width,
-                height: height,
-                pixbytes: UnsafeBufferPointer<UInt8>(start: pixbytes.baseAddress, count: pixbytes.count),
-                color: .grayscale)
+    catch
+    {
+        print(error)
+    }
 }
 
 public
