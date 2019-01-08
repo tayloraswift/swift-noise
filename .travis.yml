@@ -1,10 +1,11 @@
 language: generic
-sudo: required
-dist: trusty
-env:
-- SWIFT_BRANCH=swift-4.0-branch SWIFT_VERSION=swift-4.0-DEVELOPMENT-SNAPSHOT-2017-08-02-a
-install:
-- mkdir swift
-- curl https://swift.org/builds/$SWIFT_BRANCH/ubuntu1404/$SWIFT_VERSION/$SWIFT_VERSION-ubuntu14.04.tar.gz -s | tar xz -C swift &> /dev/null
-script:
-- env PATH=$(pwd)/swift/$SWIFT_VERSION-ubuntu14.04/usr/bin:$PATH swift test -c release
+matrix:
+  include:
+  - os: linux
+    env:
+    - JOB="Linux"
+    dist: trusty
+    script:
+    - export SWIFT_VERSION=4.2.1
+    - eval "$(curl -sL https://gist.githubusercontent.com/kylef/5c0475ff02b7c7671d2a/raw/9f442512a46d7a2af7b850d65a7e9bd31edfb09b/swiftenv-install.sh)"
+    - swift run -c release noise-tests

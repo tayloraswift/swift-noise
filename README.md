@@ -16,4 +16,4 @@
 
 ## Building
 
-Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests depend on [MaxPNG](https://github.com/kelvin13/maxpng), my free Swift PNG library, to view the generated noise.
+Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests depend on [PNG](https://github.com/kelvin13/png), my free Swift PNG library, to view the generated noise.

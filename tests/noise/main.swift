@@ -1,7 +1,5 @@
 import Noise
-import MaxPNG
-
-import Tests
+import PNG
 
 import func Glibc.clock
 
@@ -11,7 +9,6 @@ calibrate_noise(width: 256, height: 256)
 
 let viewer_size:Int = 1024
 var pixbuf:[UInt8]  = [UInt8](repeating: 0, count: viewer_size * viewer_size)
-let png_properties:PNGProperties = PNGProperties(width: viewer_size, height: viewer_size, bit_depth: 8, color: .grayscale, interlaced: false)!
 
 func benchmark<Generator>(noise generator:Generator, name:String, offset:Double = 0) where Generator:Noise
 {
@@ -21,7 +18,7 @@ func benchmark<Generator>(noise generator:Generator, name:String, offset:Double 
         pixbuf[i] = UInt8(max(0, min(255, generator.evaluate(x, y) + offset)))
     }
     print("\(name): \(clock() - t0)")
-    try! png_encode(path: "tests/\(name).png", raw_data: pixbuf, properties: png_properties)
+    try! PNG.encode(v: pixbuf, size: (viewer_size, viewer_size), as: .v8, path: "tests/\(name).png")
 }
 
 var poisson = DiskSampler2D(seed: 0)
@@ -31,7 +28,7 @@ for point:(x:Double, y:Double) in poisson.generate(radius: 10, width: viewer_siz
     pixbuf[Int(point.y) * viewer_size + Int(point.x)] = 255
 }
 print("disk2d: \(clock() - t0)")
-try png_encode(path: "tests/disk2d.png", raw_data: pixbuf, properties: png_properties)
+try PNG.encode(v: pixbuf, size: (viewer_size, viewer_size), as: .v8, path: "tests/disk2d.png")
 
 benchmark(noise: CellNoise2D(amplitude: 255, frequency: 0.01), name: "cell2d")
 benchmark(noise: CellNoise3D(amplitude: 255, frequency: 0.01), name: "cell3d")
