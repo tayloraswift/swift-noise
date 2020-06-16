@@ -14,7 +14,6 @@ public
 extension Noise
 {
     @available(*, deprecated, message: "area sampling is deprecated, iterate over a Domain2D.Iterator iterator and sample directly instead.")
-    public
     func sample_area(width:Int, height:Int) -> [(Double, Double, Double)]
     {
         var samples:[(Double, Double, Double)] = []
@@ -32,7 +31,6 @@ extension Noise
     }
 
     @available(*, deprecated, message: "area sampling is deprecated, iterate over a Domain2D.Iterator iterator and sample directly instead.")
-    public
     func sample_area_saturated_to_u8(width:Int, height:Int, offset:Double = 0.5) -> [UInt8]
     {
         var samples:[UInt8] = []
@@ -50,7 +48,6 @@ extension Noise
     }
 
     @available(*, deprecated, message: "volume sampling is deprecated, iterate over a Domain3D.Iterator iterator and sample directly instead.")
-    public
     func sample_volume(width:Int, height:Int, depth:Int) -> [(Double, Double, Double, Double)]
     {
         var samples:[(Double, Double, Double, Double)] = []
@@ -72,7 +69,6 @@ extension Noise
     }
 
     @available(*, deprecated, message: "volume sampling is deprecated, iterate over a Domain3D.Iterator iterator and sample directly instead.")
-    public
     func sample_volume_saturated_to_u8(width:Int, height:Int, depth:Int, offset:Double = 0.5) -> [UInt8]
     {
         var samples:[UInt8] = []
