@@ -1,7 +1,12 @@
 import Noise
 import PNG
 
+// TODO: migrate the stdlib Clock APIs
+#if os(Linux)
 import func Glibc.clock
+#else 
+import func Darwin.clock 
+#endif
 
 banners(width: 700, ratio: 5)
 
