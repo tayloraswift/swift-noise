@@ -32,7 +32,9 @@ func color_noise_png(r_noise:Noise, g_noise:Noise, b_noise:Noise,
     
     do
     {
-        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: path)
+        let image:PNG.Data.Rectangular = .init(packing: rgba, size: (width, height), 
+            layout: .init(format: .rgb8(palette: [], fill: nil, key: nil)))
+        try image.compress(path: path, level: 9)
     }
     catch
     {
@@ -173,7 +175,9 @@ func banner_disk2d(width:Int, height:Int, seed:Int)
     
     do
     {
-        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: "tests/banner_disk2d.png")
+        let image:PNG.Data.Rectangular = .init(packing: rgba, size: (width, height), 
+            layout: .init(format: .rgb8(palette: [], fill: nil, key: nil)))
+        try image.compress(path: "tests/banner_disk2d.png", level: 9)
     }
     catch
     {
@@ -226,7 +230,9 @@ func banner_voronoi2d(width:Int, height:Int, seed:Int)
     
     do
     {
-        try PNG.encode(rgba: rgba, size: (width, height), as: .rgb8, path: "tests/banner_voronoi2d.png")
+        let image:PNG.Data.Rectangular = .init(packing: rgba, size: (width, height), 
+            layout: .init(format: .rgb8(palette: [], fill: nil, key: nil)))
+        try image.compress(path: "tests/banner_voronoi2d.png", level: 9)
     }
     catch
     {
