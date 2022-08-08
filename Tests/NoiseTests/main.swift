@@ -6,6 +6,11 @@ import PNG
 import func Glibc.clock
 #else 
 import func Darwin.clock 
+
+func clock() -> Int 
+{
+    .init(Darwin.clock())
+}
 #endif
 
 banners(width: 700, ratio: 5)
