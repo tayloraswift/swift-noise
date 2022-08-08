@@ -13,7 +13,9 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
 
     do
     {
-        try PNG.encode(v: v, size: (width, height), as: .v8, path: path)
+        let image:PNG.Data.Rectangular = .init(packing: v, size: (width, height), 
+            layout: .init(format: .v8(fill: nil, key: nil)))
+        try image.compress(path: path, level: 9)
     }
     catch
     {
