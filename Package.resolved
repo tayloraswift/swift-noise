@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "PNG",
+        "repositoryURL": "https://github.com/kelvin13/png",
+        "state": {
+          "branch": null,
+          "revision": "beb4c9b6e6abacf01cc4d278f3731f0ed0ea3497",
+          "version": "3.0.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
