@@ -1,4 +1,4 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.5
 
 import PackageDescription
 
@@ -11,11 +11,18 @@ let package = Package(
     ],
     dependencies: 
     [
-        .package(url: "https://github.com/kelvin13/png", .exact("3.0.0"))
+        .package(url: "https://github.com/kelvin13/swift-png", .upToNextMinor(from: "4.0.1"))
     ],
     targets: 
     [
-        .target(name: "Noise", path: "sources/noise"),
-        .target(name: "NoiseTests", dependencies: ["Noise", "PNG"], path: "tests/noise")
+        .target(name: "Noise"),
+
+        .executableTarget(name: "NoiseTests", 
+            dependencies: 
+            [
+                .target(name: "Noise"), 
+                .product(name: "PNG", package: "swift-png"), 
+            ],
+            path: "Tests/NoiseTests")
     ]
 )
