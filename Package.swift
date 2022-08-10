@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Noise",
+    name: "swift-noise",
     products: 
     [
         .library(name: "Noise", targets: ["Noise"]),
