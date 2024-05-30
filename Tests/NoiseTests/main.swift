@@ -30,7 +30,7 @@ func benchmark<Generator>(noise generator:Generator, name:String, offset:Double 
     }
     print("\(name): \(clock() - t0)")
 
-    let image:PNG.Data.Rectangular = .init(packing: pixbuf, size: (viewer_size, viewer_size), 
+    let image:PNG.Image = .init(packing: pixbuf, size: (viewer_size, viewer_size),
         layout: .init(format: .v8(fill: nil, key: nil)))
     try image.compress(path: "tests/\(name).png", level: 9)
 }
@@ -42,7 +42,7 @@ for point:(x:Double, y:Double) in poisson.generate(radius: 10, width: viewer_siz
     pixbuf[Int(point.y) * viewer_size + Int(point.x)] = 255
 }
 print("disk2d: \(clock() - t0)")
-let image:PNG.Data.Rectangular = .init(packing: pixbuf, size: (viewer_size, viewer_size), 
+let image:PNG.Image = .init(packing: pixbuf, size: (viewer_size, viewer_size), 
         layout: .init(format: .v8(fill: nil, key: nil)))
 try image.compress(path: "tests/disk2d.png", level: 9)
 
