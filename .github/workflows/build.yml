@@ -1,55 +1,31 @@
-
 name: build
 
 on:
     push:
-        branches: [ master ]
+        branches: [ main ]
     pull_request:
-        branches: [ master ]
+        branches: [ main ]
 
 jobs:
     build-macos:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [macos-12, macos-11]
+        runs-on: macos-14
         steps:
-            -   uses: actions/checkout@v2
-            -   name: build 
-                run: |
-                    swift --version
-                    swift build
+          - uses: actions/checkout@v3
+          - uses: SwiftyLab/setup-swift@latest
+            with:
+              swift-version: "5.10.0"
+          - name: build
+            run: |
+              swift --version
+              swift build
     build-linux:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-20.04, ubuntu-18.04]
-                swift: [5.6.2, 5.5.3]
+        runs-on: ubuntu-22.04
         steps:
-            -   uses: actions/checkout@v2
-            
-            -   name: cache swift toolchains
-                uses: actions/cache@v2
-                with:
-                    path: swift-${{ matrix.swift }}.tar.gz
-                    key: ${{ matrix.os }}:swift:${{ matrix.swift }}
-                    
-            -   name: cache status
-                id:   cache_status
-                uses: andstor/file-existence-action@v1
-                with:
-                    files: swift-${{ matrix.swift }}.tar.gz
-            
-            -   name: download swift toolchain 
-                if: steps.cache_status.outputs.files_exists == 'false'
-                run: curl https://download.swift.org/swift-${{ matrix.swift }}-release/$(echo ${{ matrix.os }} | sed 's/[^a-zA-Z0-9]//g')/swift-${{ matrix.swift }}-RELEASE/swift-${{ matrix.swift }}-RELEASE-$(echo ${{ matrix.os }} | sed 's/[^a-zA-Z0-9\.]//g').tar.gz --output swift-${{ matrix.swift }}.tar.gz
-            
-            -   name: set up swift
-                run: |
-                    mkdir -p $GITHUB_WORKSPACE/swift-${{ matrix.swift }}
-                    tar -xzf swift-${{ matrix.swift }}.tar.gz -C $GITHUB_WORKSPACE/swift-${{ matrix.swift }} --strip 1
-                    echo "$GITHUB_WORKSPACE/swift-${{ matrix.swift }}/usr/bin" >> $GITHUB_PATH
-            -   name: build 
-                run: |
-                    swift --version
-                    swift build
+            - uses: actions/checkout@v3
+            - uses: SwiftyLab/setup-swift@latest
+              with:
+                swift-version: "5.10.0"
+            - name: build
+              run: |
+                swift --version
+                swift build
