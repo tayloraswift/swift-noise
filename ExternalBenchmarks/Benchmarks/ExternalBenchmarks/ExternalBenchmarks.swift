@@ -19,11 +19,19 @@ let benchmarks = {
     Benchmark.defaultConfiguration.maxDuration = .seconds(1) // Default = 1 second
     Benchmark.defaultConfiguration.metrics = [.throughput, .wallClock]
     
+    Benchmark("disk2d") { benchmark in
+        var poisson = DiskSampler2D(seed: 0)
+        for _ in benchmark.scaledIterations {
+            blackHole(poisson.generate(radius: 10, width: viewer_size, height: viewer_size))
+        }
+    }
+    
     Benchmark("cell2d") { benchmark in
         for _ in benchmark.scaledIterations {
             blackHole(CellNoise2D(amplitude: 255, frequency: 0.01))
         }
     }
+    
     Benchmark("cell3d") { benchmark in
         for _ in benchmark.scaledIterations {
             blackHole(CellNoise3D(amplitude: 255, frequency: 0.01))
