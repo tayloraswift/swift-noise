@@ -1,3 +1,7 @@
+/// A generic [fractal brownian motion](https://thebookofshaders.com/13/) noise generator,
+/// capable of overlaying multiple instances of procedural ``Noise`` at increasing frequencies.
+///
+/// ![preview](png/banner_FBM.png)
 public
 struct FBM<Source>:Noise where Source:Noise
 {
@@ -34,6 +38,12 @@ struct FBM<Source>:Noise where Source:Noise
         self.generators = []
     }
 
+    /// Creates an instance with the given number of `octaves` of noise. The given `amplitude`
+    /// is the amplitude of the first octave of noise, and is multiplied by `persistence` for
+    /// each successive octave. The given `frequency` is the frequency of the first octave of
+    /// noise, and is multiplied by the `lacunarity` for each successive octave. The `seed`
+    /// value is passed through to the first octave of noise, and is incremented for each
+    /// successive octave.
     @available(*, unavailable, message: "use init(_:octaves:persistence:lacunarity:) instead")
     public
     init(amplitude:Double, frequency:Double, octaves:Int, persistence:Double = 0.75, lacunarity:Double = 2, seed:Int = 0)

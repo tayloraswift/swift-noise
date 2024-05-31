@@ -2,9 +2,9 @@ name: build
 
 on:
     push:
-        branches: [ main ]
+        branches: [ master ]
     pull_request:
-        branches: [ main ]
+        branches: [ master ]
 
 jobs:
     build-macos:
@@ -51,3 +51,4 @@ jobs:
               run: |
                 swift --version
                 swift build
+                swift build -c release
