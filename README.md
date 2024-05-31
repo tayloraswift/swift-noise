@@ -1,11 +1,10 @@
 <div align="center">
   
-***`noise`***<br>`2.0.0`
+***`noise`***<br>`2.0`
   
-[![ci build status](https://github.com/kelvin13/swift-noise/actions/workflows/build.yml/badge.svg)](https://github.com/kelvin13/swift-noise/actions/workflows/build.yml)
-
-[![swift package index versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkelvin13%2Fswift-noise%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/kelvin13/swift-noise)
-[![swift package index platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkelvin13%2Fswift-noise%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/kelvin13/swift-noise)
+[![ci build status](https://github.com/tayloraswift/swift-noise/actions/workflows/build.yml/badge.svg)](https://github.com/tayloraswift/swift-noise/actions/workflows/build.yml)
+[![swift package index versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftayloraswift%2Fswift-noise%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/tayloraswift/swift-noise)
+[![swift package index platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftayloraswift%2Fswift-noise%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/tayloraswift/swift-noise)
 
 </div>
 
@@ -21,4 +20,4 @@ All popular types of procedural noise are supported, including three [gradient n
 
 ## Building
 
-Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests use [`swift-png`](https://github.com/kelvin13/swift-png) to view the generated noise.
+Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests use [`swift-png`](https://github.com/tayloraswift/swift-png) to view the generated noise.
