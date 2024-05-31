@@ -1,6 +1,5 @@
-###### Structure
+# ``FBM``
 
-# `FBM`
 A generic [fractal brownian motion](https://thebookofshaders.com/13/) noise generator, capable of overlaying multiple instances of procedural [noise](protocol-Noise.md) at increasing frequencies.
 
 ![](png/banner_FBM.png)

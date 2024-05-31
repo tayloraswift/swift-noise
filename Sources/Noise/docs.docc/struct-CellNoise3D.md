@@ -1,6 +1,5 @@
-###### Structure
+# ``CellNoise3D``
 
-# `CellNoise3D`
 A type of three-dimensional cellular noise (sometimes called [Worley noise](https://en.wikipedia.org/wiki/Worley_noise), or Voronoi noise), suitable for texturing arbitrary three-dimensional objects.
 
 Unlike many other cell noise implementations, *Noise*’s implementation samples all relevant generating-points, preventing artifacts or discontinuities from ever appearing in the noise. Accordingly, *Noise*’s implementation is heavily optimized to prevent the additional edge cases from impacting the performance of the cell noise.

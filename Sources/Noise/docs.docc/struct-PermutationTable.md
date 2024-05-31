@@ -1,6 +1,5 @@
-###### Structure
+# ``PermutationTable``
 
-# `PermutationTable`
 An 8-bit permutation table useful for generating pseudo-random hash values.
 
 ![](png/banner_voronoi2d.png)
