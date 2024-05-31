@@ -1,3 +1,16 @@
+/// A point sampler capable of producing uniform and roughly-evenly spaced pseudo-random point
+/// distributions in the plane. Disk sampling is sometimes referred to as
+/// [Poisson sampling](https://en.wikipedia.org/wiki/Supersampling#Poisson_disc).
+///
+/// ![preview](png/banner_disk2d.png)
+///
+/// Disk samples are not a noise field — its generation is inherently sequential, as opposed to
+/// most procedural noise fields which are embarrassingly parallel. Thus, disk samples have no
+/// concept of *evaluation*; the entire sample set must be generated as a whole.
+///
+/// Disk samples have an internal state, which is advanced every time the point generator runs.
+/// In many ways, disk samples have more in common with pseudo-random number generators than
+/// they do with procedural noise fields.
 public
 struct DiskSampler2D
 {
@@ -17,6 +30,9 @@ struct DiskSampler2D
     private static
     let candidate_table_bitmask:Int = 0b1111111111 // 1023
 
+    /// Creates an instance with the given fixed random `seed`. This process calculates a random
+    /// table used internally in the sample generation step. The same instance can be reused to
+    /// generate multiple, different point distributions.
     public
     init(seed:Int = 0)
     {
@@ -46,6 +62,13 @@ struct DiskSampler2D
         self.candidate_ring = candidate_ring
     }
 
+    /// Generates a set of sample points that are spaced no less than `radius` apart over a
+    /// region sized `width` by `height` . Up to `k` candidate points will be used to generate
+    /// each sample point; higher values of `k` yield more compact point distributions, but take
+    /// longer to run. The `seed` point specifies the first point that is added to the
+    /// distribution, and influences where subsequent sample points are added. This `seed` is
+    /// orthogonal to the `seed` supplied in the initializer. If `seed` is left `nil`, the seed
+    /// point is placed at the center of the region.
     public mutating
     func generate(radius:Double, width:Int, height:Int, k:Int = 32, seed:(Double, Double)? = nil) -> [(Double, Double)]
     {
