@@ -26,6 +26,15 @@ jobs:
           - uses: SwiftyLab/setup-swift@latest
             with:
               swift-version: "5.10.0"
+          - name: Homebrew Mac
+            if: ${{ runner.os == 'Macos' }}
+            run: |
+              echo "/opt/homebrew/bin:/usr/local/bin" >> $GITHUB_PATH
+              brew install jemalloc
+          - name: Ubuntu deps
+            if: ${{ runner.os == 'Linux' }}
+            run: |
+              sudo apt-get install -y libjemalloc-dev
           - name: benchmark
             run: |
               cd ExternalBenchmarks
