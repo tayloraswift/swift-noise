@@ -115,12 +115,15 @@ extension HashedTilingNoise where IntV == Math.IntV3
     }
 }
 
+/// A cryptographically unsecure 128-bit [Xorshift](https://en.wikipedia.org/wiki/Xorshift)
+/// pseudo-random number generator.
 public
 struct RandomXorshift
 {
     private
     var state128:(UInt32, UInt32, UInt32, UInt32)
 
+    /// The maximum unsigned integer value the random number generator is capable of producing.
     public
     var max:UInt32
     {
@@ -133,6 +136,8 @@ struct RandomXorshift
         self.state128 = (1, 0, UInt32(truncatingIfNeeded: seed >> UInt32.bitWidth), UInt32(truncatingIfNeeded: seed))
     }
 
+    /// Generates a pseudo-random 32 bit unsigned integer, and advances the random number
+    /// generator state.
     public mutating
     func generate() -> UInt32
     {
@@ -148,6 +153,10 @@ struct RandomXorshift
         return t
     }
 
+    /// Generates a pseudo-random 32 bit unsigned integer less than `maximum`, and advances the
+    /// random number generator state. This function should be preferred over using the plain
+    /// ``generate`` method with the modulo operator to avoid modulo biasing. However, if
+    /// `maximum` is a power of two, a bit mask may be faster.
     public mutating
     func generate(less_than maximum:UInt32) -> UInt32
     {
@@ -162,12 +171,21 @@ struct RandomXorshift
     }
 }
 
+/// An 8-bit permutation table useful for generating pseudo-random hash values.
+///
+/// ![2D voronoi noise](png/banner_voronoi2d.png)
+///
+/// Permutation tables can be used, among other things, to hash
+/// [cell noise](doc:CellNoise2D/closest_point(_:_:)) to produce a
+/// [Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram).
 public
 struct PermutationTable
 {
     private
     let permut:[UInt8] // keep these small to minimize cache misses
 
+    /// Creates an instance with the given random `seed` containing the values `0 ... 255`
+    /// shuffled in a random order.
     public
     init(seed:Int)
     {
@@ -204,7 +222,22 @@ struct PermutationTable
         return Int(self.permut[self.hash((n3.a, n3.b)) ^ (n3.c & 255)])
     }
 
-    public func hash(_ h1:Int)                     -> UInt8 { return self.permut[h1 & 255] }
-    public func hash(_ h1:Int, _ h2:Int)           -> UInt8 { return self.permut[Int(self.hash(h1    )) ^ (h2 & 255)] }
-    public func hash(_ h1:Int, _ h2:Int, _ h3:Int) -> UInt8 { return self.permut[Int(self.hash(h1, h2)) ^ (h3 & 255)] }
+    /// Hash a single integer value.
+    public
+    func hash(_ h1:Int) -> UInt8
+    {
+        return self.permut[h1 & 255]
+    }
+    /// Hash two integer values.
+    public
+    func hash(_ h1:Int, _ h2:Int) -> UInt8
+    {
+        return self.permut[Int(self.hash(h1)) ^ (h2 & 255)]
+    }
+    /// Hash three integer values.
+    public
+    func hash(_ h1:Int, _ h2:Int, _ h3:Int) -> UInt8
+    {
+        return self.permut[Int(self.hash(h1, h2)) ^ (h3 & 255)]
+    }
 }
