@@ -1,6 +1,5 @@
-###### Structure
+# ``SuperSimplexNoise3D``
 
-# `SuperSimplexNoise3D`
 A type of three-dimensional gradient noise (sometimes called [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing arbitrary three-dimensional objects.
 
 Three-dimensional super-simplex noise generally looks somewhat better visually than its [two-dimensional](struct-SuperSimplexNoise2D.md) counterpart, but runs about 20% slower.

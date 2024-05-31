@@ -1,6 +1,5 @@
-###### Structure
+# ``SimplexNoise2D``
 
-# `SimplexNoise2D`
 A type of two-dimensional gradient noise (sometimes called [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing two-dimensional planes. Simplex noise was originally an open-source improvement on the classical Perlin gradient noise algorithm, and thus is often referred to as OpenSimplex noise, to distinguish it from a patented variant of simplex noise. Simplex noise is supported in the library mainly because it has historical significance; it has since been superseded by the less popular, but more powerful and more efficient [super-simplex noise](struct-SuperSimplexNoise2D.md).
 
 In almost all cases, super-simplex noise should be preferred.
@@ -34,7 +33,7 @@ In almost all cases, super-simplex noise should be preferred.
 #### `func` [`sample_area_saturated_to_u8`](protocol-Noise.md#func-sample_area_saturated_to_u8widthint-heightint-offsetdouble--05---uint8)`(width:Int, height:Int, offset:Double = 0.5) -> [UInt8]`
 > Evaluates the noise field over the given area, starting from the origin, and extending over the first quadrant, storing the values in a row-major array of samples. The samples are clamped, but not scaled, to the range `0 ... 255`.
 
-#### `func` [`sample_volume`](protocol-Noise.md#func-sample_volumewidthint-heightint-depthint---double-double-double-double)`(width:Int, height:Int, depth:Int) -> [(Double, Double, Double, Double)]` 
+#### `func` [`sample_volume`](protocol-Noise.md#func-sample_volumewidthint-heightint-depthint---double-double-double-double)`(width:Int, height:Int, depth:Int) -> [(Double, Double, Double, Double)]`
 > Evaluates the noise field over the given volume, starting from the origin, and extending over the first octant, taking unit steps in all three directions. Although the `x`, `y`, and `z` coordinates are returned, the output vector is guaranteed to be in `xy`-plane-major, and then row-major order.
 
 #### `func` [`sample_volume_saturated_to_u8`](protocol-Noise.md#func-sample_volume_saturated_to_u8widthint-heightint-depthint-offsetdouble--05---uint8)`(width:Int, height:Int, depth:Int, offset:Double = 0.5) -> [UInt8]`

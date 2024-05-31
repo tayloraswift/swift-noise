@@ -1,6 +1,5 @@
-###### Structure
+# ``SuperSimplexNoise2D``
 
-# `SuperSimplexNoise2D`
 A type of two-dimensional gradient noise (sometimes called [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing two-dimensional planes. Super-simplex noise is an improved version of [simplex noise](struct-SimplexNoise2D.md) which runs faster and scales better to higher dimensions. (Simplex noise in turn is an improvement on the classical Perlin gradient noise algorithm.)
 
 In almost all cases, super-simplex noise should be preferred over its predecessors. Super-simplex noise runs about 25% faster than its simplex predecessor, and produces higher quality gradient noise. Super-simplex noise also comes in a [three-dimensional](struct-SuperSimplexNoise3D.md) version.
