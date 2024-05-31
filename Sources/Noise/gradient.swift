@@ -150,7 +150,22 @@ struct TilingClassicNoise3D:_ClassicNoise3D, HashedTilingNoise
     }
 }
 
-@available(*, deprecated, message: "simplex noise nearly identical to and is an inferior implementation of super simplex noise")
+/// A type of two-dimensional gradient noise (sometimes called
+/// [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing
+/// two-dimensional planes. Simplex noise was originally an open-source improvement on the
+/// classical Perlin gradient noise algorithm, and thus is often referred to as OpenSimplex
+/// noise, to distinguish it from a patented variant of simplex noise.
+///
+/// ![preview](png/banner_simplex2d.png)
+///
+/// Simplex noise is supported in the library mainly because it has historical significance; it
+/// has since been superseded by the less popular, but more powerful and more efficient
+/// ``GradientNoise2D``.
+///
+/// In almost all cases, super-simplex noise should be preferred.
+@available(*, deprecated, message: """
+    simplex noise nearly identical to and is an inferior implementation of super simplex noise
+    """)
 public
 struct SimplexNoise2D:HashedNoise
 {
@@ -188,6 +203,13 @@ struct SimplexNoise2D:HashedNoise
         self.permutation_table = permutation_table
     }
 
+    /// Creates an instance with the given `amplitude`, `frequency`, and random `seed` values.
+    /// Creating an instance generates a new pseudo-random permutation table for that instance,
+    /// and a new instance does not need to be regenerated to sample the same procedural noise
+    /// field.
+    ///
+    /// The given amplitude is adjusted internally to produce output approximately within the
+    /// range of `-amplitude ... amplitude`, however this is not strictly guaranteed.
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
@@ -211,6 +233,7 @@ struct SimplexNoise2D:HashedNoise
         }
     }
 
+    /// Evaluates the simplex noise field at the given coordinates.
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
@@ -315,12 +338,16 @@ struct SimplexNoise2D:HashedNoise
         return self.amplitude * Σ
     }
 
+    /// Evaluates the simplex noise field at the given coordinates. The third coordinate is
+    /// ignored.
     public
     func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
     {
         return self.evaluate(x, y)
     }
 
+    /// Evaluates the simplex noise field at the given coordinates. The third and fourth
+    /// coordinates are ignored.
     public
     func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
     {
@@ -331,6 +358,19 @@ struct SimplexNoise2D:HashedNoise
 @available(*, unavailable, renamed: "GradientNoise2D")
 public
 typealias SuperSimplexNoise2D = GradientNoise2D
+
+/// A type of two-dimensional gradient noise (sometimes called
+/// [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing
+/// two-dimensional planes. Super-simplex noise is an improved version of ``SimplexNoise2D``
+/// which runs faster and scales better to higher dimensions. (Simplex noise in turn is an
+/// improvement on the classical Perlin gradient noise algorithm.)
+///
+/// ![preview](png/banner_supersimplex2d.png)
+///
+/// In almost all cases, super-simplex noise should be preferred over its predecessors.
+/// Super-simplex noise runs about 25% faster than its simplex predecessor, and produces higher
+/// quality gradient noise. Super-simplex noise also comes in a
+/// [three-dimensional](doc:GradientNoise3D) version.
 public
 struct GradientNoise2D:HashedNoise
 {
@@ -396,6 +436,13 @@ struct GradientNoise2D:HashedNoise
         self.permutation_table = permutation_table
     }
 
+    /// Creates an instance with the given `amplitude`, `frequency`, and random `seed` values.
+    /// Creating an instance generates a new pseudo-random permutation table for that instance,
+    /// and a new instance does not need to be regenerated to sample the same procedural noise
+    /// field.
+    ///
+    /// The given amplitude is adjusted internally to produce output approximately within the
+    /// range of `-amplitude ... amplitude`, however this is not strictly guaranteed.
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
@@ -419,6 +466,7 @@ struct GradientNoise2D:HashedNoise
         }
     }
 
+    /// Evaluates the super-simplex noise field at the given coordinates.
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
@@ -544,12 +592,16 @@ struct GradientNoise2D:HashedNoise
         return self.amplitude * Σ
     }
 
+    /// Evaluates the super-simplex noise field at the given coordinates. The third coordinate
+    /// is ignored.
     public
     func evaluate(_ x:Double, _ y:Double, _:Double) -> Double
     {
         return self.evaluate(x, y)
     }
 
+    /// Evaluates the super-simplex noise field at the given coordinates. The third and fourth
+    /// coordinates are ignored.
     public
     func evaluate(_ x:Double, _ y:Double, _:Double, _:Double) -> Double
     {
@@ -560,6 +612,21 @@ struct GradientNoise2D:HashedNoise
 @available(*, unavailable, renamed: "GradientNoise3D")
 public
 typealias SuperSimplexNoise3D = GradientNoise3D
+
+/// A type of three-dimensional gradient noise (sometimes called
+/// [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise)), suitable for texturing
+/// arbitrary three-dimensional objects.
+///
+/// ![preview](png/banner_supersimplex3d.png)
+///
+/// Three-dimensional super-simplex noise generally looks somewhat better visually than its
+/// [two-dimensional](doc:GradientNoise3D) counterpart, but runs about 20% slower.
+///
+/// `GradientNoise3D` is *similar* (but not identical) to
+/// [Blender Perlin noise](https://docs.blender.org/manual/en/dev/render/cycles/nodes/types/textures/noise.html).
+/// The *Scale* of Blender Perlin noise is approximately equivalent to `5/4` the `frequency`
+/// of `GradientNoise3D`. The range of Blender Perlin noise is approximately `0.1875 ... 0.8125`
+/// in `GradientNoise3D` units.
 public
 struct GradientNoise3D:HashedNoise
 {
@@ -611,6 +678,13 @@ struct GradientNoise3D:HashedNoise
         self.permutation_table = permutation_table
     }
 
+    /// Creates an instance with the given `amplitude`, `frequency`, and random `seed` values.
+    /// Creating an instance generates a new pseudo-random permutation table for that instance,
+    /// and a new instance does not need to be regenerated to sample the same procedural noise
+    /// field.
+    ///
+    /// The given amplitude is adjusted internally to produce output approximately within the
+    /// range of `-amplitude ... amplitude`, however this is not strictly guaranteed.
     public
     init(amplitude:Double, frequency:Double, seed:Int = 0)
     {
@@ -635,12 +709,15 @@ struct GradientNoise3D:HashedNoise
         }
     }
 
+    /// Evaluates the super-simplex noise field at the given `x, y` coordinates, supplying `0`
+    /// for the missing `z` coordinate.
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
         return self.evaluate(x, y, 0)
     }
 
+    /// Evaluates the super-simplex noise field at the given coordinates.
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
@@ -685,6 +762,8 @@ struct GradientNoise3D:HashedNoise
         return self.amplitude * Σ
     }
 
+    /// Evaluates the super-simplex noise field at the given coordinates. The fourth coordinate
+    /// is ignored.
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double, _:Double) -> Double
     {
