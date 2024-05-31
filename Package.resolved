@@ -2,12 +2,21 @@
   "object": {
     "pins": [
       {
-        "package": "swift-png",
-        "repositoryURL": "https://github.com/kelvin13/swift-png",
+        "package": "swift-hash",
+        "repositoryURL": "https://github.com/tayloraswift/swift-hash",
         "state": {
           "branch": null,
-          "revision": "075dfb248ae327822635370e9d4f94a5d3fe93b2",
-          "version": "4.0.2"
+          "revision": "c7ba0cde5eb63042c2196b02b65a770101c1ac11",
+          "version": "0.5.0"
+        }
+      },
+      {
+        "package": "swift-png",
+        "repositoryURL": "https://github.com/tayloraswift/swift-png",
+        "state": {
+          "branch": null,
+          "revision": "14a720bfcf1b0660dc63979d55d218babc8d651f",
+          "version": "4.4.2"
         }
       }
     ]
