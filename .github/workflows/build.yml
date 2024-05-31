@@ -18,6 +18,19 @@ jobs:
             run: |
               swift --version
               swift build
+
+    benchmark-macos:
+        runs-on: macos-14
+        steps:
+          - uses: actions/checkout@v3
+          - uses: SwiftyLab/setup-swift@latest
+            with:
+              swift-version: "5.10.0"
+          - name: benchmark
+            run: |
+              cd ExternalBenchmarks
+              swift package benchmark
+
     build-linux:
         runs-on: ubuntu-22.04
         steps:
