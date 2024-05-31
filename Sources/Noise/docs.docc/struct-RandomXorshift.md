@@ -1,18 +1,17 @@
-###### Structure 
+# ``RandomXorshift``
 
-# `RandomXorshift`
 A cryptographically unsecure 128-bit [Xorshift](https://en.wikipedia.org/wiki/Xorshift) pseudo-random number generator.
 
 ***
 
 ## Symbols
 
-### Instance properties 
+### Instance properties
 
 #### `var` `max:UInt32 { get }`
 > The maximum unsigned integer value the random number generator is capable of producing.
 
-### Instance methods 
+### Instance methods
 
 #### `mutating func` `generate() -> UInt32`
 > Generates a pseudo-random 32 bit unsigned integer, and advances the random number generator state.

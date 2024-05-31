@@ -1,6 +1,5 @@
-###### Structure
+# ``DiskSampler2D``
 
-# `DiskSampler2D`
 A point sampler capable of producing uniform and roughly-evenly spaced pseudo-random point distributions in the plane. Disk sampling is sometimes referred to as [Poisson sampling](https://en.wikipedia.org/wiki/Supersampling#Poisson_disc).
 
 Disk samples are not a noise field — its generation is inherently sequential, as opposed to most procedural noise fields which are embarrassingly parallel. Thus, disk samples have no concept of *evaluation*; the entire sample set must be generated as a whole.

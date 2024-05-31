@@ -1,9 +1,8 @@
-###### Module
-# Noise
+# ``Noise``
 
 Generate and combine commonly used procedural noise patterns and distributions.
 
-*This wiki documents features present in* [Noise *1.0.0*](https://github.com/kelvin13/noise/releases/tag/1.0.0). *Many new features are currently being added to* [`master`](https://github.com/kelvin13/noise/tree/master) *for* Noise *2.0.0, and several types and methods will be deprecated or removed for 2.0.0, including* [`SimplexNoise2D`](struct-SimplexNoise2D.md).
+*This wiki documents features present in* [Noise *1.0.0*](https://github.com/tayloraswift/noise/releases/tag/1.0.0). *Many new features are currently being added to* [`master`](https://github.com/tayloraswift/noise/tree/master) *for* Noise *2.0.0, and several types and methods will be deprecated or removed for 2.0.0, including* [`SimplexNoise2D`](struct-SimplexNoise2D.md).
 ***
 
 ## Symbols
