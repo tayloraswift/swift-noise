@@ -11,9 +11,9 @@ To run the benchmarks, invoke the following command:
 
 ## Using Benchmarks
 
-- [Documentation for the package](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark/gettingstarted)
-  - [Creating and Comparing Baselines](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark/creatingandcomparingbaselines)
-  - [Exporting Benchmark Results](https://swiftpackageindex.com/ordo-one/package-benchmark/documentation/benchmark/exportingbenchmarks)
+- [Documentation for the package](https://swiftinit.org/docs/package-benchmark/benchmark/gettingstarted)
+  - [Creating and Comparing Baselines](https://swiftinit.org/docs/package-benchmark/benchmark/creatingandcomparingbaselines)
+  - [Exporting Benchmark Results](https://swiftinit.org/docs/package-benchmark/benchmark/exportingbenchmarks)
 
 ## Baselines
 
