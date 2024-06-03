@@ -16,7 +16,7 @@ All popular types of procedural noise are supported, including three [gradient n
 
 `swift-noise` includes a [fractal brownian motion](https://thebookofshaders.com/13/) (FBM) noise composition framework, and a [disk point sampler](https://en.wikipedia.org/wiki/Supersampling#Poisson_disc) (often called a Poisson sampler), for generating visually even point distributions in the plane. `swift-noise` also includes pseudo-random number generation and hashing tools.
 
-`swift-noise`’s entire public API is [documented](https://swiftinit.org/hist/swift-noise:master/noise).
+`swift-noise`’s entire public API is [documented](https://swiftinit.org/docs/swift-noise/noise).
 
 ## Building
 
