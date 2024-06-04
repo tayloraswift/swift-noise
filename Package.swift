@@ -19,7 +19,7 @@ let package = Package(
         .target(
             name: "Noise"
         ),
-//        .testTarget(name: "NoiseTests", dependencies: ["Noise"])
+        .testTarget(name: "NoiseTests", dependencies: ["Noise"]),
         .executableTarget(name: "GenNoise",
                           dependencies: [
                             .target(name: "Noise"),
