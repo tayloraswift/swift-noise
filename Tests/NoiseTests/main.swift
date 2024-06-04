@@ -24,9 +24,9 @@ func benchmark<Generator>(noise generator:Generator, name:String, offset:Double 
     where Generator:Noise
 {
     let t0:Int = clock()
-    for (i, (x, y)) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
+    for (i, element) in Domain2D(samples_x: viewer_size, samples_y: viewer_size).enumerated()
     {
-        pixbuf[i] = UInt8(max(0, min(255, generator.evaluate(x, y) + offset)))
+        pixbuf[i] = UInt8(max(0, min(255, generator.evaluate(element.x, element.y) + offset)))
     }
     print("\(name): \(clock() - t0)")
 
@@ -37,7 +37,7 @@ func benchmark<Generator>(noise generator:Generator, name:String, offset:Double 
 
 var poisson = DiskSampler2D(seed: 0)
 let t0:Int = clock()
-for point:(x:Double, y:Double) in poisson.generate(radius: 10, width: viewer_size, height: viewer_size)
+for point:SIMD2<Double> in poisson.generate(radius: 10, width: viewer_size, height: viewer_size)
 {
     pixbuf[Int(point.y) * viewer_size + Int(point.x)] = 255
 }
