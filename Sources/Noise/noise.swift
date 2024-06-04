@@ -137,10 +137,10 @@ extension Noise
 
 enum Math
 {
-    typealias IntV2    = (a:Int, b:Int)
-    typealias IntV3    = (a:Int, b:Int, c:Int)
-    typealias DoubleV2 = (x:Double, y:Double)
-    typealias DoubleV3 = (x:Double, y:Double, z:Double)
+    typealias IntV2    = SIMD2<Int>
+    typealias IntV3    = SIMD3<Int>
+    typealias DoubleV2 = SIMD2<Double>
+    typealias DoubleV3 = SIMD3<Double>
 
     @inline(__always)
     private static
@@ -154,109 +154,112 @@ enum Math
     static
     func fraction(_ v:DoubleV2) -> (IntV2, DoubleV2)
     {
-        let (i1, f1):(Int, Double) = Math.fraction(v.0),
-            (i2, f2):(Int, Double) = Math.fraction(v.1)
-        return ((i1, i2), (f1, f2))
+        
+        let (i1, f1):(Int, Double) = Math.fraction(v.x),
+            (i2, f2):(Int, Double) = Math.fraction(v.y)
+        return (IntV2(i1, i2), DoubleV2(f1, f2))
     }
     @inline(__always)
     static
     func fraction(_ v:DoubleV3) -> (IntV3, DoubleV3)
     {
-        let (i1, f1):(Int, Double) = Math.fraction(v.0),
-            (i2, f2):(Int, Double) = Math.fraction(v.1),
-            (i3, f3):(Int, Double) = Math.fraction(v.2)
-        return ((i1, i2, i3), (f1, f2, f3))
+        let (i1, f1):(Int, Double) = Math.fraction(v.x),
+            (i2, f2):(Int, Double) = Math.fraction(v.y),
+            (i3, f3):(Int, Double) = Math.fraction(v.z)
+        return (IntV3(i1, i2, i3), DoubleV3(f1, f2, f3))
     }
 
     @inline(__always)
     static
     func add(_ v1:IntV2, _ v2:IntV2) -> IntV2
     {
-        return (v1.a + v2.a, v1.b + v2.b)
+        return v1 &+ v2
     }
+    
     @inline(__always)
     static
     func add(_ v1:IntV3, _ v2:IntV3) -> IntV3
     {
-        return (v1.a + v2.a, v1.b + v2.b, v1.c + v2.c)
+        return v1 &+ v2
     }
 
     @inline(__always)
     static
     func add(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
-        return (v1.x + v2.x, v1.y + v2.y)
+        return v1 + v2
     }
+    
     @inline(__always)
     static
     func add(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
     {
-        return (v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
+        return v1 + v2
     }
 
     @inline(__always)
     static
     func sub(_ v1:IntV2, _ v2:IntV2) -> IntV2
     {
-        return (v1.a - v2.a, v1.b - v2.b)
+        return v1 &- v2
     }
     @inline(__always)
     static
     func sub(_ v1:IntV3, _ v2:IntV3) -> IntV3
     {
-        return (v1.a - v2.a, v1.b - v2.b, v1.c - v2.c)
+        return v1 &- v2
     }
 
     @inline(__always)
     static
     func sub(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
-        return (v1.x - v2.x, v1.y - v2.y)
+        return v1 - v2
     }
     @inline(__always)
     static
     func sub(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
     {
-        return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+        return v1 - v2
     }
 
     @inline(__always)
     static
     func mult(_ v1:IntV2, _ v2:IntV2) -> IntV2
     {
-        return (v1.a * v2.a, v1.b * v2.b)
+        return v1 &* v2
     }
     @inline(__always)
     static
     func mult(_ v1:IntV3, _ v2:IntV3) -> IntV3
     {
-        return (v1.a * v2.a, v1.b * v2.b, v1.c * v2.c)
+        return v1 &* v2
     }
 
     @inline(__always)
     static
     func mult(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
-        return (v1.x * v2.x, v1.y * v2.y)
+        return v1 * v2
     }
     @inline(__always)
     static
     func mult(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
     {
-        return (v1.x * v2.x, v1.y * v2.y, v1.z * v2.z)
+        return v1 * v2
     }
 
     @inline(__always)
     static
     func div(_ v1:DoubleV2, _ v2:DoubleV2) -> DoubleV2
     {
-        return (v1.x / v2.x, v1.y / v2.y)
+        return v1 / v2
     }
     @inline(__always)
     static
     func div(_ v1:DoubleV3, _ v2:DoubleV3) -> DoubleV3
     {
-        return (v1.x / v2.x, v1.y / v2.y, v1.z / v2.z)
+        return v1 / v2
     }
 
     @inline(__always)
@@ -271,13 +274,13 @@ enum Math
     static
     func mod(_ v1:IntV2, _ v2:IntV2) -> IntV2
     {
-        return (Math.mod(v1.a, v2.a), Math.mod(v1.b, v2.b))
+        return IntV2(Math.mod(v1.x, v2.x), Math.mod(v1.y, v2.y))
     }
     @inline(__always)
     static
     func mod(_ v1:IntV3, _ v2:IntV3) -> IntV3
     {
-        return (Math.mod(v1.a, v2.a), Math.mod(v1.b, v2.b), Math.mod(v1.c, v2.c))
+        return IntV3(Math.mod(v1.x, v2.x), Math.mod(v1.y, v2.y), Math.mod(v1.z, v2.z))
     }
 
     @inline(__always)
@@ -297,13 +300,13 @@ enum Math
     static
     func cast_double(_ v:IntV2) -> DoubleV2
     {
-        return (Double(v.a), Double(v.b))
+        return DoubleV2(Double(v.x), Double(v.y))
     }
     @inline(__always)
     static
     func cast_double(_ v:IntV3) -> DoubleV3
     {
-        return (Double(v.a), Double(v.b), Double(v.c))
+        return DoubleV3(Double(v.x), Double(v.y), Double(v.z))
     }
 
     @inline(__always)
@@ -325,13 +328,13 @@ enum Math
     static
     func quintic_ease(_ v:DoubleV2) -> DoubleV2
     {
-        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y))
+        return DoubleV2(Math.quintic_ease(v.x), Math.quintic_ease(v.y))
     }
     @inline(__always)
     static
     func quintic_ease(_ v:DoubleV3) -> DoubleV3
     {
-        return (Math.quintic_ease(v.x), Math.quintic_ease(v.y), Math.quintic_ease(v.z))
+        return DoubleV3(Math.quintic_ease(v.x), Math.quintic_ease(v.y), Math.quintic_ease(v.z))
     }
 }
 
@@ -340,27 +343,27 @@ public
 struct Domain2D:Sequence
 {
     private
-    let sample_lower_bound:Math.DoubleV2,
-        sample_upper_bound:Math.DoubleV2,
-        increment:Math.DoubleV2
+    let sample_lower_bound:SIMD2<Double>,
+        sample_upper_bound:SIMD2<Double>,
+        increment:SIMD2<Double>
 
     public
     struct Iterator:IteratorProtocol
     {
         private
-        var sample:Math.DoubleV2
+        var sample:SIMD2<Double>
 
         private
         let domain:Domain2D
 
         init(_ domain:Domain2D)
         {
-            self.sample = Math.add(domain.sample_lower_bound, (-0.5, 0.5))
+            self.sample = Math.add(domain.sample_lower_bound, Math.DoubleV2(-0.5, 0.5))
             self.domain = domain
         }
 
         public mutating
-        func next() -> (Double, Double)?
+        func next() -> SIMD2<Double>?
         {
             self.sample.x += 1
             if self.sample.x >= self.domain.sample_upper_bound.x
@@ -380,22 +383,22 @@ struct Domain2D:Sequence
     public
     init(samples_x:Int, samples_y:Int)
     {
-        self.increment          = (1, 1)
-        self.sample_lower_bound = (0, 0)
-        self.sample_upper_bound = Math.cast_double((samples_x, samples_y))
+        self.increment          = SIMD2<Double>(1, 1)
+        self.sample_lower_bound = SIMD2<Double>(0, 0)
+        self.sample_upper_bound = SIMD2<Double>(Double(samples_x), Double(samples_y))
     }
 
     public
     init(_ x_range:ClosedRange<Double>, _ y_range:ClosedRange<Double>, samples_x:Int, samples_y:Int)
     {
-        let sample_count:Math.DoubleV2      = Math.cast_double((samples_x, samples_y)),
-            range_lower_bound:Math.DoubleV2 = (x_range.lowerBound, y_range.lowerBound),
-            range_upper_bound:Math.DoubleV2 = (x_range.upperBound, y_range.upperBound),
-            range_difference:Math.DoubleV2  = Math.sub(range_upper_bound, range_lower_bound)
+        let sample_count      = SIMD2<Double>(Double(samples_x), Double(samples_y)),
+            range_lower_bound = SIMD2<Double>(x_range.lowerBound, y_range.lowerBound),
+            range_upper_bound = SIMD2<Double>(x_range.upperBound, y_range.upperBound),
+            range_difference  = Math.sub(range_upper_bound, range_lower_bound)
 
-        self.increment = Math.div(range_difference, sample_count)
-        self.sample_lower_bound = Math.div(Math.mult(range_lower_bound, sample_count), range_difference)
-        self.sample_upper_bound = Math.add(self.sample_lower_bound, sample_count)
+        self.increment = range_difference / sample_count
+        self.sample_lower_bound = (range_lower_bound * sample_count) / range_difference
+        self.sample_upper_bound = self.sample_lower_bound + sample_count
     }
 
     public
@@ -410,27 +413,27 @@ public
 struct Domain3D:Sequence
 {
     private
-    let sample_lower_bound:Math.DoubleV3,
-        sample_upper_bound:Math.DoubleV3,
-        increment:Math.DoubleV3
+    let sample_lower_bound:SIMD3<Double>,
+        sample_upper_bound:SIMD3<Double>,
+        increment:SIMD3<Double>
 
     public
     struct Iterator:IteratorProtocol
     {
         private
-        var sample:Math.DoubleV3
+        var sample:SIMD3<Double>
 
         private
         let domain:Domain3D
 
         init(_ domain:Domain3D)
         {
-            self.sample = Math.add(domain.sample_lower_bound, (-0.5, 0.5, 0.5))
+            self.sample = Math.add(domain.sample_lower_bound, SIMD3<Double>(-0.5, 0.5, 0.5))
             self.domain = domain
         }
 
         public mutating
-        func next() -> (Double, Double, Double)?
+        func next() -> SIMD3<Double>?
         {
             self.sample.x += 1
             if self.sample.x >= self.domain.sample_upper_bound.x
@@ -455,23 +458,23 @@ struct Domain3D:Sequence
     public
     init(samples_x:Int, samples_y:Int, samples_z:Int)
     {
-        self.increment          = (1, 1, 1)
-        self.sample_lower_bound = (0, 0, 0)
-        self.sample_upper_bound = Math.cast_double((samples_x, samples_y, samples_z))
+        self.increment          = SIMD3<Double>(1, 1, 1)
+        self.sample_lower_bound = SIMD3<Double>(0, 0, 0)
+        self.sample_upper_bound = SIMD3<Double>(Double(samples_x), Double(samples_y), Double(samples_z))
     }
 
     public
     init(_ x_range:ClosedRange<Double>, _ y_range:ClosedRange<Double>, _ z_range:ClosedRange<Double>,
         samples_x:Int, samples_y:Int, samples_z:Int)
     {
-        let sample_count:Math.DoubleV3      = Math.cast_double((samples_x, samples_y, samples_z)),
-            range_lower_bound:Math.DoubleV3 = (x_range.lowerBound, y_range.lowerBound, z_range.lowerBound),
-            range_upper_bound:Math.DoubleV3 = (x_range.upperBound, y_range.upperBound, z_range.upperBound),
-            range_difference:Math.DoubleV3  = Math.sub(range_upper_bound, range_lower_bound)
+        let sample_count      = SIMD3<Double>(Double(samples_x), Double(samples_y), Double(samples_z)),
+            range_lower_bound = SIMD3<Double>(x_range.lowerBound, y_range.lowerBound, z_range.lowerBound),
+            range_upper_bound = SIMD3<Double>(x_range.upperBound, y_range.upperBound, z_range.upperBound),
+            range_difference  = Math.sub(range_upper_bound, range_lower_bound)
 
-        self.increment = Math.div(range_difference, sample_count)
-        self.sample_lower_bound = Math.div(Math.mult(range_lower_bound, sample_count), range_difference)
-        self.sample_upper_bound = Math.add(self.sample_lower_bound, sample_count)
+        self.increment = range_difference / sample_count
+        self.sample_lower_bound = (range_lower_bound * sample_count) / range_difference
+        self.sample_upper_bound = self.sample_lower_bound + sample_count
     }
 
     public

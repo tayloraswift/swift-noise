@@ -6,7 +6,7 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
     let domain:Domain2D = .init(-2 ... 2, -2 ... 2, samples_x: width, samples_y: height)
     let v:[UInt8]       = domain.enumerated().map 
     {
-        (element:(Int, (x:Double, y:Double))) in
+        (element:(Int, SIMD2<Double>)) in
         
         return .init(clamping: noise.evaluate(element.1.x, element.1.y) + value_offset)
     }
