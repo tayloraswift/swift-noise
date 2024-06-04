@@ -18,6 +18,7 @@ jobs:
             run: |
               swift --version
               swift build
+              swift test
 
     benchmark-macos:
         runs-on: macos-14
@@ -52,3 +53,4 @@ jobs:
                 swift --version
                 swift build
                 swift build -c release
+                swift test
