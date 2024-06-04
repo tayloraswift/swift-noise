@@ -8,7 +8,7 @@ let package = Package(
     products: 
     [
         .library(name: "Noise", targets: ["Noise"]),
-        .executable(name: "noise-tests", targets: ["NoiseTests"])
+        .executable(name: "generate-noise", targets: ["GenNoise"])
     ],
     dependencies: 
     [
@@ -19,13 +19,12 @@ let package = Package(
         .target(
             name: "Noise"
         ),
-
-        .executableTarget(name: "NoiseTests",
+//        .testTarget(name: "NoiseTests", dependencies: ["Noise"])
+        .executableTarget(name: "GenNoise",
                           dependencies: [
                             .target(name: "Noise"),
                             .product(name: "PNG", package: "swift-png"),
                           ],
-                          path: "Tests/NoiseTests",
                           exclude:[
                             "calibrate.blend",
                             "calibrate.blend1"

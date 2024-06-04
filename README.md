@@ -20,4 +20,11 @@ All popular types of procedural noise are supported, including three [gradient n
 
 ## Building
 
-Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests use [`swift-png`](https://github.com/tayloraswift/swift-png) to view the generated noise.
+Build *Noise* with the Swift Package Manager. *Noise* itself has no dependencies, but the tests use 
+
+The package includes an executable, `generate-noise`, that depends on [`swift-png`](https://github.com/tayloraswift/swift-png).
+It generates noise locally for visual inspection.
+To regenerate example images, run the following command in the terminal:
+
+```
+swift run -c release generate-noise
