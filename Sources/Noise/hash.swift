@@ -89,27 +89,27 @@ extension HashedTilingNoise
     }
 }
 
-extension HashedTilingNoise where IntV == SIMD2<Int>
+extension HashedTilingNoise where IntV == Math.IntV2
 {
-    func _transpose_wavelengths(_ wavelengths:Math.IntV2, octaves:Int) -> SIMD2<Int>
+    func _transpose_wavelengths(_ wavelengths:Math.IntV2, octaves:Int) -> Math.IntV2
     {
-        return SIMD2<Int>(wavelengths.x << octaves, wavelengths.y << octaves)
+        return (wavelengths.a << octaves, wavelengths.b << octaves)
     }
 
-    func hash(point:SIMD2<Int>) -> Int
+    func hash(point:Math.IntV2) -> Int
     {
         return self.permutation_table.hash(Math.mod(point, self.wavelengths))
     }
 }
 
-extension HashedTilingNoise where IntV == SIMD3<Int>
+extension HashedTilingNoise where IntV == Math.IntV3
 {
-    func _transpose_wavelengths(_ wavelengths:SIMD3<Int>, octaves:Int) -> SIMD3<Int>
+    func _transpose_wavelengths(_ wavelengths:Math.IntV3, octaves:Int) -> Math.IntV3
     {
-        return SIMD3<Int>(wavelengths.x << octaves, wavelengths.y << octaves, wavelengths.z << octaves)
+        return (wavelengths.a << octaves, wavelengths.b << octaves, wavelengths.c << octaves)
     }
 
-    func hash(point:SIMD3<Int>) -> Int
+    func hash(point:Math.IntV3) -> Int
     {
         return self.permutation_table.hash(Math.mod(point, self.wavelengths))
     }
@@ -212,14 +212,14 @@ struct PermutationTable
         self.permut = permutations
     }
 
-    func hash(_ n2:SIMD2<Int>) -> Int
+    func hash(_ n2:Math.IntV2) -> Int
     {
-        return Int(self.permut[Int(self.permut[n2.x & 255]) ^ (n2.y & 255)])
+        return Int(self.permut[Int(self.permut[n2.a & 255]) ^ (n2.b & 255)])
     }
 
-    func hash(_ n3:SIMD3<Int>) -> Int
+    func hash(_ n3:Math.IntV3) -> Int
     {
-        return Int(self.permut[self.hash(SIMD2<Int>(n3.x, n3.y)) ^ (n3.z & 255)])
+        return Int(self.permut[self.hash((n3.a, n3.b)) ^ (n3.c & 255)])
     }
 
     /// Hash a single integer value.
