@@ -50,7 +50,7 @@ func banner_classic3d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: (0.65*255, 0.65*255, 0.65*255),
-                    path: "tests/banner_classic3d.png")
+                    path: "examples/banner_classic3d.png")
 }
 
 /*
@@ -74,7 +74,7 @@ func banner_supersimplex2d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: (0.65*255, 0.65*255, 0.65*255),
-                    path: "tests/banner_supersimplex2d.png")
+                    path: "examples/banner_supersimplex2d.png")
 }
 
 func banner_supersimplex3d(width:Int, height:Int, seed:Int)
@@ -85,7 +85,7 @@ func banner_supersimplex3d(width:Int, height:Int, seed:Int)
                     width: width,
                     height: height,
                     value_offset: (0.65*255, 0.65*255, 0.65*255),
-                    path: "tests/banner_supersimplex3d.png")
+                    path: "examples/banner_supersimplex3d.png")
 }
 
 func banner_cell2d(width:Int, height:Int, seed:Int)
@@ -97,7 +97,7 @@ func banner_cell2d(width:Int, height:Int, seed:Int)
                     height: height,
                     value_offset: (0, 0, 0),
                     invert: true,
-                    path: "tests/banner_cell2d.png")
+                    path: "examples/banner_cell2d.png")
 }
 
 func banner_cell3d(width:Int, height:Int, seed:Int)
@@ -109,7 +109,7 @@ func banner_cell3d(width:Int, height:Int, seed:Int)
                     height: height,
                     value_offset: (0, 0, 0),
                     invert: true,
-                    path: "tests/banner_cell3d.png")
+                    path: "examples/banner_cell3d.png")
 }
 
 func banner_FBM(width:Int, height:Int, seed:Int)
@@ -121,7 +121,7 @@ func banner_FBM(width:Int, height:Int, seed:Int)
                     height: height,
                     value_offset: (0, 150, 150),
                     invert: false,
-                    path: "tests/banner_FBM.png")
+                    path: "examples/banner_FBM.png")
 }
 
 func circle_at(cx:Double, cy:Double, r:Double, width:Int, height:Int, _ f:(Int, Int, Double) -> ())
@@ -177,7 +177,7 @@ func banner_disk2d(width:Int, height:Int, seed:Int)
     {
         let image:PNG.Image = .init(packing: rgba, size: (width, height), 
             layout: .init(format: .rgb8(palette: [], fill: nil, key: nil)))
-        try image.compress(path: "tests/banner_disk2d.png", level: 9)
+        try image.compress(path: "examples/banner_disk2d.png", level: 9)
     }
     catch
     {
@@ -232,7 +232,7 @@ func banner_voronoi2d(width:Int, height:Int, seed:Int)
     {
         let image:PNG.Image = .init(packing: rgba, size: (width, height),
             layout: .init(format: .rgb8(palette: [], fill: nil, key: nil)))
-        try image.compress(path: "tests/banner_voronoi2d.png", level: 9)
+        try image.compress(path: "examples/banner_voronoi2d.png", level: 9)
     }
     catch
     {
@@ -244,15 +244,22 @@ public
 func banners(width:Int, ratio:Double)
 {
     let height:Int = Int(Double(width) / ratio)
+    print("banner_classic3d")
     banner_classic3d     (width: width, height: height, seed: 6)
+    //print("banner_simplex2d")
     //banner_simplex2d     (width: width, height: height, seed: 6)
+    print("banner_supersimplex2d")
     banner_supersimplex2d(width: width, height: height, seed: 8)
+    print("banner_supersimplex3d")
     banner_supersimplex3d(width: width, height: height, seed: 2)
+    print("banner_cell2d")
     banner_cell2d        (width: width, height: height, seed: 0)
+    print("banner_cell3d")
     banner_cell3d        (width: width, height: height, seed: 0)
+    print("banner_voronoi2d")
     banner_voronoi2d     (width: width, height: height, seed: 3)
-
+    print("banner_FBM")
     banner_FBM           (width: width, height: height, seed: 2)
-
+    print("banner_disk2d")
     banner_disk2d        (width: width, height: height, seed: 0)
 }

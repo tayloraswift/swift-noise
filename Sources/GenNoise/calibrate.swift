@@ -26,33 +26,38 @@ func grayscale_noise_png(noise:Noise, width:Int, height:Int, value_offset:Double
 public
 func calibrate_noise(width:Int, height:Int, seed:Int = 0)
 {
+    print("calibrate-classic-distortion")
     grayscale_noise_png(noise: DistortedNoise(FBM(ClassicNoise3D(amplitude: 0.5*255, frequency: 2, seed: seed), octaves: 4), strength: 0.003),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
-                        path: "tests/calibrate_classic-distortion.png")
-
+                        path: "examples/calibrate_classic-distortion.png")
+    
+    print("calibrate-gradient2d")
     grayscale_noise_png(noise: GradientNoise2D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
-                        path: "tests/calibrate_gradient2d.png")
+                        path: "examples/calibrate_gradient2d.png")
 
+    print("calibrate-gradient3d")
     grayscale_noise_png(noise: GradientNoise3D(amplitude: 0.5*255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0.5*255,
-                        path: "tests/calibrate_gradient3d.png")
+                        path: "examples/calibrate_gradient3d.png")
 
+    print("calibrate-cell2d")
     grayscale_noise_png(noise: CellNoise2D(amplitude: 255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0,
-                        path: "tests/calibrate_cell2d.png")
+                        path: "examples/calibrate_cell2d.png")
 
+    print("calibrate-cell3d")
     grayscale_noise_png(noise: CellNoise3D(amplitude: 255, frequency: 4, seed: seed),
                         width: width,
                         height: height,
                         value_offset: 0,
-                        path: "tests/calibrate_cell3d.png")
+                        path: "examples/calibrate_cell3d.png")
 }
