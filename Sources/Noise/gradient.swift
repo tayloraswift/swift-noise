@@ -4,14 +4,14 @@ protocol _ClassicNoise3D
     var frequency:Double { get }
     var amplitude:Double { get }
 
-    func hash(point:Math.IntV3) -> Int
+    func hash(point:SIMD3<Int>) -> Int
 }
 
 extension _ClassicNoise3D
 {
     @inline(__always)
     private
-    func gradient(from generating_point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    func gradient(from generating_point:SIMD3<Int>, at offset:SIMD3<Double>) -> Double
     {
         // use vectors to the edge of a cube
         let h:Int     = self.hash(point: generating_point) & 15,
@@ -25,7 +25,7 @@ extension _ClassicNoise3D
     @inline(__always)
     func _evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+        let sample = SIMD3<Double>(x * self.frequency, y * self.frequency, z * self.frequency)
 
         // get integral cube coordinates as well as fractional offsets
         let (bin, rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
@@ -34,17 +34,17 @@ extension _ClassicNoise3D
         let U:Math.DoubleV3 = Math.quintic_ease(rel)
 
         let r:Double = Math.lerp(Math.lerp(Math.lerp(self.gradient(from:  bin                            , at:  rel),
-                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c   ), at: (rel.x - 1, rel.y    , rel.z)),
+                                                     self.gradient(from: SIMD3<Int>(bin.x + 1, bin.y    , bin.z   ), at: SIMD3<Double>(rel.x - 1, rel.y    , rel.z)),
                                                      factor: U.x),
-                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c   ), at: (rel.x    , rel.y - 1, rel.z)),
-                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c   ), at: (rel.x - 1, rel.y - 1, rel.z)),
+                                           Math.lerp(self.gradient(from: SIMD3<Int>(bin.x    , bin.y + 1, bin.z   ), at: SIMD3<Double>(rel.x    , rel.y - 1, rel.z)),
+                                                     self.gradient(from: SIMD3<Int>(bin.x + 1, bin.y + 1, bin.z   ), at: SIMD3<Double>(rel.x - 1, rel.y - 1, rel.z)),
                                                      factor: U.x),
                                            factor: U.y),
-                                 Math.lerp(Math.lerp(self.gradient(from: (bin.a    , bin.b    , bin.c + 1), at: (rel.x    , rel.y   , rel.z - 1)),
-                                                     self.gradient(from: (bin.a + 1, bin.b    , bin.c + 1), at: (rel.x - 1, rel.y   , rel.z - 1)),
+                                 Math.lerp(Math.lerp(self.gradient(from: SIMD3<Int>(bin.x    , bin.y    , bin.y + 1), at: SIMD3<Double>(rel.x    , rel.y   , rel.z - 1)),
+                                                     self.gradient(from: SIMD3<Int>(bin.x + 1, bin.y    , bin.z + 1), at: SIMD3<Double>(rel.x - 1, rel.y   , rel.z - 1)),
                                                      factor: U.x),
-                                           Math.lerp(self.gradient(from: (bin.a    , bin.b + 1, bin.c + 1), at: (rel.x    , rel.y - 1, rel.z - 1)),
-                                                     self.gradient(from: (bin.a + 1, bin.b + 1, bin.c + 1), at: (rel.x - 1, rel.y - 1, rel.z - 1)),
+                                           Math.lerp(self.gradient(from: SIMD3<Int>(bin.x    , bin.y + 1, bin.z + 1), at: SIMD3<Double>(rel.x    , rel.y - 1, rel.z - 1)),
+                                                     self.gradient(from: SIMD3<Int>(bin.x + 1, bin.y + 1, bin.z + 1), at: SIMD3<Double>(rel.x - 1, rel.y - 1, rel.z - 1)),
                                                      factor: U.x),
                                            factor: U.y),
                                  factor: U.z)
@@ -128,7 +128,7 @@ struct TilingClassicNoise3D:_ClassicNoise3D, HashedTilingNoise
         self.amplitude = 0.982 * amplitude
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
-        self.wavelengths = (wavelengths_x, wavelengths_y, wavelengths_z)
+        self.wavelengths = SIMD3<Int>(wavelengths_x, wavelengths_y, wavelengths_z)
     }
 
     public
@@ -174,22 +174,22 @@ struct SimplexNoise2D:HashedNoise
         STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 
     private static
-    let gradient_table32:[Math.DoubleV2] =
+    let gradient_table32:[SIMD2<Double>] =
     [
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
+        SIMD2<Double>(1  , 0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0  , -1),
+        SIMD2<Double>(0.7, 0.7), SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7), SIMD2<Double>(0.7, -0.7),
 
-        (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7),
+        SIMD2<Double>(0.7, -0.7),
+        SIMD2<Double>(1  , 0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0  , -1),
+        SIMD2<Double>(0.7, 0.7), SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7),
 
-        (-0.7, -0.7), (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7),
+        SIMD2<Double>(-0.7, -0.7), SIMD2<Double>(0.7, -0.7),
+        SIMD2<Double>(1  , 0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0  , -1),
+        SIMD2<Double>(0.7, 0.7), SIMD2<Double>(-0.7, 0.7),
 
-        (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7)
+        SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7), SIMD2<Double>(0.7, -0.7),
+        SIMD2<Double>(1  , 0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0  , -1),
+        SIMD2<Double>(0.7, 0.7)
     ]
 
     let permutation_table:PermutationTable,
@@ -237,15 +237,15 @@ struct SimplexNoise2D:HashedNoise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
+        let sample = SIMD2<Double>(x, y) * self.frequency
         // transform our coordinate system so that the *simplex* (x, y) forms a
         // rectangular grid (u, v)
         let squish_offset:Double    = (sample.x + sample.y) * SimplexNoise2D.SQUISH_2D,
-            sample_uv:Math.DoubleV2 = (sample.x + squish_offset, sample.y + squish_offset)
+            sample_uv = sample + squish_offset
 
         // get integral (u, v) coordinates of the rhombus and get position inside
         // the rhombus relative to (floor(u), floor(v))
-        let (bin, sample_uv_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample_uv)
+        let (bin, sample_uv_rel):(SIMD2<Int>, SIMD2<Double>) = Math.fraction(sample_uv)
 
         //   (0, 0) ----- (1, 0)
         //       \    A    / \
@@ -270,8 +270,8 @@ struct SimplexNoise2D:HashedNoise
         // do the same in the original (x, y) coordinate space
 
         // stretch back to get (x, y) coordinates of rhombus origin
-        let stretch_offset:Double = Double(bin.a + bin.b) * SimplexNoise2D.STRETCH_2D,
-            origin:Math.DoubleV2 = (Double(bin.a) + stretch_offset, Double(bin.b) + stretch_offset)
+        let stretch_offset:Double = Double(bin.x + bin.y) * SimplexNoise2D.STRETCH_2D,
+            origin = SIMD2<Double>(Double(bin.x), Double(bin.y)) + stretch_offset
 
         // get relative position inside the rhombus relative to (xb, xb)
         let sample_rel:Math.DoubleV2 = Math.sub(sample, origin)
@@ -279,33 +279,33 @@ struct SimplexNoise2D:HashedNoise
         var Σ:Double = 0 // the value of the noise function, which we will sum up
 
         @inline(__always)
-        func _inspect(point_offset:Math.IntV2, sample_offset:Math.DoubleV2)
+        func _inspect(point_offset:SIMD2<Int>, sample_offset:SIMD2<Double>)
         {
-            Σ += gradient(from: Math.add(bin, point_offset), at: Math.sub(sample_rel, sample_offset))
+            Σ += gradient(from: bin &+ point_offset, at: sample_rel - sample_offset)
         }
 
         // contribution from (1, 0)
-        _inspect(point_offset: (1, 0), sample_offset: (1 + SimplexNoise2D.STRETCH_2D, SimplexNoise2D.STRETCH_2D))
+        _inspect(point_offset: SIMD2<Int>(1, 0), sample_offset: SIMD2<Double>(1 + SimplexNoise2D.STRETCH_2D, SimplexNoise2D.STRETCH_2D))
 
         // contribution from (0, 1)
-        _inspect(point_offset: (0, 1), sample_offset: (SimplexNoise2D.STRETCH_2D, 1 + SimplexNoise2D.STRETCH_2D))
+        _inspect(point_offset: SIMD2<Int>(0, 1), sample_offset: SIMD2<Double>(SimplexNoise2D.STRETCH_2D, 1 + SimplexNoise2D.STRETCH_2D))
 
         // decide which triangle we are in
         let uv_sum:Double = sample_uv_rel.x + sample_uv_rel.y
         if (uv_sum > 1) // we are to the bottom-right of the diagonal line (du = 1 - dv)
         {
-            _inspect(point_offset: (1, 1), sample_offset: (1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
+            _inspect(point_offset: SIMD2<Int>(1, 1), sample_offset: SIMD2<Double>(1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
 
             let center_dist:Double = 2 - uv_sum
             if center_dist < sample_uv_rel.x || center_dist < sample_uv_rel.y
             {
                 if sample_uv_rel.x > sample_uv_rel.y
                 {
-                    _inspect(point_offset: (2, 0), sample_offset: (2 + 2*SimplexNoise2D.STRETCH_2D, 2*SimplexNoise2D.STRETCH_2D))
+                    _inspect(point_offset: SIMD2<Int>(2, 0), sample_offset: SIMD2<Double>(2 + 2*SimplexNoise2D.STRETCH_2D, 2*SimplexNoise2D.STRETCH_2D))
                 }
                 else
                 {
-                    _inspect(point_offset: (0, 2), sample_offset: (2*SimplexNoise2D.STRETCH_2D, 2 + 2*SimplexNoise2D.STRETCH_2D))
+                    _inspect(point_offset: SIMD2<Int>(0, 2), sample_offset: SIMD2<Double>(2*SimplexNoise2D.STRETCH_2D, 2 + 2*SimplexNoise2D.STRETCH_2D))
                 }
             }
             else
@@ -322,16 +322,16 @@ struct SimplexNoise2D:HashedNoise
             {
                 if sample_uv_rel.x > sample_uv_rel.y
                 {
-                    _inspect(point_offset: (1, -1), sample_offset: (-1, 1))
+                    _inspect(point_offset: SIMD2<Int>(1, -1), sample_offset: SIMD2<Double>(-1, 1))
                 }
                 else
                 {
-                    _inspect(point_offset: (-1, 1), sample_offset: (1, -1))
+                    _inspect(point_offset: SIMD2<Int>(-1, 1), sample_offset: SIMD2<Double>(1, -1))
                 }
             }
             else
             {
-                _inspect(point_offset: (1, 1), sample_offset: (1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
+                _inspect(point_offset: SIMD2<Int>(1, 1), sample_offset: SIMD2<Double>(1 + 2*SimplexNoise2D.STRETCH_2D, 1 + 2*SimplexNoise2D.STRETCH_2D))
             }
         }
 
@@ -379,16 +379,16 @@ struct GradientNoise2D:HashedNoise
         STRETCH_2D:Double = 0.5 * (3.squareRoot() - 1)
 
     private static
-    let points:[(Math.IntV2, Math.DoubleV2)] =
+    let points:[(SIMD2<Int>, SIMD2<Double>)] =
     {
-        var points:[(Math.IntV2, Math.DoubleV2)] = []
+        var points:[(SIMD2<Int>, SIMD2<Double>)] = []
             points.reserveCapacity(32)
 
         @inline(__always)
-        func _lattice_point(at point:Math.IntV2) -> (Math.IntV2, Math.DoubleV2)
+        func _lattice_point(at point:SIMD2<Int>) -> (SIMD2<Int>, SIMD2<Double>)
         {
-            let stretch_offset:Double = Double(point.a + point.b) * GradientNoise2D.SQUISH_2D
-            return (point, (Double(point.a) + stretch_offset, Double(point.b) + stretch_offset))
+            let stretch_offset:Double = Double(point.x + point.y) * GradientNoise2D.SQUISH_2D
+            return (point, SIMD2<Double>(Double(point.x), Double(point.y)) + stretch_offset)
         }
 
         for (i1, j1, i2, j2):(Int, Int, Int, Int) in
@@ -397,32 +397,32 @@ struct GradientNoise2D:HashedNoise
             (-1, 0, 0,  1), (0, 1, 1, 2), (1, 0, 0,  1), (2, 1, 1, 2)
         ]
         {
-            points.append(_lattice_point(at: ( 0,  0)))
-            points.append(_lattice_point(at: ( 1,  1)))
-            points.append(_lattice_point(at: (i1, j1)))
-            points.append(_lattice_point(at: (i2, j2)))
+            points.append(_lattice_point(at: SIMD2<Int>( 0,  0)))
+            points.append(_lattice_point(at: SIMD2<Int>( 1,  1)))
+            points.append(_lattice_point(at: SIMD2<Int>(i1, j1)))
+            points.append(_lattice_point(at: SIMD2<Int>(i2, j2)))
         }
 
         return points
     }()
 
     private static // each gradient appears four times to mitigate hashing biases
-    let gradient_table32:[Math.DoubleV2] =
+    let gradient_table32:[SIMD2<Double>] =
     [
-        (1  , 0  ), ( 0  , 1  ), (-1  ,  0  ), (0  , -1),
-        (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7), (0.7, -0.7),
+        SIMD2<Double>(1  , 0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0  , -1),
+        SIMD2<Double>(0.7, 0.7), SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7), SIMD2<Double>(0.7, -0.7),
 
-        (0.7, -0.7),
-        (1  ,  0  ), ( 0  , 1  ), (-1  ,  0  ), (0, -1),
-        (0.7,  0.7), (-0.7, 0.7), (-0.7, -0.7),
+        SIMD2<Double>(0.7, -0.7),
+        SIMD2<Double>(1  ,  0  ), SIMD2<Double>( 0  , 1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0, -1),
+        SIMD2<Double>(0.7,  0.7), SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7),
 
-        (-0.7, -0.7), ( 0.7, -0.7),
-        ( 1  ,  0  ), ( 0  ,  1  ), (-1, 0), (0, -1),
-        ( 0.7,  0.7), (-0.7,  0.7),
+        SIMD2<Double>(-0.7, -0.7), SIMD2<Double>( 0.7, -0.7),
+        SIMD2<Double>( 1  ,  0  ), SIMD2<Double>( 0  ,  1  ), SIMD2<Double>(-1, 0), SIMD2<Double>(0, -1),
+        SIMD2<Double>( 0.7,  0.7), SIMD2<Double>(-0.7,  0.7),
 
-        (-0.7, 0.7), (-0.7, -0.7), ( 0.7, -0.7),
-        ( 1  , 0  ), ( 0  ,  1  ), (-1  ,  0  ), (0, -1),
-        ( 0.7, 0.7)
+        SIMD2<Double>(-0.7, 0.7), SIMD2<Double>(-0.7, -0.7), SIMD2<Double>( 0.7, -0.7),
+        SIMD2<Double>( 1  , 0  ), SIMD2<Double>( 0  ,  1  ), SIMD2<Double>(-1  ,  0  ), SIMD2<Double>(0, -1),
+        SIMD2<Double>( 0.7, 0.7)
     ]
 
     let permutation_table:PermutationTable,
@@ -451,12 +451,12 @@ struct GradientNoise2D:HashedNoise
         self.permutation_table = PermutationTable(seed: seed)
     }
 
-    func gradient(from point:Math.IntV2, at offset:Math.DoubleV2) -> Double
+    func gradient(from point:SIMD2<Int>, at offset:SIMD2<Double>) -> Double
     {
         let dr:Double = 2/3 - Math.dot(offset, offset)
         if dr > 0
         {
-            let gradient:Math.DoubleV2 = GradientNoise2D.gradient_table32[self.permutation_table.hash(point) & 31],
+            let gradient:SIMD2<Double> = GradientNoise2D.gradient_table32[self.permutation_table.hash(point) & 31],
                 drdr:Double = dr * dr
             return drdr * drdr * Math.dot(gradient, offset)
         }
@@ -470,10 +470,10 @@ struct GradientNoise2D:HashedNoise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
+        let sample = SIMD2<Double>(x * self.frequency, y * self.frequency)
         // transform our (x, y) coordinate to (u, v) space
         let stretch_offset:Double = (sample.x + sample.y) * GradientNoise2D.STRETCH_2D,
-            sample_uv:Math.DoubleV2 = (sample.x + stretch_offset, sample.y + stretch_offset)
+            sample_uv = SIMD2<Double>(sample.x + stretch_offset, sample.y + stretch_offset)
 
         //         (0, 0) ----- (1, 0)
         //           / \    A    /
@@ -497,7 +497,7 @@ struct GradientNoise2D:HashedNoise
 
         // use the (u, v) coordinates to bin the triangle and get relative offsets
         // from the top-left corner of the square (in (u, v) space)
-        let (bin, sample_uv_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample_uv)
+        let (bin, sample_uv_rel):(SIMD2<Int>, SIMD2<Double>) = Math.fraction(sample_uv)
 
         let a:Int = sample_uv_rel.x + sample_uv_rel.y > 1 ? 1 : 0
         let base_vertex_index:Int = a << 2 |
@@ -582,12 +582,12 @@ struct GradientNoise2D:HashedNoise
 
         // get the relative offset from (0, 0)
         let squish_offset:Double = (sample_uv_rel.x + sample_uv_rel.y) * GradientNoise2D.SQUISH_2D,
-            sample_rel:Math.DoubleV2 = (sample_uv_rel.x + squish_offset, sample_uv_rel.y + squish_offset)
+            sample_rel = SIMD2<Double>(sample_uv_rel.x, sample_uv_rel.y) + squish_offset
 
         var Σ:Double = 0
         for (point, point_offset) in GradientNoise2D.points[base_vertex_index ..< base_vertex_index + 4]
         {
-            Σ += self.gradient(from: Math.add(bin, point), at: Math.sub(sample_rel, point_offset))
+            Σ += self.gradient(from: bin &+ point, at: sample_rel - point_offset)
         }
         return self.amplitude * Σ
     }
@@ -631,17 +631,17 @@ public
 struct GradientNoise3D:HashedNoise
 {
     private static
-    let points:[(Math.IntV3, Math.DoubleV3)] =
+    let points:[(SIMD3<Int>, SIMD3<Double>)] =
     {
-        var points:[(Math.IntV3, Math.DoubleV3)] = []
+        var points:[(SIMD3<Int>, SIMD3<Double>)] = []
             points.reserveCapacity(64)
 
         for n in 0 ..< 16
         {
-            let p1:Math.IntV3 = (    n      & 1,     n      & 1,     n      & 1),
-                p2:Math.IntV3 = (1 - n >> 1 & 1,     n >> 1 & 1,     n >> 1 & 1),
-                p3:Math.IntV3 = (    n >> 2 & 1, 1 - n >> 2 & 1,     n >> 2 & 1),
-                p4:Math.IntV3 = (    n >> 3 & 1,     n >> 3 & 1, 1 - n >> 3 & 1)
+            let p1 = SIMD3<Int>(    n      & 1,     n      & 1,     n      & 1),
+                p2 = SIMD3<Int>(1 - n >> 1 & 1,     n >> 1 & 1,     n >> 1 & 1),
+                p3 = SIMD3<Int>(    n >> 2 & 1, 1 - n >> 2 & 1,     n >> 2 & 1),
+                p4 = SIMD3<Int>(    n >> 3 & 1,     n >> 3 & 1, 1 - n >> 3 & 1)
 
             points.append((p1, Math.cast_double(p1)))
             points.append((p2, Math.cast_double(p2)))
@@ -653,18 +653,18 @@ struct GradientNoise3D:HashedNoise
     }()
 
     private static
-    let gradient_table32:[Math.DoubleV3] =
+    let gradient_table32:[SIMD3<Double>] =
     [
-        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
-        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
-        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (0, -1,  1), ( 0, -1, -1),
+        SIMD3<Double>(1, 1, 0), SIMD3<Double>(-1,  1, 0), SIMD3<Double>(1, -1,  0), SIMD3<Double>(-1, -1,  0),
+        SIMD3<Double>(1, 0, 1), SIMD3<Double>(-1,  0, 1), SIMD3<Double>(1,  0, -1), SIMD3<Double>(-1,  0, -1),
+        SIMD3<Double>(0, 1, 1), SIMD3<Double>( 0, -1, 1), SIMD3<Double>(0,  1, -1), SIMD3<Double>( 0, -1, -1),
+        SIMD3<Double>(1, 1, 0), SIMD3<Double>(-1,  1, 0), SIMD3<Double>(0, -1,  1), SIMD3<Double>( 0, -1, -1),
 
-        (0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (1, -1,  0), (-1, -1,  0),
-        (1, 0, 1), (-1,  0, 1), (1,  0, -1), (-1,  0, -1),
-        (0, 1, 1), ( 0, -1, 1), (0,  1, -1), ( 0, -1, -1),
-        (1, 1, 0), (-1,  1, 0), (0, -1,  1)
+        SIMD3<Double>(0, -1, -1),
+        SIMD3<Double>(1, 1, 0), SIMD3<Double>(-1,  1, 0), SIMD3<Double>(1, -1,  0), SIMD3<Double>(-1, -1,  0),
+        SIMD3<Double>(1, 0, 1), SIMD3<Double>(-1,  0, 1), SIMD3<Double>(1,  0, -1), SIMD3<Double>(-1,  0, -1),
+        SIMD3<Double>(0, 1, 1), SIMD3<Double>( 0, -1, 1), SIMD3<Double>(0,  1, -1), SIMD3<Double>( 0, -1, -1),
+        SIMD3<Double>(1, 1, 0), SIMD3<Double>(-1,  1, 0), SIMD3<Double>(0, -1,  1)
     ]
 
     let permutation_table:PermutationTable,
@@ -694,7 +694,7 @@ struct GradientNoise3D:HashedNoise
     }
 
     private
-    func gradient(from point:Math.IntV3, at offset:Math.DoubleV3) -> Double
+    func gradient(from point:SIMD3<Int>, at offset:SIMD3<Double>) -> Double
     {
         let dr:Double = 0.75 - Math.dot(offset, offset)
         if dr > 0
@@ -721,14 +721,14 @@ struct GradientNoise3D:HashedNoise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+        let sample = SIMD3<Double>(x * self.frequency, y * self.frequency, z * self.frequency)
 
         // transform our coordinate system so that out rotated lattice (x, y, z)
         // forms an axis-aligned rectangular grid again (u, v, w)
         let rot_offset:Double = 2/3 * (sample.x + sample.y + sample.z),
-            U1:Math.DoubleV3 = (rot_offset - sample.x, rot_offset - sample.y, rot_offset - sample.z),
+            U1 = SIMD3<Double>(rot_offset - sample.x, rot_offset - sample.y, rot_offset - sample.z),
         // do the same for an offset cube lattice
-            U2:Math.DoubleV3 = (U1.x + 512.5, U1.y + 512.5, U1.z + 512.5)
+            U2 = U1 + 512.5
 
         // get integral (u, v, w) cube coordinates as well as fractional offsets
         let (bin1, sample_rel1):(Math.IntV3, Math.DoubleV3) = Math.fraction(U1),
