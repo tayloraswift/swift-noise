@@ -565,7 +565,7 @@ extension _CellNoise3D
 /// `CellNoise3D` is analogous to
 /// [Blender Voronoi noise](https://docs.blender.org/manual/en/dev/render/cycles/nodes/types/textures/voronoi.html),
 /// with the *Distance Squared* metric. The *Scale* of Blender Voronoi noise is identical to the
-/// ``frequency`` of `CellNoise3D`; its range is approximately `0 ... 10/3` in `CellNoise3D`
+/// frequency of `CellNoise3D`; its range is approximately `0 ... 10/3` in `CellNoise3D`
 /// units.
 public
 struct CellNoise3D:_CellNoise3D, HashedNoise
