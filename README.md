@@ -3,6 +3,8 @@
 ***`noise`***<br>`2.0`
 
 [![ci build status](https://github.com/tayloraswift/swift-noise/actions/workflows/build.yml/badge.svg)](https://github.com/tayloraswift/swift-noise/actions/workflows/build.yml)
+[![ci build status](https://github.com/tayloraswift/swift-noise/actions/workflows/docs.yml/badge.svg)](https://github.com/tayloraswift/swift-noise/actions/workflows/docs.yml)
+
 [![swift package index versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftayloraswift%2Fswift-noise%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/tayloraswift/swift-noise)
 [![swift package index platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Ftayloraswift%2Fswift-noise%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/tayloraswift/swift-noise)
 
