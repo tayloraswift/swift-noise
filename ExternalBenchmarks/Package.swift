@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "ExternalBenchmarks",
     platforms: [
-        .macOS(.v13),
+        .macOS("13.3"),
     ],
     dependencies: [
         .package(url: "https://github.com/ordo-one/package-benchmark", .upToNextMajor(from: "1.0.0")),
