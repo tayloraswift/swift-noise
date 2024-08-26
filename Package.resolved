@@ -1,25 +1,23 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "swift-hash",
-        "repositoryURL": "https://github.com/tayloraswift/swift-hash",
-        "state": {
-          "branch": null,
-          "revision": "c7ba0cde5eb63042c2196b02b65a770101c1ac11",
-          "version": "0.5.0"
-        }
-      },
-      {
-        "package": "swift-png",
-        "repositoryURL": "https://github.com/tayloraswift/swift-png",
-        "state": {
-          "branch": null,
-          "revision": "14a720bfcf1b0660dc63979d55d218babc8d651f",
-          "version": "4.4.2"
-        }
+  "pins" : [
+    {
+      "identity" : "swift-hash",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tayloraswift/swift-hash",
+      "state" : {
+        "revision" : "7a3fbb75ec4c88421796faaf0b47f16ffc21b348",
+        "version" : "0.6.2"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "swift-png",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/tayloraswift/swift-png",
+      "state" : {
+        "revision" : "99c1279148c0843328263b39158bf10ea7ea469e",
+        "version" : "4.4.4"
+      }
+    }
+  ],
+  "version" : 2
 }
