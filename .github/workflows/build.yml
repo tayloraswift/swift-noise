@@ -13,7 +13,7 @@ jobs:
           - uses: actions/checkout@v3
           - uses: SwiftyLab/setup-swift@latest
             with:
-              swift-version: "5.10.0"
+              swift-version: "5.10.1"
           - name: build
             run: |
               swift --version
@@ -26,7 +26,7 @@ jobs:
           - uses: actions/checkout@v3
           - uses: SwiftyLab/setup-swift@latest
             with:
-              swift-version: "5.10.0"
+              swift-version: "5.10.1"
           - name: Homebrew Mac
             if: ${{ runner.os == 'Macos' }}
             run: |
@@ -42,15 +42,14 @@ jobs:
               swift package benchmark
 
     build-linux:
-        runs-on: ubuntu-22.04
+        runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v3
             - uses: SwiftyLab/setup-swift@latest
               with:
-                swift-version: "5.10.0"
+                swift-version: "5.10.1"
             - name: build
               run: |
                 swift --version
-                swift build
                 swift build -c release
                 swift test
