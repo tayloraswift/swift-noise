@@ -4,17 +4,17 @@ import PackageDescription
 
 let package = Package(
     name: "swift-noise",
-    platforms: [.macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)],
-    products: 
+    platforms: [.macOS("13.3"), .iOS("16.4"), .tvOS("16.4"), .watchOS("9.4")],
+    products:
     [
         .library(name: "Noise", targets: ["Noise"]),
         .executable(name: "generate-noise", targets: ["GenNoise"])
     ],
-    dependencies: 
+    dependencies:
     [
         .package(url: "https://github.com/tayloraswift/swift-png", from: "4.4.0")
     ],
-    targets: 
+    targets:
     [
         .target(
             name: "Noise"
