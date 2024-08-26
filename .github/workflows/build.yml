@@ -10,46 +10,49 @@ jobs:
     build-macos:
         runs-on: macos-14
         steps:
-          - uses: actions/checkout@v3
-          - uses: SwiftyLab/setup-swift@latest
-            with:
-              swift-version: "5.10.1"
-          - name: build
-            run: |
-              swift --version
-              swift build
-              swift test
+            -   name: Checkout repository
+                uses: actions/checkout@v3
+
+            -   name: build
+                run: |
+                    swift --version
+                    swift build
+                    swift test
 
     benchmark-macos:
         runs-on: macos-14
         steps:
-          - uses: actions/checkout@v3
-          - uses: SwiftyLab/setup-swift@latest
-            with:
-              swift-version: "5.10.1"
-          - name: Homebrew Mac
-            if: ${{ runner.os == 'Macos' }}
-            run: |
-              echo "/opt/homebrew/bin:/usr/local/bin" >> $GITHUB_PATH
-              brew install jemalloc
-          - name: Ubuntu deps
-            if: ${{ runner.os == 'Linux' }}
-            run: |
-              sudo apt-get install -y libjemalloc-dev
-          - name: benchmark
-            run: |
-              cd ExternalBenchmarks
-              swift package benchmark
+            -   name: Checkout repository
+                uses: actions/checkout@v3
+
+            -   name: Homebrew Mac
+                if: ${{ runner.os == 'Macos' }}
+                run: |
+                    echo "/opt/homebrew/bin:/usr/local/bin" >> $GITHUB_PATH
+                    brew install jemalloc
+            -   name: Ubuntu deps
+                if: ${{ runner.os == 'Linux' }}
+                run: |
+                    sudo apt-get install -y libjemalloc-dev
+            -   name: benchmark
+                run: |
+                    cd ExternalBenchmarks
+                    swift package benchmark
 
     build-linux:
         runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v3
-            - uses: SwiftyLab/setup-swift@latest
-              with:
-                swift-version: "5.10.1"
-            - name: build
-              run: |
-                swift --version
-                swift build -c release
-                swift test
+            -   name: Install Swift
+                uses: tayloraswift/swift-install-action@master
+                with:
+                    swift-prefix: "swift-5.10.1-release/ubuntu2404/swift-5.10.1-RELEASE"
+                    swift-id: "swift-5.10.1-RELEASE-ubuntu24.04"
+
+            -   name: Checkout repository
+                uses: actions/checkout@v3
+
+            -   name: Build and test
+                run: |
+                    swift --version
+                    swift build -c release
+                    swift test
