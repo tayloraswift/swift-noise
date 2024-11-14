@@ -1,0 +1,22 @@
+name: visionOS
+
+on:
+    push:
+        branches: [ master ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+    macos:
+        runs-on: macos-15
+        name: macOS
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v3
+
+            -   name: Build
+                run: |
+                    swift --version
+                    xcrun xcodebuild build -scheme "Noise" -destination \
+                        "generic/platform=visionos"
+
