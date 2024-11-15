@@ -5,9 +5,9 @@
 [![Tests](https://github.com/tayloraswift/swift-noise/actions/workflows/Tests.yml/badge.svg)](https://github.com/tayloraswift/swift-noise/actions/workflows/Tests.yml)
 [![Documentation](https://github.com/tayloraswift/swift-noise/actions/workflows/Documentation.yml/badge.svg)](https://github.com/tayloraswift/swift-noise/actions/workflows/Documentation.yml)
 
-</div>
-
 ![](Sources/Noise/docs.docc/png/banner_FBM.png)
+
+</div>
 
 **`swift-noise`** is a free, pure Swift procedural noise generation library. The library product has no dependencies and does not import Foundation or any system frameworks.
 
