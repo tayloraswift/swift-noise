@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tayloraswift/swift-hash",
       "state" : {
-        "revision" : "7a3fbb75ec4c88421796faaf0b47f16ffc21b348",
-        "version" : "0.6.2"
+        "revision" : "4d70a941b7039358f2ec8565f6c3b53c05f6c6ef",
+        "version" : "0.6.3"
       }
     },
     {
@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tayloraswift/swift-png",
       "state" : {
-        "revision" : "99c1279148c0843328263b39158bf10ea7ea469e",
-        "version" : "4.4.4"
+        "revision" : "e677ba0728150c41118c52fcbebdfa74b071ab17",
+        "version" : "4.4.7"
       }
     }
   ],
