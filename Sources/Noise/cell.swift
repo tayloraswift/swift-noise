@@ -4,14 +4,14 @@ protocol _CellNoise2D
     var frequency:Double { get }
     var amplitude:Double { get }
 
-    func hash(point:Math.IntV2) -> Int
+    func hash(point:SIMD2<Int>) -> Int
 }
 
 extension _CellNoise2D
 {
     @inline(__always)
     private
-    func distance2(from sample_point:Math.DoubleV2, generating_point:Math.IntV2) -> Double
+    func distance2(from sample_point:SIMD2<Double>, generating_point:SIMD2<Int>) -> Double
     {
         let hash:Int = self.hash(point: generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
@@ -22,20 +22,22 @@ extension _CellNoise2D
 
         //          0b XXXX YYYY
 
-        let dp:Math.DoubleV2 = ((Double(hash >> 4         ) - 15 / 2) * 1 / 16,
-                                (Double(hash      & 0b1111) - 15 / 2) * 1 / 16)
+        let dp = SIMD2<Double>(
+            ((Double(hash >> 4         ) - 7.5) / 16.0),
+            ((Double(hash      & 0b1111) - 7.5) / 16.0)
+        )
 
-        let dv:Math.DoubleV2 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
+        let dv = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
     }
 
     // ugly hack to get around compiler linker bug
     @inline(__always)
-    func _closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    func _closest_point(_ x:Double, _ y:Double) -> (point:SIMD2<Int>, r2:Double)
     {
-        let sample:Math.DoubleV2 = (x * self.frequency, y * self.frequency)
+        let sample = SIMD2<Double>(x * self.frequency, y * self.frequency)
 
-        let (bin, sample_rel):(Math.IntV2, Math.DoubleV2) = Math.fraction(sample)
+        let (bin, sample_rel):(SIMD2<Int>, SIMD2<Double>) = Math.fraction(sample)
 
         // determine kernel
 
@@ -70,12 +72,15 @@ extension _CellNoise2D
         // square since it cannot produce a feature point closer than we have already
         // found.
 
-        let quadrant:Math.IntV2 = (sample_rel.x > 0.5 ? 1 : -1  , sample_rel.y > 0.5 ? 1 : -1),
-            near:Math.IntV2     = Math.add(bin, ((quadrant.a + 1) >> 1, (quadrant.b + 1) >> 1)),
-            far:Math.IntV2      = (near.a - quadrant.a          , near.b - quadrant.b)
+        let quadrant = SIMD2<Int>(sample_rel.x > 0.5 ? 1 : -1, sample_rel.y > 0.5 ? 1 : -1)
+        let _x = (quadrant.x + 1) >> 1
+        let _y = (quadrant.y + 1) >> 1
+        let near = bin &+ SIMD2<Int>(_x, _y)
+        
+        let far = near &- quadrant
 
-        let nearpoint_disp:Math.DoubleV2 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
-                                            abs(sample_rel.y - Double((quadrant.b + 1) >> 1)))
+        let nearpoint_disp = SIMD2<Double>(abs(sample_rel.x - Double((quadrant.x + 1) >> 1)),
+                                           abs(sample_rel.y - Double((quadrant.y + 1) >> 1)))
 
         var r2:Double = self.distance2(from: sample, generating_point: near),
             closest_point:Math.IntV2 = near
@@ -99,8 +104,8 @@ extension _CellNoise2D
         // cumulative sample coverage = 65.50%
 
         // A points
-        _inspect(generating_point: (near.a, far.b), dy: nearpoint_disp.y - 0.5)
-        _inspect(generating_point: (far.a, near.b), dx: nearpoint_disp.x - 0.5)
+        _inspect(generating_point: SIMD2<Int>(near.x, far.y), dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: SIMD2<Int>(far.x, near.y), dx: nearpoint_disp.x - 0.5)
 
         // far point
         _inspect(generating_point: far, dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 0.5)
@@ -133,15 +138,15 @@ extension _CellNoise2D
         // Cell group II:
         //                 within r^2 = 1.0
         // cumulative sample coverage = 99.96%
-        let inner:Math.IntV2 = Math.add(near, quadrant)
+        let inner:SIMD2<Int> = near &+ quadrant
 
         // B points
-        _inspect(generating_point: (inner.a, near.b), dx: nearpoint_disp.x + 0.5)
-        _inspect(generating_point: (near.a, inner.b), dy: nearpoint_disp.y + 0.5)
+        _inspect(generating_point: SIMD2<Int>(inner.x, near.y), dx: nearpoint_disp.x + 0.5)
+        _inspect(generating_point: SIMD2<Int>(near.x, inner.y), dy: nearpoint_disp.y + 0.5)
 
         // C points
-        _inspect(generating_point: (inner.a, far.b), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
-        _inspect(generating_point: (far.a, inner.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
+        _inspect(generating_point: SIMD2<Int>(inner.x, far.y), dx: nearpoint_disp.x + 0.5, dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: SIMD2<Int>(far.x, inner.y), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y + 0.5)
 
         guard r2 > 1.0
         else
@@ -152,15 +157,15 @@ extension _CellNoise2D
         // Cell group III:
         //                 within r^2 = 2.0
         // cumulative sample coverage = 100%
-        let outer:Math.IntV2 = Math.sub(far, quadrant)
+        let outer:SIMD2<Int> = far &- quadrant
 
         // D points
-        _inspect(generating_point: (near.a, outer.b), dy: nearpoint_disp.y - 1.5)
-        _inspect(generating_point: (outer.a, near.b), dx: nearpoint_disp.x - 1.5)
+        _inspect(generating_point: SIMD2<Int>(near.x, outer.y), dy: nearpoint_disp.y - 1.5)
+        _inspect(generating_point: SIMD2<Int>(outer.x, near.y), dx: nearpoint_disp.x - 1.5)
 
         // E points
-        _inspect(generating_point: (far.a, outer.b), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
-        _inspect(generating_point: (outer.a, far.b), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
+        _inspect(generating_point: SIMD2<Int>(far.x, outer.y), dx: nearpoint_disp.x - 0.5, dy: nearpoint_disp.y - 1.5)
+        _inspect(generating_point: SIMD2<Int>(outer.x, far.y), dx: nearpoint_disp.x - 1.5, dy: nearpoint_disp.y - 0.5)
 
         return (closest_point, r2)
     }
@@ -213,7 +218,7 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     /// be fed to a color hashing function to produce a
     /// [Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram).
     public
-    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    func closest_point(_ x:Double, _ y:Double) -> (point:SIMD2<Int>, r2:Double)
     {
         return self._closest_point(x, y)
     }
@@ -222,7 +227,7 @@ struct CellNoise2D:_CellNoise2D, HashedNoise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
+        let (_, r2):(SIMD2<Int>, Double) = self.closest_point(x, y)
         return self.amplitude * r2
     }
 
@@ -274,11 +279,11 @@ struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
         self.amplitude = amplitude / 2
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
-        self.wavelengths = (wavelengths_x, wavelengths_y)
+        self.wavelengths = SIMD2<Int>(wavelengths_x, wavelengths_y)
     }
 
     public
-    func closest_point(_ x:Double, _ y:Double) -> (point:(Int, Int), r2:Double)
+    func closest_point(_ x:Double, _ y:Double) -> (point:SIMD2<Int>, r2:Double)
     {
         return self._closest_point(x, y)
     }
@@ -286,7 +291,7 @@ struct TilingCellNoise2D:_CellNoise2D, HashedTilingNoise
     public
     func evaluate(_ x:Double, _ y:Double) -> Double
     {
-        let (_, r2):((Int, Int), Double) = self.closest_point(x, y)
+        let (_, r2):(SIMD2<Int>, Double) = self.closest_point(x, y)
         return self.amplitude * r2
     }
 
@@ -310,14 +315,14 @@ protocol _CellNoise3D
     var frequency:Double { get }
     var amplitude:Double { get }
 
-    func hash(point:Math.IntV3) -> Int
+    func hash(point:SIMD3<Int>) -> Int
 }
 
 extension _CellNoise3D
 {
     @inline(__always)
     private
-    func distance2(from sample_point:Math.DoubleV3, generating_point:Math.IntV3) -> Double
+    func distance2(from sample_point:SIMD3<Double>, generating_point:SIMD3<Int>) -> Double
     {
         let hash:Int = self.hash(point: generating_point)
         // hash is within 0 ... 255, take it to 0 ... 0.5
@@ -330,23 +335,23 @@ extension _CellNoise3D
 
         //          0b XXX YYY ZZ
 
-        let axes:Math.DoubleV3 = Math.cast_double(( hash >> 5,
+        let axes:SIMD3<Double> = Math.cast_double(SIMD3<Int>( hash >> 5,
                                                     hash >> 2 & 0b0111,
                                                     hash << 1 & 0b0111 + ((hash >> 5 ^ hash >> 2) & 1)))
-        let dp:Math.DoubleV3 = ((axes.x - 7 / 2) * 1.0 / 8,
+        let dp:SIMD3<Double> = SIMD3<Double>((axes.x - 7 / 2) * 1.0 / 8,
                                 (axes.y - 7 / 2) * 1.0 / 8,
                                 (axes.z - 7 / 2) * 1.0 / 8)
 
-        let dv:Math.DoubleV3 = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
+        let dv:SIMD3<Double> = Math.sub(Math.add(Math.cast_double(generating_point), dp), sample_point)
         return Math.dot(dv, dv)
     }
 
     @inline(__always)
-    func _closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    func _closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:SIMD3<Int>, r2:Double)
     {
-        let sample:Math.DoubleV3 = (x * self.frequency, y * self.frequency, z * self.frequency)
+        let sample = SIMD3<Double>(x * self.frequency, y * self.frequency, z * self.frequency)
 
-        let (bin, sample_rel):(Math.IntV3, Math.DoubleV3) = Math.fraction(sample)
+        let (bin, sample_rel):(SIMD3<Int>, SIMD3<Double>) = Math.fraction(sample)
 
         // determine kernel
 
@@ -359,28 +364,28 @@ extension _CellNoise3D
         //   near - quadrant.x ————— near            quadrant →
         //                                              ↓
 
-        let quadrant:Math.IntV3  = (sample_rel.x > 0.5 ? 1 : -1,
+        let quadrant:SIMD3<Int>  = SIMD3<Int>(sample_rel.x > 0.5 ? 1 : -1,
                                     sample_rel.y > 0.5 ? 1 : -1,
                                     sample_rel.z > 0.5 ? 1 : -1)
-        let near:Math.IntV3      = Math.add(bin, ((quadrant.a + 1) >> 1,
-                                                  (quadrant.b + 1) >> 1,
-                                                  (quadrant.c + 1) >> 1))
+        let near:SIMD3<Int>      = Math.add(bin, SIMD3<Int>((quadrant.x + 1) >> 1,
+                                                  (quadrant.y + 1) >> 1,
+                                                  (quadrant.z + 1) >> 1))
 
-        let nearpoint_disp:Math.DoubleV3 = (abs(sample_rel.x - Double((quadrant.a + 1) >> 1)),
-                                            abs(sample_rel.y - Double((quadrant.b + 1) >> 1)),
-                                            abs(sample_rel.z - Double((quadrant.c + 1) >> 1)))
+        let nearpoint_disp:SIMD3<Double> = SIMD3<Double>(abs(sample_rel.x - Double((quadrant.x + 1) >> 1)),
+                                            abs(sample_rel.y - Double((quadrant.y + 1) >> 1)),
+                                            abs(sample_rel.z - Double((quadrant.z + 1) >> 1)))
 
         var r2:Double = self.distance2(from: sample, generating_point: near),
-            closest_point:Math.IntV3 = near
+            closest_point:SIMD3<Int> = near
 
         @inline(__always)
-        func _inspect_cell(offset:Math.IntV3)
+        func _inspect_cell(offset:SIMD3<Int>)
         {
             // calculate distance from quadrant volume to kernel cell
             var cell_distance2:Double
-            if offset.a != 0
+            if offset.x != 0
             {                                                                // move by 0.5 towards zero
-                let dx:Double = nearpoint_disp.x + Double(offset.a) + (offset.a > 0 ? -0.5 : 0.5)
+                let dx:Double = nearpoint_disp.x + Double(offset.x) + (offset.x > 0 ? -0.5 : 0.5)
                 cell_distance2 = dx*dx
             }
             else
@@ -388,15 +393,15 @@ extension _CellNoise3D
                 cell_distance2 = 0
             }
 
-            if offset.b != 0
+            if offset.y != 0
             {                                                                // move by 0.5 towards zero
-                let dy:Double = nearpoint_disp.y + Double(offset.b) + (offset.b > 0 ? -0.5 : 0.5)
+                let dy:Double = nearpoint_disp.y + Double(offset.y) + (offset.y > 0 ? -0.5 : 0.5)
                 cell_distance2 += dy*dy
             }
 
-            if offset.c != 0
+            if offset.z != 0
             {                                                                // move by 0.5 towards zero
-                let dz:Double = nearpoint_disp.z + Double(offset.c) + (offset.c > 0 ? -0.5 : 0.5)
+                let dz:Double = nearpoint_disp.z + Double(offset.z) + (offset.z > 0 ? -0.5 : 0.5)
                 cell_distance2 += dz*dz
             }
 
@@ -406,7 +411,7 @@ extension _CellNoise3D
                 return
             }
 
-            let generating_point:Math.IntV3 = Math.add(near, Math.mult(quadrant, offset))
+            let generating_point:SIMD3<Int> = Math.add(near, Math.mult(quadrant, offset))
             let dr2:Double = self.distance2(from: sample, generating_point: generating_point)
             if dr2 < r2
             {
@@ -421,15 +426,15 @@ extension _CellNoise3D
         // Cell group I:
         //                outside r^2 = 0
         // cumulative sample coverage = 47.85%
-        _inspect_cell(offset: (-1,  0,  0))
-        _inspect_cell(offset: ( 0, -1,  0))
-        _inspect_cell(offset: ( 0,  0, -1))
+        _inspect_cell(offset: SIMD3<Int>(-1,  0,  0))
+        _inspect_cell(offset: SIMD3<Int>( 0, -1,  0))
+        _inspect_cell(offset: SIMD3<Int>( 0,  0, -1))
 
-        _inspect_cell(offset: ( 0, -1, -1))
-        _inspect_cell(offset: (-1,  0, -1))
-        _inspect_cell(offset: (-1, -1,  0))
+        _inspect_cell(offset: SIMD3<Int>( 0, -1, -1))
+        _inspect_cell(offset: SIMD3<Int>(-1,  0, -1))
+        _inspect_cell(offset: SIMD3<Int>(-1, -1,  0))
 
-        _inspect_cell(offset: (-1, -1, -1))
+        _inspect_cell(offset: SIMD3<Int>(-1, -1, -1))
 
         // Cell group II:
         //                outside r^2 = 0.25
@@ -439,9 +444,9 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in  [(1,  0,  0), ( 0, 1,  0), ( 0,  0,  1),
-                        (0, -1,  1), ( 0, 1, -1), ( 1,  0, -1), (-1, 0, 1), (-1, 1, 0), (1, -1, 0),
-                        (1, -1, -1), (-1, 1, -1), (-1, -1,  1)]
+        for offset in  [SIMD3<Int>(1,  0,  0), SIMD3<Int>( 0, 1,  0), SIMD3<Int>( 0,  0,  1),
+                        SIMD3<Int>(0, -1,  1), SIMD3<Int>( 0, 1, -1), SIMD3<Int>( 1,  0, -1), SIMD3<Int>(-1, 0, 1), SIMD3<Int>(-1, 1, 0), SIMD3<Int>(1, -1, 0),
+                        SIMD3<Int>(1, -1, -1), SIMD3<Int>(-1, 1, -1), SIMD3<Int>(-1, -1,  1)]
         {
             _inspect_cell(offset: offset)
         }
@@ -454,7 +459,7 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in [(0, 1, 1), (1, 0, 1), (1, 1, 0), (-1, 1, 1), (1, -1, 1), (1, 1, -1)]
+        for offset in [SIMD3<Int>(0, 1, 1), SIMD3<Int>(1, 0, 1), SIMD3<Int>(1, 1, 0), SIMD3<Int>(-1, 1, 1), SIMD3<Int>(1, -1, 1), SIMD3<Int>(1, 1, -1)]
         {
             _inspect_cell(offset: offset)
         }
@@ -471,9 +476,9 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in  [(-2,  0,  0), ( 0, -2,  0), ( 0,  0, -2),
-                        ( 0, -2, -1), ( 0, -1, -2), (-2,  0, -1), (-1, 0, -2), (-2, -1, 0), (-1, -2, 0),
-                        (-2, -1, -1), (-1, -2, -1), (-1, -1, -2)]
+        for offset in  [SIMD3<Int>(-2,  0,  0), SIMD3<Int>( 0, -2,  0), SIMD3<Int>( 0,  0, -2),
+                        SIMD3<Int>( 0, -2, -1), SIMD3<Int>( 0, -1, -2), SIMD3<Int>(-2,  0, -1), SIMD3<Int>(-1, 0, -2), SIMD3<Int>(-2, -1, 0), SIMD3<Int>(-1, -2, 0),
+                        SIMD3<Int>(-2, -1, -1), SIMD3<Int>(-1, -2, -1), SIMD3<Int>(-1, -1, -2)]
         {
             _inspect_cell(offset: offset)
         }
@@ -486,8 +491,8 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in  [( 0, 1, -2), ( 0, -2, 1), (1,  0, -2), (-2,  0, 1), (1, -2,  0), (-2, 1,  0),
-                        (-2, 1, -1), (-2, -1, 1), (1, -2, -1), (-1, -2, 1), (1, -1, -2), (-1, 1, -2)]
+        for offset in  [SIMD3<Int>( 0, 1, -2), SIMD3<Int>( 0, -2, 1), SIMD3<Int>(1,  0, -2), SIMD3<Int>(-2,  0, 1), SIMD3<Int>(1, -2,  0), SIMD3<Int>(-2, 1,  0),
+                        SIMD3<Int>(-2, 1, -1), SIMD3<Int>(-2, -1, 1), SIMD3<Int>(1, -2, -1), SIMD3<Int>(-1, -2, 1), SIMD3<Int>(1, -1, -2), SIMD3<Int>(-1, 1, -2)]
         {
             _inspect_cell(offset: offset)
         }
@@ -504,7 +509,7 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in [(0, -2, -2), (-2, 0, -2), (-2, -2, 0), (-1, -2, -2), (-2, -1, -2), (-2, -2, -1)]
+        for offset in [SIMD3<Int>(0, -2, -2), SIMD3<Int>(-2, 0, -2), SIMD3<Int>(-2, -2, 0), SIMD3<Int>(-1, -2, -2), SIMD3<Int>(-2, -1, -2), SIMD3<Int>(-2, -2, -1)]
         {
             _inspect_cell(offset: offset)
         }
@@ -517,9 +522,9 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in  [(2,  0,  0), (0,  2,  0), ( 0,  0, 2),
-                        (0, -1,  2), (0,  2, -1), (-1,  0, 2), ( 2,  0, -1), (-1, 2,  0), ( 2, -1,  0),
-                                     (2, -1, -1),              (-1, -1,  2),              (-1,  2, -1)]
+        for offset in  [SIMD3<Int>(2,  0,  0), SIMD3<Int>(0,  2,  0), SIMD3<Int>( 0,  0, 2),
+                        SIMD3<Int>(0, -1,  2), SIMD3<Int>(0,  2, -1), SIMD3<Int>(-1,  0, 2), SIMD3<Int>( 2,  0, -1), SIMD3<Int>(-1, 2,  0), SIMD3<Int>( 2, -1,  0),
+                        SIMD3<Int>(2, -1, -1),              SIMD3<Int>(-1, -1,  2),              SIMD3<Int>(-1,  2, -1)]
         {
             _inspect_cell(offset: offset)
         }
@@ -532,8 +537,8 @@ extension _CellNoise3D
         {
             return (closest_point, r2)
         }
-        for offset in  [(0, 1,  2), (0,  2, 1), (1, 0,  2), ( 2, 0, 1), (1,  2, 0), ( 2, 1, 0),
-                        (2, 1, -1), (2, -1, 1), (1, 2, -1), (-1, 2, 1), (1, -1, 2), (-1, 1, 2)]
+        for offset in  [SIMD3<Int>(0, 1,  2), SIMD3<Int>(0,  2, 1), SIMD3<Int>(1, 0,  2), SIMD3<Int>( 2, 0, 1), SIMD3<Int>(1,  2, 0), SIMD3<Int>( 2, 1, 0),
+                        SIMD3<Int>(2, 1, -1), SIMD3<Int>(2, -1, 1), SIMD3<Int>(1, 2, -1), SIMD3<Int>(-1, 2, 1), SIMD3<Int>(1, -1, 2), SIMD3<Int>(-1, 1, 2)]
         {
             _inspect_cell(offset: offset)
         }
@@ -602,7 +607,7 @@ struct CellNoise3D:_CellNoise3D, HashedNoise
     /// be fed to a color hashing function to produce a
     /// [Voronoi diagram](https://en.wikipedia.org/wiki/Voronoi_diagram).
     public
-    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:SIMD3<Int>, r2:Double)
     {
         return self._closest_point(x, y, z)
     }
@@ -619,7 +624,7 @@ struct CellNoise3D:_CellNoise3D, HashedNoise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let (_, r2):((Int, Int, Int), Double) = self.closest_point(x, y, z)
+        let (_, r2):(SIMD3<Int>, Double) = self.closest_point(x, y, z)
         return self.amplitude * r2
     }
 
@@ -664,11 +669,11 @@ struct TilingCellNoise3D:_CellNoise3D, HashedTilingNoise
         self.amplitude = 1 / 3 * amplitude
         self.frequency = frequency
         self.permutation_table = PermutationTable(seed: seed)
-        self.wavelengths = (wavelengths_x, wavelengths_y, wavelengths_z)
+        self.wavelengths = SIMD3<Int>(wavelengths_x, wavelengths_y, wavelengths_z)
     }
 
     public
-    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:(Int, Int, Int), r2:Double)
+    func closest_point(_ x:Double, _ y:Double, _ z:Double) -> (point:SIMD3<Int>, r2:Double)
     {
         return self._closest_point(x, y, z)
     }
@@ -682,7 +687,7 @@ struct TilingCellNoise3D:_CellNoise3D, HashedTilingNoise
     public
     func evaluate(_ x:Double, _ y:Double, _ z:Double) -> Double
     {
-        let (_, r2):((Int, Int, Int), Double) = self.closest_point(x, y, z)
+        let (_, r2):(SIMD3<Int>, Double) = self.closest_point(x, y, z)
         return self.amplitude * r2
     }
 

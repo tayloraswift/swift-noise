@@ -15,14 +15,14 @@ public
 struct DiskSampler2D
 {
     private
-    let candidate_ring:[Math.DoubleV2]
+    let candidate_ring:[SIMD2<Double>]
 
     private
     var rng:RandomXorshift,
         candidate_index:Int = 0
 
     private
-    var candidate_offset:Math.DoubleV2
+    var candidate_offset:SIMD2<Double>
     {
         return self.candidate_ring[self.candidate_index]
     }
@@ -40,7 +40,7 @@ struct DiskSampler2D
         let rand_scale:Double = 4 / Double(self.rng.max)
 
         var candidates_generated:Int = 0
-        var candidate_ring:[Math.DoubleV2] = []
+        var candidate_ring:[SIMD2<Double>] = []
             candidate_ring.reserveCapacity(DiskSampler2D.candidate_table_bitmask + 1)
 
         while candidates_generated <= DiskSampler2D.candidate_table_bitmask
@@ -55,7 +55,7 @@ struct DiskSampler2D
                 continue
             }
 
-            candidate_ring.append((x, y))
+            candidate_ring.append(SIMD2<Double>(x, y))
             candidates_generated += 1
         }
 
@@ -70,7 +70,7 @@ struct DiskSampler2D
     /// orthogonal to the `seed` supplied in the initializer. If `seed` is left `nil`, the seed
     /// point is placed at the center of the region.
     public mutating
-    func generate(radius:Double, width:Int, height:Int, k:Int = 32, seed:(Double, Double)? = nil) -> [(Double, Double)]
+    func generate(radius:Double, width:Int, height:Int, k:Int = 32, seed:SIMD2<Double>? = nil) -> [SIMD2<Double>]
     {
         let normalized_width:Double  = Double(width ) / radius,
             normalized_height:Double = Double(height) / radius,
@@ -79,19 +79,19 @@ struct DiskSampler2D
             grid_stride:Int = grid_width + 4
         var grid = [Math.DoubleV2?](repeating: nil, count: grid_stride * (grid_height + 4))
 
-        var queue:[Math.DoubleV2]
-        if let seed:Math.DoubleV2 = seed
+        var queue:[SIMD2<Double>]
+        if let seed:SIMD2<Double> = seed
         {
-            queue = [(Double(seed.x) / radius, Double(seed.y) / radius)]
+            queue = [SIMD2<Double>(seed / radius)]
         }
         else
         {
-            queue = [(0.5 * normalized_width, 0.5 * normalized_height)]
+            queue = [SIMD2<Double>(0.5 * normalized_width, 0.5 * normalized_height)]
         }
 
         _ = DiskSampler2D.attempt_insert(candidate: queue[0], into_grid: &grid, grid_stride: grid_stride)
-        var points:[(Double, Double)] = [(queue[0].x * radius, queue[0].y * radius)]
-        outer: while let front:Math.DoubleV2 = queue.last
+        var points:[SIMD2<Double>] = [queue[0] * radius]
+        outer: while let front:SIMD2<Double> = queue.last
         {
             for _ in 0 ..< k
             {
@@ -106,7 +106,7 @@ struct DiskSampler2D
 
                 if DiskSampler2D.attempt_insert(candidate: candidate, into_grid: &grid, grid_stride: grid_stride)
                 {
-                    points.append((candidate.x * radius, candidate.y * radius))
+                    points.append(candidate * radius)
                     queue.append(candidate)
                     queue.swapAt(queue.endIndex - 1, Int(self.rng.generate(less_than: UInt32(queue.endIndex))))
                     continue outer
@@ -119,7 +119,7 @@ struct DiskSampler2D
     }
 
     private static
-    func attempt_insert(candidate:Math.DoubleV2, into_grid grid:inout [Math.DoubleV2?], grid_stride:Int) -> Bool
+    func attempt_insert(candidate:SIMD2<Double>, into_grid grid:inout [SIMD2<Double>?], grid_stride:Int) -> Bool
     {
         let i:Int      = Int(candidate.y * 2.squareRoot()) + 2,
             j:Int      = Int(candidate.x * 2.squareRoot()) + 2,
@@ -136,20 +136,20 @@ struct DiskSampler2D
                                          center +   grid_stride,
                                          center + 2*grid_stride)
 
-        let ring:[Math.DoubleV2?] = [         grid[base.0 - 1], grid[base.0], grid[base.0 + 1],
+        let ring:[SIMD2<Double>?] = [         grid[base.0 - 1], grid[base.0], grid[base.0 + 1],
                             grid[base.1 - 2], grid[base.1 - 1], grid[base.1], grid[base.1 + 1], grid[base.1 + 2],
                             grid[center - 2], grid[center - 1],               grid[center + 1], grid[center + 2],
                             grid[base.2 - 2], grid[base.2 - 1], grid[base.2], grid[base.2 + 1], grid[base.2 + 2],
                                               grid[base.3 - 1], grid[base.3], grid[base.3 + 1]]
-        for cell:Math.DoubleV2? in ring
+        for cell:SIMD2<Double>? in ring
         {
-            guard let occupant:Math.DoubleV2 = cell
+            guard let occupant:SIMD2<Double> = cell
             else
             {
                 continue
             }
 
-            let dv:Math.DoubleV2 = Math.sub(occupant, candidate)
+            let dv = occupant - candidate
 
             guard Math.dot(dv, dv) > 1
             else
