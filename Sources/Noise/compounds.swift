@@ -24,8 +24,7 @@ public struct FBM<Source>: Noise where Source: Noise {
         *,
         unavailable,
         message: "init(amplitude:frequency:seed:) defaults to octaves = 1, which does not make sense for FBM modules"
-    )
-    public init(amplitude: Double, frequency: Double, seed: Int) {
+    ) public init(amplitude: Double, frequency: Double, seed: Int) {
         self.generators = []
     }
 
