@@ -19,7 +19,7 @@ All popular types of procedural noise are supported, including three [gradient n
 
 ## Requirements
 
-The swift-noise library requires Swift 5.10 or later.
+The swift-noise library requires Swift 6.0 or later.
 
 <!-- DO NOT EDIT BELOW! AUTOSYNC CONTENT [STATUS TABLE] -->
 | Platform | Status |

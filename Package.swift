@@ -1,5 +1,4 @@
-// swift-tools-version:5.8
-
+// swift-tools-version:6.0
 import PackageDescription
 
 let package: Package = .init(
@@ -29,7 +28,7 @@ let package: Package = .init(
                 "calibrate.blend1"
             ]
         )
-    ]
+    ],
 )
 for target: Target in package.targets {
     {
