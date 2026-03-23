@@ -4,11 +4,10 @@ import PNG
 // TODO: migrate the stdlib Clock APIs
 #if os(Linux)
 import func Glibc.clock
-#else 
-import func Darwin.clock 
+#else
+import func Darwin.clock
 
-func clock() -> Int 
-{
+func clock() -> Int {
     .init(Darwin.clock())
 }
 #endif
@@ -22,7 +21,7 @@ calibrate_noise(width: 256, height: 256)
 //let viewer_size:Int = 1024
 //var pixbuf:[UInt8]  = [UInt8](repeating: 0, count: viewer_size * viewer_size)
 //
-//func benchmark<Generator>(noise generator:Generator, name:String, offset:Double = 0) throws 
+//func benchmark<Generator>(noise generator:Generator, name:String, offset:Double = 0) throws
 //    where Generator:Noise
 //{
 //    let t0:Int = clock()
@@ -44,7 +43,7 @@ calibrate_noise(width: 256, height: 256)
 //    pixbuf[Int(point.y) * viewer_size + Int(point.x)] = 255
 //}
 //print("disk2d: \(clock() - t0)")
-//let image:PNG.Image = .init(packing: pixbuf, size: (viewer_size, viewer_size), 
+//let image:PNG.Image = .init(packing: pixbuf, size: (viewer_size, viewer_size),
 //        layout: .init(format: .v8(fill: nil, key: nil)))
 //try image.compress(path: "tests/disk2d.png", level: 9)
 //
