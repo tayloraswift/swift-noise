@@ -2,7 +2,7 @@ import Noise
 import PNG
 
 func grayscale_noise_png(
-    noise: Noise,
+    noise: some Noise,
     width: Int,
     height: Int,
     value_offset: Double,

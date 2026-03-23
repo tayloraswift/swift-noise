@@ -8,12 +8,18 @@ extension UInt8 {
 }
 
 func color_noise_png(
-    r_noise: Noise, g_noise: Noise, b_noise: Noise,
-    width: Int, height: Int, value_offset: (
+    r_noise: some Noise,
+    g_noise: some Noise,
+    b_noise: some Noise,
+    width: Int,
+    height: Int,
+    value_offset: (
         r: Double,
         g: Double,
         b: Double
-    ), invert: Bool = false, path: String
+    ),
+    invert: Bool = false,
+    path: String
 ) {
     let domain: Domain2D         = .init(samples_x: width, samples_y: height)
     let rgba: [PNG.RGBA<UInt8>]  = domain.map {

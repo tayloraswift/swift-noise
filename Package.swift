@@ -2,7 +2,7 @@
 
 import PackageDescription
 
-let package = Package(
+let package: Package = .init(
     name: "swift-noise",
     platforms: [.macOS("13.3"), .iOS("16.4"), .tvOS("16.4"), .watchOS("9.4")],
     products: [
@@ -31,3 +31,13 @@ let package = Package(
         )
     ]
 )
+for target: Target in package.targets {
+    {
+        var settings: [SwiftSetting] = $0 ?? []
+
+        settings.append(.enableUpcomingFeature("ExistentialAny"))
+        settings.append(.enableExperimentalFeature("StrictConcurrency"))
+
+        $0 = settings
+    } (&target.swiftSettings)
+}
