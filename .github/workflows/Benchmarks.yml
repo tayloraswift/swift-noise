@@ -1,4 +1,4 @@
-name: benchmark
+name: Benchmarks
 
 on:
     push:
@@ -7,22 +7,24 @@ on:
         branches: [ master ]
 
 jobs:
-    benchmark-macos:
-        runs-on: macos-15
+    macOS-benchmark:
+        runs-on: macos-26
         steps:
-            -   name: Checkout repository
-                uses: actions/checkout@v3
+            -   name: 🩵 Checkout repository 🩵
+                uses: actions/checkout@v6
 
-            -   name: Homebrew Mac
-                if: ${{ runner.os == 'Macos' }}
+            -   name: 🩵 macOS dependencies 🩵
+                if: ${{ runner.os == 'macOS' }}
                 run: |
                     echo "/opt/homebrew/bin:/usr/local/bin" >> $GITHUB_PATH
                     brew install jemalloc
-            -   name: Ubuntu deps
+
+            -   name: 🩵 Ubuntu dependencies 🩵
                 if: ${{ runner.os == 'Linux' }}
                 run: |
-                    sudo apt-get install -y libjemalloc-dev
-            -   name: benchmark
+                    sudo apt install -y libjemalloc-dev
+
+            -   name: 🩵 Benchmark 🩵
                 run: |
                     cd ExternalBenchmarks
                     swift package benchmark
