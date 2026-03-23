@@ -1,5 +1,7 @@
-name: tests
+name: Tests
 
+permissions:
+    contents: write
 on:
     push:
         branches: [ master ]
@@ -7,28 +9,76 @@ on:
         branches: [ master ]
 
 jobs:
-    linux:
+    changes:
+        runs-on: ubuntu-latest
+        name: Assess changes
+        steps:
+            -   name: 💖 Checkout repository 💖
+                uses: actions/checkout@v6
+
+            -   name: 💖 Decide checks 💖
+                uses: tj-actions/changed-files@v47
+                id: changes
+                with:
+                    files_ignore: |
+                        README.md
+                        LICENSE
+                        NOTICE
+                        .mailmap
+                        .gitignore
+                        .github/FUNDING.yml
+        outputs:
+            code_changed: ${{ steps.changes.outputs.any_changed }}
+
+    Linux:
         runs-on: ubuntu-24.04
         name: Ubuntu 24.04
+        needs: changes
+        if: ${{ needs.changes.outputs.code_changed == 'true' }}
         steps:
-            -   name: Install Swift
-                uses: tayloraswift/swift-install-action@master
+            -   name: 💖 Install Swift 💖
+                uses: rarestype/swift-install-action@master
                 with:
-                    swift-prefix: "swift-6.0.3-release/ubuntu2404/swift-6.0.3-RELEASE"
-                    swift-id: "swift-6.0.3-RELEASE-ubuntu24.04"
+                    swift-prefix: "swift-6.2.4-release/ubuntu2404/swift-6.2.4-RELEASE"
+                    swift-id: "swift-6.2.4-RELEASE-ubuntu24.04"
 
-            -   name: Checkout repository
-                uses: actions/checkout@v3
+            -   name: 💖 Checkout repository 💖
+                uses: actions/checkout@v6
 
-            -   name: Run tests
+            -   name: 💖 Run tests 💖
                 run: Scripts/TestAll
 
-    macos:
-        runs-on: macos-15
-        name: macOS
+            -   name: 💖 Update badge 💖
+                uses: rarestype/rarestbadge@v1
+                if: always()
+
+    macOS:
+        runs-on: macos-26
+        needs: changes
+        if: ${{ needs.changes.outputs.code_changed == 'true' }}
         steps:
-            -   name: Checkout repository
-                uses: actions/checkout@v3
+            -   name: 💖 Checkout repository 💖
+                uses: actions/checkout@v6
 
-            -   name: Run tests
+            -   name: 💖 Select Xcode 26.3 💖
+                run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+
+            -   name: 💖 Run tests 💖
                 run: Scripts/TestAll
+
+            -   name: 💖 Update badge 💖
+                uses: rarestype/rarestbadge@v1
+                if: always()
+
+    macOS-devices:
+        strategy:
+            matrix:
+                destination: [iOS, tvOS, visionOS, watchOS]
+        needs: changes
+        if: ${{ needs.changes.outputs.code_changed == 'true' }}
+        name: ${{ matrix.destination }}
+        uses: rarestype/swift-device-action/.github/workflows/build.yml@v1
+        with:
+            xcode-scheme: 'swift-noise-Package'
+            destination: ${{ matrix.destination }}
+            badge-namespace: ${{ github.workflow }}
