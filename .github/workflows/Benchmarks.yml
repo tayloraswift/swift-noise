@@ -14,13 +14,13 @@ jobs:
                 uses: actions/checkout@v6
 
             -   name: 🩵 macOS dependencies 🩵
-                if: ${{ runner.os == 'macOS' }}
+                if: runner.os == 'macOS'
                 run: |
                     echo "/opt/homebrew/bin:/usr/local/bin" >> $GITHUB_PATH
                     brew install jemalloc
 
             -   name: 🩵 Ubuntu dependencies 🩵
-                if: ${{ runner.os == 'Linux' }}
+                if: runner.os == 'Linux'
                 run: |
                     sudo apt install -y libjemalloc-dev
 
