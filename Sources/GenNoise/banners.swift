@@ -22,8 +22,7 @@ func color_noise_png(
     path: String
 ) {
     let domain: Domain2D         = .init(samples_x: width, samples_y: height)
-    let rgba: [PNG.RGBA<UInt8>]  = domain.map {
-        (p: (x: Double, y: Double)) in
+    let rgba: [PNG.RGBA<UInt8>]  = domain.map { (p: (x: Double, y: Double)) in
 
         let r: UInt8 = .init(clamping: r_noise.evaluate(p.x, p.y) + value_offset.r),
         g: UInt8 = .init(clamping: g_noise.evaluate(p.x, p.y) + value_offset.g),
@@ -182,8 +181,13 @@ func banner_disk2d(width: Int, height: Int, seed: Int) {
         color: (r: UInt8, g: UInt8, b: UInt8)
     ) {
         for point: (x: Double, y: Double) in points {
-            circle_at(cx: point.x, cy: point.y, r: 10, width: width, height: height) {
-                (x: Int, y: Int, v: Double) in
+            circle_at(
+                cx: point.x,
+                cy: point.y,
+                r: 10,
+                width: width,
+                height: height
+            ) { (x: Int, y: Int, v: Double) in
 
                 let i: Int = y * width + x
                 rgba[i].r = .init(clamping: Int(rgba[i].r) - Int(Double(color.r) * v))
@@ -225,8 +229,7 @@ func banner_voronoi2d(width: Int, height: Int, seed: Int) {
     b: PermutationTable   = PermutationTable(seed: seed + 2)
 
     let domain: Domain2D         = .init(samples_x: width, samples_y: height)
-    let rgba: [PNG.RGBA<UInt8>]  = domain.map {
-        (p: (x: Double, y: Double)) in
+    let rgba: [PNG.RGBA<UInt8>]  = domain.map { (p: (x: Double, y: Double)) in
 
         @inline(__always) func _supersample(_ x: Double, _ y: Double) -> (
             r: UInt8,

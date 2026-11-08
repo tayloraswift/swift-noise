@@ -31,11 +31,12 @@ public extension Noise {
     /// Evaluates the noise field over the given area, starting from the origin, and extending
     /// over the first quadrant, taking unit steps in both directions. Although the `x` and `y`
     /// coordinates are returned, the output vector is guaranteed to be in row-major order.
-    @available(*, deprecated, message: """
+    @available(
+        *, deprecated, message: """
         area sampling is deprecated, iterate over a `Domain2D.Iterator` iterator and sample \
         directly instead.
-        """)
-    func sample_area(width: Int, height: Int) -> [(Double, Double, Double)] {
+        """
+    ) func sample_area(width: Int, height: Int) -> [(Double, Double, Double)] {
         var samples: [(Double, Double, Double)] = []
         samples.reserveCapacity(width * height)
         for i in 0 ..< height {
@@ -51,11 +52,16 @@ public extension Noise {
     /// Evaluates the noise field over the given area, starting from the origin, and extending
     /// over the first quadrant, storing the values in a row-major array of samples. The samples
     /// are clamped, but not scaled, to the range `0 ... 255`.
-    @available(*, deprecated, message: """
+    @available(
+        *, deprecated, message: """
         area sampling is deprecated, iterate over a `Domain2D.Iterator` iterator and sample \
         directly instead.
-        """)
-    func sample_area_saturated_to_u8(width: Int, height: Int, offset: Double = 0.5) -> [UInt8] {
+        """
+    ) func sample_area_saturated_to_u8(
+        width: Int,
+        height: Int,
+        offset: Double = 0.5
+    ) -> [UInt8] {
         var samples: [UInt8] = []
         samples.reserveCapacity(width * height)
         for i in 0 ..< height {
@@ -72,11 +78,12 @@ public extension Noise {
     /// over the first octant, taking unit steps in all three directions. Although the `x`, `y`,
     /// and `z` coordinates are returned, the output vector is guaranteed to be in
     /// `xy` plane-major, and then row-major order.
-    @available(*, deprecated, message: """
+    @available(
+        *, deprecated, message: """
         volume sampling is deprecated, iterate over a `Domain3D.Iterator` iterator and sample \
         directly instead.
-        """)
-    func sample_volume(
+        """
+    ) func sample_volume(
         width: Int,
         height: Int,
         depth: Int
@@ -100,11 +107,12 @@ public extension Noise {
     /// over the first octant, storing the values in a `xy` plane-major, and then row-major
     /// order array of samples. The samples are clamped, but not scaled, to the range
     /// `0 ... 255`.
-    @available(*, deprecated, message: """
+    @available(
+        *, deprecated, message: """
         volume sampling is deprecated, iterate over a `Domain3D.Iterator` iterator and sample \
         directly instead.
-        """)
-    func sample_volume_saturated_to_u8(
+        """
+    ) func sample_volume_saturated_to_u8(
         width: Int,
         height: Int,
         depth: Int,
