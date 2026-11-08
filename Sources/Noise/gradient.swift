@@ -183,10 +183,11 @@ public struct TilingClassicNoise3D: _ClassicNoise3D, HashedTilingNoise {
 /// ``GradientNoise2D``.
 ///
 /// In almost all cases, super-simplex noise should be preferred.
-@available(*, deprecated, message: """
+@available(
+    *, deprecated, message: """
     simplex noise nearly identical to and is an inferior implementation of super simplex noise
-    """)
-public struct SimplexNoise2D: HashedNoise {
+    """
+) public struct SimplexNoise2D: HashedNoise {
     private static let SQUISH_2D: Double = 0.5 * (1 / 3.squareRoot() - 1),
     STRETCH_2D: Double = 0.5 * (3.squareRoot() - 1)
 

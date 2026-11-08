@@ -377,7 +377,8 @@ extension _CellNoise3D {
             sample_rel.z > 0.5 ? 1 : -1
         )
         let near: Math.IntV3      = Math.add(
-            bin, (
+            bin,
+            (
                 (quadrant.a + 1) >> 1,
                 (quadrant.b + 1) >> 1,
                 (quadrant.c + 1) >> 1
