@@ -510,9 +510,10 @@ public struct GradientNoise2D: HashedNoise {
         let (bin, sample_uv_rel): (Math.IntV2, Math.DoubleV2) = Math.fraction(sample_uv)
 
         let a: Int = sample_uv_rel.x + sample_uv_rel.y > 1 ? 1 : 0
-        let base_vertex_index: Int = a << 2 |
-        Int((2*sample_uv_rel.x - sample_uv_rel.y - Double(a))*0.5 + 1) << 3 |
-        Int((2*sample_uv_rel.y - sample_uv_rel.x - Double(a))*0.5 + 1) << 4
+        let base_vertex_index: Int =
+            a << 2 |
+            Int((2*sample_uv_rel.x - sample_uv_rel.y - Double(a))*0.5 + 1) << 3 |
+            Int((2*sample_uv_rel.y - sample_uv_rel.x - Double(a))*0.5 + 1) << 4
         /*
             This bit of code deserves some explanation. OpenSimplex/SuperSimplex
             always samples four vertices. Which four depends on what part of the A–B
@@ -738,16 +739,16 @@ public struct GradientNoise3D: HashedNoise {
 
         // get nearest points
         let base_vertex_index1: Int =
-        ( sample_rel1.x + sample_rel1.y + sample_rel1.z >= 1.5 ?  4 : 0) |
-        (-sample_rel1.x + sample_rel1.y + sample_rel1.z >= 0.5 ?  8 : 0) |
-        ( sample_rel1.x - sample_rel1.y + sample_rel1.z >= 0.5 ? 16 : 0) |
-        ( sample_rel1.x + sample_rel1.y - sample_rel1.z >= 0.5 ? 32 : 0)
+            ( sample_rel1.x + sample_rel1.y + sample_rel1.z >= 1.5 ?  4 : 0) |
+            (-sample_rel1.x + sample_rel1.y + sample_rel1.z >= 0.5 ?  8 : 0) |
+            ( sample_rel1.x - sample_rel1.y + sample_rel1.z >= 0.5 ? 16 : 0) |
+            ( sample_rel1.x + sample_rel1.y - sample_rel1.z >= 0.5 ? 32 : 0)
 
         let base_vertex_index2: Int =
-        ( sample_rel2.x + sample_rel2.y + sample_rel2.z >= 1.5 ?  4 : 0) |
-        (-sample_rel2.x + sample_rel2.y + sample_rel2.z >= 0.5 ?  8 : 0) |
-        ( sample_rel2.x - sample_rel2.y + sample_rel2.z >= 0.5 ? 16 : 0) |
-        ( sample_rel2.x + sample_rel2.y - sample_rel2.z >= 0.5 ? 32 : 0)
+            ( sample_rel2.x + sample_rel2.y + sample_rel2.z >= 1.5 ?  4 : 0) |
+            (-sample_rel2.x + sample_rel2.y + sample_rel2.z >= 0.5 ?  8 : 0) |
+            ( sample_rel2.x - sample_rel2.y + sample_rel2.z >= 0.5 ? 16 : 0) |
+            ( sample_rel2.x + sample_rel2.y - sample_rel2.z >= 0.5 ? 32 : 0)
 
         // sum up the contributions from the two lattices
         var Σ: Double = 0
